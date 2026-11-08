@@ -11,6 +11,13 @@ d'environnement MDP_FAMILLE (ou il est demandé au clavier).
       Recompresse le MP3 en 128 kbit/s, le chiffre dans musiques/<id>.bin
       et met à jour niveaux/index.json (le niveau niveaux/<id>.json doit exister).
 
+  python3 outils/chiffrer.py images <sortie.bin> <dossier> <image.png>...
+      Regroupe des images (chemins relatifs au dossier) dans un seul fichier chiffré :
+      un JSON {chemin: PNG en base64} — c'est ce que lit index.html (images/<nom>.bin).
+
+  python3 outils/chiffrer.py fichier <entrée> <sortie.bin>
+      Chiffre un fichier tel quel (ex. la réserve de ressources, dans reserve/).
+
   python3 outils/chiffrer.py index
       Recalcule niveaux/index.json à partir des fichiers niveaux/*.json et musiques/*.bin.
 
@@ -115,6 +122,21 @@ def main():
         open(os.path.join(RACINE, 'musiques', f'{ident}.bin'), 'wb').write(chiffrer(k, donnees))
         print(f'musiques/{ident}.bin : {len(donnees) / 1e6:.1f} Mo (128 kbit/s)')
         recalculer(idx)
+    elif cmd == 'images':
+        sortie, dossier, images = sys.argv[2], sys.argv[3], sys.argv[4:]
+        k = cle_verifiee(idx)
+        paquet = {im: base64.b64encode(open(os.path.join(dossier, im), 'rb').read()).decode() for im in images}
+        donnees = json.dumps(paquet).encode()
+        os.makedirs(os.path.dirname(os.path.abspath(sortie)), exist_ok=True)
+        open(sortie, 'wb').write(chiffrer(k, donnees))
+        print(f'{sortie} : {len(images)} image(s), {len(donnees) / 1e3:.0f} ko')
+    elif cmd == 'fichier':
+        entree, sortie = sys.argv[2], sys.argv[3]
+        k = cle_verifiee(idx)
+        os.makedirs(os.path.dirname(os.path.abspath(sortie)), exist_ok=True)
+        donnees = open(entree, 'rb').read()
+        open(sortie, 'wb').write(chiffrer(k, donnees))
+        print(f'{sortie} : {len(donnees) / 1e6:.1f} Mo')
     elif cmd == 'index':
         recalculer(idx)
     else:
