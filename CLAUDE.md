@@ -33,8 +33,10 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 ## Gameplay (décisions de Kiki)
 - Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas est pour les pouces). Portrait = style 3DS (notes qui descendent).
 - On touche **n'importe où** : c'est le moment qui compte, pas l'endroit. 1 ou 2 pouces.
-- Surtout une note à la fois ; doubles (trait doré) et tenue d'un pouce + tape de l'autre aux moments forts.
+- Surtout une note à la fois ; doubles (barre bleue, comme sur Switch) et tenue d'un pouce + tape de l'autre aux moments forts.
 - Le geste « retour » d'Android est ignoré pendant une partie.
+- Look des notes repris de Final Bar Line (captures de Kiki, 08/11) : rond rouge à point blanc (taper), vert + bande verte (maintenir), doré avec grande flèche blanche qui sort du rond (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
+- Fluidité : 60 i/s visés. Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
 
 ## Mapper un nouveau morceau (méthode validée par Kiki le 08/11)
 Ne pas mapper seulement la mélodie (« on ne sent pas la musique », comme Guitar Hero en très facile).
@@ -53,5 +55,6 @@ Ne pas mapper seulement la mélodie (« on ne sent pas la musique », comme Guit
 ## Tester sans écran
 - `python3 -m http.server 8765` à la racine (avec une copie chiffrée d'essai si besoin : `cp -r` du dépôt dans /tmp, `init` avec un mot de passe bidon).
 - `?auto` dans l'adresse : le jeu joue tout seul (pas de son) ; `?auto&niveau=gff` pour un niveau en ligne.
+- `?fps` dans l'adresse : compteur d'images par seconde (et résolution) en bas à gauche.
 - Playwright + `/usr/bin/google-chrome` : simuler de vrais doigts avec des `PointerEvent` dont les `pointerId` sont des **entiers distincts**.
 - Objectif : partie complète simulée = 100 % Critical, aucune erreur dans la console.
