@@ -31,7 +31,7 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 `{"y": "t"|"h"|"s", "t": temps dans le MP3 (s), "l": piste 0-3 (0 = grave, en bas en paysage), "e": fin de tenue, "d": sens du glissé (u, d, l, r, ur, ul, dr, dl), "p": n° de note double}`.
 
 ## Gameplay (décisions de Kiki)
-- Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas est pour les pouces). Portrait = style 3DS (notes qui descendent).
+- Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas est pour les pouces). **Pas de mode portrait** (décision de Kiki, 08/11) : en portrait, un écran demande de tourner le téléphone et la partie se met en pause.
 - On touche **n'importe où** : c'est le moment qui compte, pas l'endroit. 1 ou 2 pouces.
 - Surtout une note à la fois ; doubles (barre bleue, comme sur Switch) et tenue d'un pouce + tape de l'autre aux moments forts.
 - Le geste « retour » d'Android est ignoré pendant une partie.

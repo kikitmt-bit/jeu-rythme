@@ -40,12 +40,18 @@ input[type=range]{width:150px;vertical-align:middle;accent-color:#ffd04a}
 table{border-collapse:collapse;font-size:16px}
 td{padding:2px 12px}
 td:last-child{text-align:right;font-weight:800}
+#tourner{display:none;z-index:10;background:#06110c}
+#tourner .tel{font-size:64px;animation:pivote 2s ease-in-out infinite}
+@keyframes pivote{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait){#tourner{display:flex}}
 #bpause{position:fixed;top:8px;right:8px;width:42px;height:42px;padding:0;border-radius:50%;font-size:14px;background:rgba(0,0,0,.35);color:#fff;border:1px solid rgba(255,255,255,.45);box-shadow:none}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <button id="bpause" class="cache" aria-label="Pause">❚❚</button>
+
+<div id="tourner" class="ecran"><div class="tel">📱</div><h2>Tourne ton téléphone</h2><div class="sous">Le jeu se joue en paysage.</div></div>
 
 <div id="accueil" class="ecran">
   <h1>Jeu de rythme</h1>
@@ -109,7 +115,6 @@ const BPM = 120, BEAT = 60 / BPM, START = 2.0;          // la musique démarre 2
 const W_CRIT = 0.045, W_GREAT = 0.09, W_GOOD = 0.14;  // fenêtres de jugement (secondes, de chaque côté)
 const MULT = {CRITICAL: 1, GREAT: 0.7, GOOD: 0.4, MISS: 0};
 const AUTO = /[?&]auto/.test(location.search);        // ?auto : le jeu joue tout seul (pour tester)
-const DEPTH = 1.25;                                    // force de la perspective
 const tb = (bar, beat) => START + (bar * 4 + beat) * BEAT;
 const MIDI = m => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -411,9 +416,8 @@ function tempsA(stamp) {
    Dessin : préparation des images (sprites)
    ============================================================ */
 const cv = document.getElementById('c'), g = cv.getContext('2d', {alpha: false});
-let W = 0, H = 0, DPR = 1, TY = 0, R = 0, RN = 0, VX = 0, VY = 0, XFAR = 0, MODE = 'v';
+let W = 0, H = 0, DPR = 1, R = 0, RN = 0, XFAR = 0;
 const CX = [0, 0, 0, 0], CY = [0, 0, 0, 0];   // position des 4 cibles
-const KFAR = 1 / (1 + DEPTH);
 function toile(n, h = n) { const c = document.createElement('canvas'); c.width = n; c.height = h; return [c, c.getContext('2d')]; }
 const rond = (x, r) => { x.beginPath(); x.arc(0, 0, r, 0, 7); x.fill(); };
 
@@ -522,7 +526,7 @@ function texteImage(txt, taille, remplissage, contourCol, italique = true) {
 const arcEnCiel = (x, l) => { const gr = x.createLinearGradient(l * .1, 0, l * .9, 0); ['#ff6fd0', '#ffb34a', '#fff35a', '#6dff9a', '#5fd6ff', '#b98bff'].forEach((c, i) => gr.addColorStop(i / 5, c)); return gr; };
 const vertical = (...cs) => (x, l, h) => { const gr = x.createLinearGradient(0, h * .2, 0, h * .8); cs.forEach((c, i) => gr.addColorStop(i / (cs.length - 1), c)); return gr; };
 function preparerTextes() {
-  const t = Math.round(R * (MODE === 'h' ? .62 : .46));
+  const t = Math.round(R * .62);
   TXT = {
     CRITICAL: texteImage('CRITICAL', t, arcEnCiel, '#ffffff'),
     GREAT: texteImage('GREAT', t, vertical('#fff0fa', '#ff5fb8'), '#ffffff'),
@@ -620,23 +624,12 @@ function miseEnPage() {
   W = innerWidth; H = innerHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
-  // téléphone en paysage : notes de gauche à droite (style Switch) ; en portrait : notes qui descendent (style 3DS).
-  // Dans les deux cas, une bande libre en bas de l'écran pour les pouces.
-  MODE = W >= H ? 'h' : 'v';
-  if (MODE === 'v') {
-    const ecart = W * .22;
-    TY = H * .66;
-    R = Math.min(ecart * .4, H * .065);
-    VX = W / 2;
-    for (let i = 0; i < 4; i++) { CX[i] = VX + (i - 1.5) * ecart; CY[i] = TY; }
-    const yFar = H * .07;
-    VY = (yFar - TY * KFAR) / (1 - KFAR);
-  } else {
-    const haut = H * .19, bas = H * .64, ecart = (bas - haut) / 3;
-    R = Math.min(ecart * .44, W * .055);
-    for (let i = 0; i < 4; i++) { CX[i] = W * .82; CY[i] = bas - i * ecart; }   // aigu = en haut
-    XFAR = -R * 1.5;
-  }
+  // jeu en paysage uniquement (style Switch) : notes de gauche à droite, cibles à droite,
+  // pistes dans la moitié haute, une bande libre en bas de l'écran pour les pouces.
+  const haut = H * .19, bas = H * .64, ecart = (bas - haut) / 3;
+  R = Math.min(ecart * .44, W * .055);
+  for (let i = 0; i < 4; i++) { CX[i] = W * .82; CY[i] = bas - i * ecart; }   // aigu = en haut
+  XFAR = -R * 1.5;
   RN = R * .8;   // rayon d'une note
   fond = decor();
   pistesFixes();
@@ -648,22 +641,13 @@ let surbrillance = [];
 function pistesFixes() {
   const d = fond.getContext('2d');
   d.setTransform(DPR, 0, 0, DPR, 0, 0);
-  if (MODE === 'h') {
-    const y0 = CY[3] - R * 1.5, y1 = CY[0] + R * 1.5;
-    const gb = d.createLinearGradient(0, 0, W, 0);
-    gb.addColorStop(0, 'rgba(10,20,30,0)'); gb.addColorStop(.3, 'rgba(10,20,30,.22)'); gb.addColorStop(1, 'rgba(10,20,30,.32)');
-    d.fillStyle = gb; d.fillRect(0, y0, W, y1 - y0);
-    for (let i = 0; i < 4; i++) {
-      d.fillStyle = 'rgba(0,0,0,.25)'; d.fillRect(0, CY[i] - .5, W, 3);
-      d.fillStyle = 'rgba(255,255,255,.55)'; d.fillRect(0, CY[i] - 1, W, 2);
-    }
-  } else {
-    for (let i = 0; i < 4; i++) {
-      const far = proj(i, 1), near = proj(i, -.08);
-      const gr = d.createLinearGradient(far.x, far.y, near.x, near.y);
-      gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.6, 'rgba(255,255,255,.35)'); gr.addColorStop(1, 'rgba(255,255,255,.6)');
-      d.strokeStyle = gr; d.lineWidth = 2; d.beginPath(); d.moveTo(far.x, far.y); d.lineTo(near.x, near.y); d.stroke();
-    }
+  const y0 = CY[3] - R * 1.5, y1 = CY[0] + R * 1.5;
+  const gb = d.createLinearGradient(0, 0, W, 0);
+  gb.addColorStop(0, 'rgba(10,20,30,0)'); gb.addColorStop(.3, 'rgba(10,20,30,.22)'); gb.addColorStop(1, 'rgba(10,20,30,.32)');
+  d.fillStyle = gb; d.fillRect(0, y0, W, y1 - y0);
+  for (let i = 0; i < 4; i++) {
+    d.fillStyle = 'rgba(0,0,0,.25)'; d.fillRect(0, CY[i] - .5, W, 3);
+    d.fillStyle = 'rgba(255,255,255,.55)'; d.fillRect(0, CY[i] - 1, W, 2);
   }
   // dégradés réutilisés à chaque image pour éclairer la piste de la prochaine note
   surbrillance = [0, 1, 2, 3].map(i => {
@@ -673,11 +657,10 @@ function pistesFixes() {
   });
 }
 let lucioles = [];
-addEventListener('resize', miseEnPage);
+addEventListener('resize', () => { if (innerHeight > innerWidth) mettrePause(); miseEnPage(); });
 
 function proj(lane, s) {
-  if (MODE === 'h') return {x: CX[lane] - s * (CX[lane] - XFAR), y: CY[lane], k: 1};
-  const k = 1 / (1 + s * DEPTH); return {x: VX + (CX[lane] - VX) * k, y: VY + (TY - VY) * k, k};
+  return {x: CX[lane] - s * (CX[lane] - XFAR), y: CY[lane], k: 1};
 }
 // bande qui suit une piste entre deux distances, largeur w (à l'échelle de la perspective)
 function bande(lane, s0, s1, w) {
@@ -907,8 +890,7 @@ function dessiner(st, dt, horloge) {
     const s = (n.t - st) / A, pa = proj(n.lane, s), pb = proj(m.lane, s);
     g.globalAlpha = Math.max(0, Math.min(1, (1.02 - s) * 6));
     const e = RN * .22 * pa.k;
-    if (MODE === 'h') g.fillRect(pa.x - e, Math.min(pa.y, pb.y), e * 2, Math.abs(pb.y - pa.y));
-    else g.fillRect(Math.min(pa.x, pb.x), pa.y - e, Math.abs(pb.x - pa.x), e * 2);
+    g.fillRect(pa.x - e, Math.min(pa.y, pb.y), e * 2, Math.abs(pb.y - pa.y));
   }
   g.globalAlpha = 1;
   // corps des notes tenues (bande verte pleine, comme sur Switch)
@@ -969,13 +951,12 @@ function dessiner(st, dt, horloge) {
     const pop = t.age < .08 ? 1.5 - t.age / .08 * .5 : 1;
     g.globalAlpha = t.age > .4 ? 1 - (t.age - .4) / .2 : 1;
     const img = TXT[t.j], l = img.l * pop, h = img.h * pop;
-    if (MODE === 'h') g.drawImage(img, CX[t.lane] + R * 1.1, CY[t.lane] - t.age * 14 - h / 2, l, h);
-    else g.drawImage(img, CX[t.lane] - l / 2, CY[t.lane] - R * 1.75 - t.age * 18 - h / 2, l, h);
+    g.drawImage(img, CX[t.lane] + R * 1.1, CY[t.lane] - t.age * 14 - h / 2, l, h);
   }
   textes.length = k;
   g.globalAlpha = 1;
   if (etat === 'jeu' && st < niveau.debut + 4) {
-    const yz = MODE === 'h' ? (CY[0] + R * 1.6 + H) / 2 : (TY + R * 1.5 + H) / 2;
+    const yz = (CY[0] + R * 1.6 + H) / 2;
     g.globalAlpha = Math.min(1, (niveau.debut + 4 - st) / 1.5) * .7;
     const img = texteCache('aide', "Tape n'importe où", Math.round(Math.max(14, Math.min(W, H) * .045)), '#ffffff', 'rgba(20,10,20,.9)', false);
     g.drawImage(img, W / 2 - img.l / 2, yz - img.h / 2, img.l, img.h);
@@ -992,7 +973,7 @@ function hud(st, dt) {
   g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(0, H - 4, W, 4);
   g.fillStyle = '#6fd8ff'; g.fillRect(0, H - 4, W * prog, 4);
   // score en haut à droite (laisse la place au bouton pause)
-  const ts = Math.round(Math.max(18, Math.min(W, H) * (MODE === 'h' ? .06 : .06)));
+  const ts = Math.round(Math.max(18, Math.min(W, H) * .06));
   const sc = texteCache('score', String(score).padStart(7, '0'), ts, vertical('#ffffff', '#dfe8ff'), 'rgba(10,15,30,.85)');
   g.drawImage(sc, W - 58 - sc.l, m - sc.h * .2, sc.l, sc.h);
   // HP en haut à gauche
@@ -1007,8 +988,8 @@ function hud(st, dt) {
     const nb = texteCache('chaine', String(combo), tc, vertical('#ffffff', '#bff4ff', '#6fd0ff'), 'rgba(20,30,60,.9)');
     const mot = texteCache('chaineMot', 'CHAIN', Math.round(tc * .38), vertical('#ffffff', '#bff4ff'), 'rgba(20,30,60,.9)');
     const z = 1 + comboPop * .2, l = nb.l * z, h = nb.h * z;
-    const total = nb.l + mot.l * .9, x0 = MODE === 'h' ? W / 2 - total / 2 : m * .5;
-    const y0 = MODE === 'h' ? m * .3 : m + 14;
+    const total = nb.l + mot.l * .9, x0 = W / 2 - total / 2;
+    const y0 = m * .3;
     g.drawImage(nb, x0 + nb.l - l, y0 + nb.h - h, l, h);
     g.drawImage(mot, x0 + nb.l - mot.l * .12, y0 + nb.h * .72 - mot.h / 2, mot.l, mot.h);
   }
