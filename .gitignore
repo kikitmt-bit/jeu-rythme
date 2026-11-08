@@ -1,0 +1,8 @@
+# Jamais de musique en clair dans le dépôt
+*.mp3
+*.wav
+*.ogg
+*.m4a
+*.flac
+*.raw
+__pycache__/
