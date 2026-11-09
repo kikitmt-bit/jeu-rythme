@@ -17,6 +17,7 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 | `niveaux/<id>.json` | Un niveau : tempo, décalages, partition (`notes`) |
 | `musiques/<id>.bin` | Musique du niveau, MP3 128 kbit/s **chiffré** (AES-256-GCM) |
 | `images/zelda.bin` | Sprites de la scène de combat (Link, Ganon, Grande Fée…), **chiffrés** : JSON `{chemin: PNG base64}` |
+| `images/equipe.bin` | Planches des persos de l'équipe, **chiffrées** : JSON `{"link.png": PNG base64}`. Chaque planche = 4 × 4 poses calées sur les pieds (attente, course, attaque, touché / à genoux / victoire / content). Réglages dans `PERSOS` et `EQUIPE` (index.html) |
 | `reserve/solarus-alttp-pack.zip.bin` | Réserve **chiffrée** : tout le pack Solarus ALTTP envoyé par Kiki (sprites, sons, musiques .it, tilesets) pour piocher plus tard |
 | `outils/chiffrer.py` | Verrouille musiques (`morceau`), paquets d'images (`images`) et fichiers (`fichier`) avec le mot de passe familial |
 | `outils/analyse/` | Analyse audio (numpy + scipy) qui a servi à mapper Great Fairy's Fountain |
@@ -26,6 +27,7 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 1. **Jamais de musique ni d'image de jeu en clair dans le dépôt** (droits d'auteur : Nintendo, Square Enix…). Seulement des `.bin` chiffrés. `.gitignore` bloque les `.mp3`.
    Les ressources Nintendo, c'est **Kiki qui les fournit** (fichiers envoyés dans la conversation) ; Claude ne les télécharge pas lui-même et ne dessine pas de personnages existants.
 2. **Jamais le mot de passe familial dans un fichier**, un commit, un message de commit ou le cerveau. Kiki le redonne dans la conversation quand il faut chiffrer un morceau ; le passer par `MDP_FAMILLE=... python3 outils/chiffrer.py ...`.
+   S'il l'a oublié : bouton « Clé de secours » du menu du jeu (visible quand le téléphone est déverrouillé) → il colle la clé → `CLE_FAMILLE=... python3 outils/chiffrer.py ...`. Même règle : jamais écrite nulle part.
 3. Le mot de passe ne change pas (sinon il faut rechiffrer toutes les musiques et chacun doit le retaper).
 
 ## Format d'un niveau (`niveaux/<id>.json`)
@@ -40,6 +42,7 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 - Le geste « retour » d'Android est ignoré pendant une partie.
 - Look des notes repris de Final Bar Line (captures de Kiki, 08/11) : rond rouge à point blanc (taper), vert + bande verte (maintenir), doré avec grande flèche blanche qui sort du rond (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
 - Scène de combat façon Theatrhythm (08/11), avec les sprites ALTTP fournis par Kiki : Link en bas (attaque à chaque note réussie, blessé sur un raté, victoire à la fin), Ganon en face (se dandine en rythme, clignote, barre de vie ; explose puis revient à chaque vague), la Grande Fée sur GFF. Affichée seulement si le mot de passe est entré. Pixel art agrandi sans flou. Poses décrites dans `POSES` (index.html), d'après les `.dat` Solarus du pack.
+- Équipe de 4 (10/11) : un perso à droite de chaque piste (`EQUIPE`, piste 0 = bas). Il attaque sur une note réussie de SA piste, est touché sur un raté, fait un coup spécial (élan + grand coup) sur un glissé, pose de victoire / à genoux en fin de partie. Style lisse « chibi » (planches faites par Kiki avec une IA, PNG à fond transparent) : tous les persos dans ce même style. Pour l'instant : Link (tunique recolorée en vert) sur la piste du haut ; l'ancien petit Link pixel art en bas a été retiré, Ganon et la Fée restent.
 - Fluidité : 60 i/s visés. Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
 
 ## Mapper un nouveau morceau (méthode validée par Kiki le 08/11)

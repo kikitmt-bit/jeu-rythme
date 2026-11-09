@@ -68,7 +68,7 @@ td:last-child{text-align:right;font-weight:800}
     <div>Vitesse<span class="choix" id="vitesse"><button data-v="2.1">Lente</button><button data-v="1.6">Normale</button><button data-v="1.25">Rapide</button></span></div>
     <label>Décalage audio <input id="decalage" type="range" min="-150" max="150" step="5"> <span id="decalageVal">0</span> ms</label>
   </div>
-  <div class="ligne"><button id="jouer">Jouer</button><button id="bplein" class="discret">Plein écran</button></div>
+  <div class="ligne"><button id="jouer">Jouer</button><button id="bplein" class="discret">Plein écran</button><button id="bsecours" class="discret cache">Clé de secours</button></div>
   <div class="sous" id="msgCharge" style="font-size:14px;min-height:1.2em"></div>
   <div class="sous" id="msgPlein" style="font-size:13px;color:#ffd98a"></div>
   <div class="sous" style="font-size:13px;opacity:.65">Son allumé, téléphone en paysage, les pouces en bas de l'écran. Pour jouer comme une appli : menu du navigateur, « Ajouter à l'écran d'accueil » (sur iPhone : Partager, puis « Sur l'écran d'accueil »). Sur PC : espace, D, F, J ou K pour taper et maintenir (deux touches pour les notes doubles), flèches pour glisser.</div>
@@ -688,8 +688,9 @@ function nouvellePartie() {
   effets = []; textes = []; gestes.clear(); nouveauCombat();
 }
 
-function noter(j, lane) {
+function noter(j, lane, special) {
   if (!j) j = 'GOOD';
+  reactionMembre(j, lane, special);
   comptes[j]++;
   if (j === 'MISS') { combo = 0; hp = Math.max(0, hp - 8); }
   else {
@@ -753,7 +754,7 @@ function finGlisse(ge, angle) {
   const n = ge.note;
   n.fait = true;
   let diff = Math.abs(angle - DIR_ANGLE[n.dir]) % 360; if (diff > 180) diff = 360 - diff;
-  noter(diff <= 55 ? juger(ge.tm - n.t) || 'GOOD' : 'MISS', n.lane);
+  noter(diff <= 55 ? juger(ge.tm - n.t) || 'GOOD' : 'MISS', n.lane, true);
 }
 function lache(id, tm) {
   const ge = gestes.get(id); gestes.delete(id);
@@ -824,7 +825,7 @@ function mettreAJour(st, dt) {
     const n = notes[i];
     if (n.t > st + 2.5) break;
     if (AUTO) {
-      if (!n.fait && !n.tete && st >= n.t) { if (n.type === 'hold') { n.tete = n.tenu = true; noter('CRITICAL', n.lane); } else { n.fait = true; noter('CRITICAL', n.lane); } }
+      if (!n.fait && !n.tete && st >= n.t) { if (n.type === 'hold') { n.tete = n.tenu = true; noter('CRITICAL', n.lane); } else { n.fait = true; noter('CRITICAL', n.lane, n.type === 'swipe'); } }
       if (n.type === 'hold' && n.tenu && st >= n.end) { n.tenu = false; n.queue = n.fait = true; noter('CRITICAL', n.lane); }
       continue;
     }
@@ -857,7 +858,7 @@ function dessiner(st, dt, horloge) {
   // pulsation sur le temps
   const beatPhase = st > niveau.debut ? ((st - niveau.debut) / niveau.temps) % 1 : 1;
   const pulse = 1 + .045 * Math.max(0, 1 - beatPhase * 4);
-  if (etat !== 'menu') dessinerScene(horloge, pulse);
+  if (etat !== 'menu') { dessinerScene(horloge, pulse); dessinerEquipe(horloge, pulse); }
 
   // piste de la prochaine note éclairée
   const nn = notes[prochaine];
@@ -1016,7 +1017,11 @@ const POSES = {
   fee:     ['npc/great_fairy.png', 0, 0, 32, 48, 16, 45, 2, 500],
 };
 async function chargerImages() {
-  if (IMG || !cle) return;
+  if (!cle) return;
+  await Promise.all([chargerZelda(), chargerEquipe()]);
+}
+async function chargerZelda() {
+  if (IMG) return;
   try {
     const r = await fetch('images/zelda.bin?v=1');
     if (!r.ok) return;
@@ -1079,19 +1084,78 @@ function dessinerScene(horloge, pulse) {
     g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(x - bw / 2, by, bw, 5);
     g.fillStyle = '#ff5a6a'; g.fillRect(x - bw / 2, by, bw * Math.max(0, combat.pv), 5);
   }
-  // Link
-  const lx = W * .6, el = e * 1.3;
-  ombreSous(lx, el * 20);
-  if (combat.fin === 'gagne') {
-    const d = now - combat.finT, f = imageA('victoireCorps', d);
-    pose('victoireCorps', f, lx, sol, el); pose('victoireEpee', f, lx, sol, el);
-  } else if (combat.fin === 'perdu' || now - combat.blesse < 300) {
-    pose('blesse', 0, lx + (now - combat.blesse < 300 ? el * 4 : 0), sol, el);
-  } else if (now - combat.coup < 360) {
-    const d = now - combat.coup, f = imageA('coupCorps', d);
-    pose('coupCorps', f, lx, sol, el); pose('coupEpee', f, lx, sol, el);
-  } else pose('debout', 0, lx, sol - (pulse - 1) * el * 30, el);
+  // (l'ancien petit Link en pixel art est remplacé par l'équipe, à droite des pistes)
   g.imageSmoothingEnabled = lisse;
+}
+
+/* ============================================================
+   Équipe : un personnage à droite de chaque piste. Il attaque quand on réussit
+   une note de SA piste, est touché quand on la rate, fait un coup spécial sur un glissé.
+   Planches dans images/equipe.bin (chiffré) : 4 x 4 poses, toutes calées sur les pieds.
+     ligne 1 : attente (3e image = clignement)   ligne 2 : course
+     ligne 3 : attaque                           ligne 4 : touché, à genoux, victoire, content
+   ============================================================ */
+const PERSOS = {
+  // case : taille d'une pose ; pieds : où sont les pieds dans la case ; corps : hauteur du perso
+  link: {img: 'link.png', case: [321.6, 247.2], pieds: [157.6, 220.8], corps: 180},
+};
+const EQUIPE = [null, null, null, 'link'];   // piste 0 (en bas) → piste 3 (en haut)
+let EQ_IMG = null;
+const membres = [0, 1, 2, 3].map(() => ({coup: -1e9, special: -1e9, rate: -1e9}));
+async function chargerEquipe() {
+  if (EQ_IMG || !cle) return;
+  try {
+    const r = await fetch('images/equipe.bin?v=1');
+    if (!r.ok) return;
+    const paquet = JSON.parse(new TextDecoder().decode(await dechiffrer(await r.arrayBuffer())));
+    const im = {};
+    await Promise.all(Object.entries(paquet).map(([nom, b]) => new Promise(ok => {
+      const i = new Image(); i.onload = ok; i.onerror = ok; i.src = 'data:image/png;base64,' + b; im[nom] = i;
+    })));
+    EQ_IMG = im;
+  } catch (e) { EQ_IMG = null; }
+}
+function reactionMembre(j, lane, special) {
+  const m = membres[lane], now = performance.now();
+  if (!m || !EQUIPE[lane]) return;
+  if (j === 'MISS') m.rate = now;
+  else if (special) m.special = now;
+  else m.coup = now;
+}
+// quelle pose montrer, et de combien avancer (vers la gauche) pour le coup spécial
+function poseMembre(m, now, horloge) {
+  if (combat.fin === 'gagne') { const d = now - combat.finT; return [d < 900 ? 14 : (Math.floor(d / 600) % 2 ? 15 : 14), 0]; }
+  if (combat.fin === 'perdu') return [13, 0];
+  const dr = now - m.rate, ds = now - m.special, dc = now - m.coup;
+  const recent = Math.min(dr, ds, dc);
+  if (recent === dr && dr < 380) return [12, 0];
+  if (recent === ds && ds < 520) {                       // élan (course) puis grand coup d'épée
+    if (ds < 160) return [4 + Math.floor(ds / 40), ds / 160];
+    const k = Math.min(3, Math.floor((ds - 160) / 70));
+    return [8 + k, k < 3 ? 1 : 1 - (ds - 370) / 150];
+  }
+  if (recent === dc && dc < 240) return [8 + Math.min(3, Math.floor(dc / 60)), 0];
+  // attente : respire en rythme, cligne des yeux de temps en temps
+  if ((horloge % 3.3) < .14) return [2, 0];
+  return [Math.floor(horloge * 2) % 2 ? 1 : 0, 0];
+}
+function dessinerEquipe(horloge, pulse) {
+  if (!EQ_IMG) return;
+  const now = performance.now(), ecart = CY[0] - CY[1];
+  for (let lane = 0; lane < 4; lane++) {
+    const p = PERSOS[EQUIPE[lane]], img = p && EQ_IMG[p.img];
+    if (!img || !img.complete || !img.naturalWidth) continue;
+    const m = membres[lane], [f, elan] = poseMembre(m, now, horloge);
+    const e = ecart * 1.25 / p.corps;                     // le perso fait ~1,25 écart de piste de haut
+    const [cw, ch] = p.case, [px, py] = p.pieds;
+    let x = CX[lane] + R * 1.4 + ecart * .62, y = CY[lane] + ecart * .5;
+    x = Math.min(x, W - ecart * .55);
+    x -= elan * ecart * .3;
+    if (now - m.rate < 380) x += Math.sin((now - m.rate) / 30) * ecart * .04;   // il tremble quand il est touché
+    if (f < 4) y -= (pulse - 1) * ecart * .5;
+    if (ombre) { g.globalAlpha = .45; g.drawImage(ombre, x - ecart * .35, y - ecart * .06, ecart * .7, ecart * .14); g.globalAlpha = 1; }
+    g.drawImage(img, (f % 4) * cw, Math.floor(f / 4) * ch, cw, ch, x - px * e, y - py * e, cw * e, ch * e);
+  }
 }
 
 /* ============================================================
@@ -1261,7 +1325,16 @@ $('formMdp').onsubmit = async e => {
   if (!(await verifierCle(k))) { $('msgMdp').textContent = 'Mot de passe incorrect.'; return; }
   cle = k; $('champMdp').value = ''; chargerImages();
   try { localStorage.setItem('jeu-rythme-cle', vers64(await crypto.subtle.exportKey('raw', k))); } catch (e) {}
+  $('bsecours').classList.remove('cache');
   afficher('accueil');
+};
+// « Clé de secours » : copie la clé gardée par ce téléphone (elle remplace le mot de passe pour Claude)
+$('bsecours').onclick = async () => {
+  let brut = null; try { brut = localStorage.getItem('jeu-rythme-cle'); } catch (e) {}
+  if (!brut) return;
+  const msg = $('msgCharge');
+  try { await navigator.clipboard.writeText(brut); msg.textContent = 'Clé copiée ! Colle-la dans la conversation avec Claude.'; }
+  catch (e) { msg.textContent = 'Clé : ' + brut; msg.style.userSelect = 'text'; }
 };
 $('sansMdp').onclick = () => { choisirNiveau('foret'); afficher('accueil'); };
 
@@ -1286,6 +1359,7 @@ async function demarrer() {
       const k = await crypto.subtle.importKey('raw', b64(brut), {name: 'AES-GCM'}, true, ['decrypt']);
       if (await verifierCle(k)) cle = k;
     } catch (e) {}
+    $('bsecours').classList.toggle('cache', !cle);
     await chargerImages();
   }
   const m = location.search.match(/niveau=([\w-]+)/);

@@ -2,7 +2,8 @@
 """Verrouille les musiques du jeu avec le mot de passe familial.
 
 Le mot de passe n'est JAMAIS écrit dans le dépôt : on le donne par la variable
-d'environnement MDP_FAMILLE (ou il est demandé au clavier).
+d'environnement MDP_FAMILLE (ou il est demandé au clavier). À la place, on peut donner
+la « clé de secours » (bouton du menu du jeu) par la variable CLE_FAMILLE.
 
   python3 outils/chiffrer.py init
       Une seule fois : crée le sel et le témoin de vérification dans niveaux/index.json.
@@ -72,7 +73,8 @@ def cle_verifiee(idx):
     ch = idx.get('chiffrement')
     if not ch:
         sys.exit("Pas encore initialisé : lance d'abord « python3 outils/chiffrer.py init ».")
-    k = cle(mot_de_passe(), base64.b64decode(ch['sel']))
+    # CLE_FAMILLE : la « clé de secours » copiée depuis le menu du jeu, à la place du mot de passe
+    k = base64.b64decode(os.environ['CLE_FAMILLE']) if os.environ.get('CLE_FAMILLE') else cle(mot_de_passe(), base64.b64decode(ch['sel']))
     try:
         dechiffrer(k, base64.b64decode(ch['verif']))
     except Exception:
