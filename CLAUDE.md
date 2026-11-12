@@ -28,7 +28,7 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
    Les ressources Nintendo, c'est **Kiki qui les fournit** (fichiers envoyés dans la conversation) ; Claude ne les télécharge pas lui-même et ne dessine pas de personnages existants.
 2. **Jamais le mot de passe familial dans un fichier**, un commit, un message de commit ou le cerveau. Kiki le redonne dans la conversation quand il faut chiffrer un morceau ; le passer par `MDP_FAMILLE=... python3 outils/chiffrer.py ...`.
    S'il l'a oublié : bouton « Clé de secours » du menu du jeu (visible quand le téléphone est déverrouillé) → il colle la clé → `CLE_FAMILLE=... python3 outils/chiffrer.py ...`. Même règle : jamais écrite nulle part.
-3. Le mot de passe ne change pas (sinon il faut rechiffrer toutes les musiques et chacun doit le retaper).
+3. Le mot de passe change rarement : `MDP_FAMILLE=ancien MDP_NOUVEAU=nouveau python3 outils/chiffrer.py changer` (ou `CLE_FAMILLE=...` pour l'ancien) rechiffre tous les `.bin` d'un coup ; chacun doit ensuite retaper le nouveau mot de passe dans le jeu.
 
 ## Format d'un niveau (`niveaux/<id>.json`)
 `bpm`, `grille` (s, premier temps de la grille dans le MP3), `avance` (s de silence avant le MP3, 1,5),
