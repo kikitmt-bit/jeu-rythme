@@ -216,8 +216,9 @@ function couchesDuCorps(f) {
     for (const x of [-15.6, 5.2]) p.trait(`M ${x - 3},-59.8 Q ${x},-57.5 ${x + 3},-59.8`, P.fonce(yeux, .5), .9);
   }});
   if (f.oreilles === 'pointues') c.push({os: 'tete', z: Z.oreille, dessin(p) {
-    p.forme('M 19,-66 Q 27.5,-63.5 33.5,-56 Q 26.5,-52 18.8,-52.4 Z', peau, {taille: 'p', force: 1.4});
-    p.forme('M 21.5,-62.6 Q 26.5,-60.6 30,-56.6 Q 25.5,-55 21.4,-55.4 Z', ombreDe(peau, .28), {taille: 0});
+    // oreille pointue : courte (elle n'atteint pas le bord de la coiffe), bord du haut presque horizontal, pointe à peine relevée
+    p.forme('M 19,-63.6 Q 26,-64.5 32,-64.8 Q 28.8,-56.6 18.8,-53.6 Z', peau, {taille: 'p', force: 1.4});
+    p.forme('M 22,-62 Q 26,-62.6 29.2,-62.8 Q 26.8,-58 22,-56.4 Z', ombreDe(peau, .26), {taille: 0});
   }});
   return c;
 }
