@@ -52,16 +52,16 @@ tenues.tunique = o => {
   // Le col : la tunique remonte autour du cou (on ne voit pas le cou), ouverte en V sur le vêtement de dessous.
   // Le perso est de trois quarts : le V est décalé vers la gauche, le pan gauche est très fin, le droit est large.
   // Les pans restent bas et près du cou : ils ne doivent pas dépasser de chaque côté de la tête.
-  const V = 'M -7,-49.6 L 1.6,-50 L -3.6,-36.6 Z';
-  const panG = 'M -8.8,-43.6 L -7.9,-48.4 L -6.8,-49.4 L -3.6,-36.2 L -3.6,-34.6 L -6.4,-43.4 Z';
-  const panD = 'M 8.8,-43.4 L 6.4,-48.8 L 1.8,-50.2 L -3.6,-36.2 L -3.6,-34.6 L .6,-43.2 Z';
+  const V = 'M -7,-49.6 L 1.6,-50 L -3.6,-41 Z';
+  const panG = 'M -8.8,-43.6 L -7.9,-48.4 L -6.8,-49.4 L -3.6,-40.6 L -3.6,-39 L -6.2,-43.6 Z';
+  const panD = 'M 8.8,-43.4 L 6.4,-48.8 L 1.8,-50.2 L -3.6,-40.6 L -3.6,-39 L -.4,-43.6 Z';
   const couches = [{os: 'torse', z: Z.torse, dessin(p) {
     p.forme(robe, c, {taille: 'g', force: .9});
     p.portee(P.ell(-1, -53, 14, 9.5), robe, c, {dy: 1.2, flou: 3, force: .55});        // l'ombre de la tête
     p.forme(V, dessous, {taille: 0});
     p.portee(P.ell(-1, -53, 13, 7.6), V, dessous, {dy: 1, flou: 1.4, force: .4});
     p.forme(panG, c, {taille: 'p', force: .9}); p.forme(panD, c, {taille: 'p', force: .9});
-    if (o.col) { p.trait('M -6.9,-49.4 L -3.7,-36.5', o.col, .6, .9); p.trait('M 1.7,-50 L -3.5,-36.5', o.col, .6, .9); }
+    if (o.col) { p.trait('M -6.9,-49.4 L -3.7,-40.9', o.col, .6, .9); p.trait('M 1.7,-50 L -3.5,-40.9', o.col, .6, .9); }
     p.dans(robe, () => {
       p.trait('M -6,-21 Q -5.6,-19 -6.4,-16.6', P.fonce(c, .78), .45, .5);              // plis du bas
       p.trait('M 5,-21.4 Q 5.6,-19 5,-16.4', P.fonce(c, .78), .45, .5);
@@ -71,7 +71,8 @@ tenues.tunique = o => {
       }
     });
   }}];
-  // La bandoulière passe PAR-DESSUS l'épaule, le col et le bas du V : elle est peinte après le haut du bras.
+  // Le V est court : il s'arrête bien avant la bandoulière.
+  // La bandoulière passe PAR-DESSUS l'épaule : elle est peinte après le haut du bras.
   // Même largeur que la ceinture d'un bout à l'autre ; elle dépasse des deux côtés (coupée au bord du vêtement).
   if (o.bandouliere) couches.push({os: 'torse', z: Z.brasG + .5, dessin(p) {
     const [ex, ey] = OS.brasG1.p, [cx, cy] = OS.brasG2.p;

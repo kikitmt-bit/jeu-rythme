@@ -161,26 +161,25 @@ function couchesDuCorps(f) {
     const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
     c.push({os: os1, z, dessin(p) {
       p.forme(P.capsule(ex, ey, cx, cy, 3.1, 2.7), b.dessous || peau);
-      p.forme(P.capsule(ex, ey, ex + (cx - ex) * .55, ey + (cy - ey) * .55, 3.7, 3.5), b.manche);   // manche courte
+      // manche courte, un peu évasée, qui se termine par un bord droit
+      const l = Math.hypot(cx - ex, cy - ey), vx = (cx - ex) / l, vy = (cy - ey) / l, fin = l * .7;
+      const pt = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);
+      p.dans(`M ${pt(-8, -8)} L ${pt(-8, 8)} L ${pt(fin, 8)} L ${pt(fin, -8)} Z`,
+             () => p.forme(P.capsule(ex, ey, ex + vx * l, ey + vy * l, 3.7, 4), b.manche));
     }});
-    // avant-bras : on voit le vêtement de dessous, puis le gant qui ne remonte qu'à mi-chemin, avec son revers plus clair
+    // avant-bras : le vêtement de dessous
     const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n;
-    const r = (a, t) => (cx + (mx - cx) * a + uy * t).toFixed(2) + ',' + (cy + (my - cy) * a - ux * t).toFixed(2);
-    c.push({os: os2, z: z + 1, dessin(p) {
-      p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau);
-      if (b.gant) {
-        const g = .3;
-        p.forme(P.capsule(cx + (mx - cx) * (g + .12), cy + (my - cy) * (g + .12), mx, my, 2.75, 2.6), b.gant);
-        p.forme(`M ${r(g - .1, -3.3)} L ${r(g - .1, 3.3)} L ${r(g + .14, 3.15)} L ${r(g + .14, -3.15)} Z`, P.clair(b.gant, .14), {taille: 'p'});
-      }
-    }});
-    // la main est une couche à part : celle qui tient l'arme passe devant l'arme
+    c.push({os: os2, z: z + 1, dessin(p) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau); }});
+    // La main et le gant sont une couche à part : la main qui tient l'arme passe devant l'arme.
+    // Le gant est UNE seule forme (main + moitié de l'avant-bras) : pas de trait entre les deux, seulement des ombres.
+    // Ses deux bords (côté doigts et côté coude) sont de légers arcs, comme le bord d'un tube vu de trois quarts.
     c.push({os: os2, z: os1 === 'brasD1' ? Z.mainD : z + 1, dessin(p) {
-      const main = P.ell(mx, my, 3.1, 3);
-      p.forme(main, peau);                                                                          // la main
-      if (b.gant) {                                                                                 // gant : la moitié de la main, côté poignet
-        const d = -.4, q = (a, t) => (mx + ux * a - uy * t).toFixed(2) + ',' + (my + uy * a + ux * t).toFixed(2);
-        p.dans(main, () => p.forme(`M ${q(d, -5)} L ${q(d, 5)} L ${q(6, 5)} L ${q(6, -5)} Z`, b.gant, {taille: 'p'}));
+      p.forme(P.ell(mx, my, 3.1, 3), peau);                                                         // la main
+      if (b.gant) {
+        const R = 7, sg = n * .32, gx = cx - ux * sg, gy = cy - uy * sg;                             // début du gant sur l'avant-bras
+        const zone = new Path2D(); zone.arc(gx - ux * R, gy - uy * R, R, 0, 7);                      // au-delà de l'arc côté coude…
+        zone.moveTo(mx - ux * R + R, my - uy * R); zone.arc(mx - ux * R, my - uy * R, R, 0, 2 * Math.PI, true);   // …et avant l'arc côté doigts
+        p.dans(zone, () => p.forme(P.capsule(gx, gy, mx, my, 2.85, 3.12), b.gant));
       }
     }});
   };
