@@ -139,6 +139,22 @@ def main():
         donnees = open(entree, 'rb').read()
         open(sortie, 'wb').write(chiffrer(k, donnees))
         print(f'{sortie} : {len(donnees) / 1e6:.1f} Mo')
+    elif cmd == 'changer':
+        # Changer le mot de passe : ancien par MDP_FAMILLE (ou CLE_FAMILLE), nouveau par MDP_NOUVEAU
+        k = cle_verifiee(idx)
+        nouveau = os.environ.get('MDP_NOUVEAU') or getpass.getpass('Nouveau mot de passe : ')
+        if not nouveau:
+            sys.exit('Nouveau mot de passe vide.')
+        sel = os.urandom(16)
+        k2 = cle(nouveau.encode(), sel)
+        fichiers = sorted(glob.glob(os.path.join(RACINE, '**', '*.bin'), recursive=True))
+        clairs = {f: dechiffrer(k, open(f, 'rb').read()) for f in fichiers}
+        for f, d in clairs.items():
+            open(f, 'wb').write(chiffrer(k2, d))
+            print(f'  {os.path.relpath(f, RACINE)} rechiffré')
+        idx['chiffrement'] = {'sel': base64.b64encode(sel).decode(), 'iterations': ITERATIONS,
+                              'verif': base64.b64encode(chiffrer(k2, TEMOIN)).decode()}
+        recalculer(idx)
     elif cmd == 'index':
         recalculer(idx)
     else:

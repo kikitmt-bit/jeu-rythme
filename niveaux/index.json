@@ -1,8 +1,8 @@
 {
   "chiffrement": {
-    "sel": "EwIkOa/0uKCUpzg5Wqwkzg==",
+    "sel": "aUgCASpwZgQa8suv96wC6A==",
     "iterations": 250000,
-    "verif": "KKEfwtCe83lEtWNvJ5KfYwZcRc7vkf4qagf2F0QqqXI8HgB9qFBj5u+EIVnW5B93IuAcoxChSfDNT9X8pg=="
+    "verif": "nPgCcZNtbneauC+dvYke7Ee19P0aX2s8CFZIrZ8nHc0NArbo+SJtnvD0CxqkrJWysm65RJ3TDAcssvUIQg=="
   },
   "niveaux": [
     {
@@ -10,7 +10,7 @@
       "titre": "Great Fairy's Fountain",
       "jeu": "Zelda: Ocarina of Time",
       "notes": 172,
-      "version": "d9f4323473"
+      "version": "0dcb08981f"
     }
   ]
 }
