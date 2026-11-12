@@ -12,14 +12,17 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 ## Structure
 | Fichier | Rôle |
 |---|---|
-| `index.html` | Tout le jeu (JS pur, un seul fichier, aucune dépendance) |
+| `index.html` | Le jeu (JS pur, aucune dépendance) ; il charge les trois fichiers de `persos/` |
 | `niveaux/index.json` | Catalogue des niveaux + paramètres de chiffrement (sel, témoin). Généré par `outils/chiffrer.py`, ne pas éditer à la main |
 | `niveaux/<id>.json` | Un niveau : tempo, décalages, partition (`notes`) |
 | `musiques/<id>.bin` | Musique du niveau, MP3 128 kbit/s **chiffré** (AES-256-GCM) |
-| `images/zelda.bin` | Sprites de la scène de combat (Link, Ganon, Grande Fée…), **chiffrés** : JSON `{chemin: PNG base64}` |
-| `images/equipe.bin` | Planches des persos de l'équipe, **chiffrées** : JSON `{"link.png": PNG base64}`. Chaque planche = 4 × 4 poses calées sur les pieds (attente, course, attaque, touché / à genoux / victoire / content). Réglages dans `PERSOS` et `EQUIPE` (index.html) |
+| `persos/poupee.js` | **Le moule des personnages** : squelette, mannequin (tête, visage, bras, jambes), pinceau (ombrage), animations. Commun à tous, c'est lui qui garantit le style unique |
+| `persos/pieces.js` | Bibliothèque de pièces : coiffures, coiffes, tenues, armes, boucliers |
+| `persos/fiches.js` | Les personnages : une fiche = des pièces + des couleurs |
+| `atelier.html` | Atelier des personnages (https://kikitmt-bit.github.io/jeu-rythme/atelier.html) : voir un perso, ses animations, ombrage oui/non, squelette |
 | `reserve/solarus-alttp-pack.zip.bin` | Réserve **chiffrée** : tout le pack Solarus ALTTP envoyé par Kiki (sprites, sons, musiques .it, tilesets) pour piocher plus tard |
 | `outils/chiffrer.py` | Verrouille musiques (`morceau`), paquets d'images (`images`) et fichiers (`fichier`) avec le mot de passe familial |
+| `images/` | Vide depuis le 12/11 (anciens sprites chiffrés retirés ; ils restent dans l'historique Git) |
 | `outils/analyse/` | Analyse audio (numpy + scipy) qui a servi à mapper Great Fairy's Fountain |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
@@ -41,9 +44,20 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 - Surtout une note à la fois ; doubles (barre bleue, comme sur Switch) et tenue d'un pouce + tape de l'autre aux moments forts.
 - Le geste « retour » d'Android est ignoré pendant une partie.
 - Look des notes repris de Final Bar Line (captures de Kiki, 08/11) : rond rouge à point blanc (taper), vert + bande verte (maintenir), doré avec grande flèche blanche qui sort du rond (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
-- Scène de combat façon Theatrhythm (08/11), avec les sprites ALTTP fournis par Kiki : Link en bas (attaque à chaque note réussie, blessé sur un raté, victoire à la fin), Ganon en face (se dandine en rythme, clignote, barre de vie ; explose puis revient à chaque vague), la Grande Fée sur GFF. Affichée seulement si le mot de passe est entré. Pixel art agrandi sans flou. Poses décrites dans `POSES` (index.html), d'après les `.dat` Solarus du pack.
-- Équipe de 4 (10/11) : un perso à droite de chaque piste (`EQUIPE`, piste 0 = bas). Il attaque sur une note réussie de SA piste, est touché sur un raté, fait un coup spécial (élan + grand coup) sur un glissé, pose de victoire / à genoux en fin de partie. Style lisse « chibi » (planches faites par Kiki avec une IA, PNG à fond transparent) : tous les persos dans ce même style. Pour l'instant : Link (tunique recolorée en vert) sur la piste du haut ; l'ancien petit Link pixel art en bas a été retiré, Ganon et la Fée restent.
+- Personnages (12/11) : style « poupée » façon Theatrhythm (grosse tête, yeux ovales, joues roses, petit corps), en **marionnettes articulées dessinées par le code** (plus de planches d'images, plus de ChatGPT). L'ancienne scène (Link pixel art, Ganon, Grande Fée, planche chibi de Link) a été supprimée à la demande de Kiki.
+- Pour l'instant : un seul héros (`heros-vert`) en bas de l'écran, qui marche au rythme (un pas par temps). `EQUIPE` et `dessinerEquipe` dans index.html.
+- Vision de Kiki pour la suite (capture Final Bar Line, 12/11) : l'équipe de 4 regroupée en bas à droite, une piste par perso (il tape quand on réussit sa note), attaque spéciale au bout de N notes avec un bandeau en triangle à droite (gros plan du perso + nom du coup), monstres à gauche qui meurent et sont remplacés. Une dizaine d'actions par perso (attaque, coup spécial, touché, à genoux, saut de victoire…), les mêmes pour tous.
 - Fluidité : 60 i/s visés. Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
+
+## Créer un personnage (process du 12/11)
+Kiki envoie 2-3 croquis ou images + une description. Claude :
+1. Écrit une **fiche** dans `persos/fiches.js` : couleurs (peau, yeux) + pièces choisies (`cheveux`, `coiffe`, `tenue`, `bras`, `jambes`, `arme`, `bouclier`).
+2. S'il manque une pièce (nouvelle coiffure, nouvelle arme…), l'ajoute dans `persos/pieces.js`, dessinée en pose de repos dans le repère de la poupée (pieds en 0,0, ~100 de haut, regarde à gauche), toujours avec `p.forme(...)` pour avoir le même ombrage. Regarder `coiffures.raie` et `armes.epee` comme modèles.
+3. **Ne touche jamais** au visage, aux proportions ni au pinceau de `poupee.js` pour un seul perso : tout changement là s'applique à tous (c'est voulu).
+4. Vérifie à l'œil : `atelier.html?perso=<id>&anim=repos&fond=sombre&t=0` (image figée, `&plat` = sans ombrage, `&os` = squelette), capture Playwright, comparer avec les modèles de Kiki, corriger, recommencer.
+5. Les animations sont dans `Poupee.animations` (poupee.js), écrites une fois pour le squelette : `attente`, `marche`. Angles en degrés par os ; positif = dans le sens des aiguilles d'une montre (jambe vers l'avant).
+- Personnages **originaux ou « inspirés de »** uniquement dans `fiches.js` (dépôt public, pas de logo ni d'emblème d'un vrai jeu : le bouclier porte la croche de l'équipe).
+- Monstres : plus tard, même pinceau, squelettes plus simples.
 
 ## Mapper un nouveau morceau (méthode validée par Kiki le 08/11)
 Ne pas mapper seulement la mélodie (« on ne sent pas la musique », comme Guitar Hero en très facile).

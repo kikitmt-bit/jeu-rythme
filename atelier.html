@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atelier des personnages</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #171a24; color: #eef; font: 16px system-ui, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header { padding: 10px 14px 4px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  h1 { font-size: 18px; margin: 0; }
+  header a { color: #9cc7ff; font-size: 14px; margin-left: auto; }
+  #scene { flex: 1; min-height: 0; position: relative; }
+  canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .barre { display: flex; gap: 8px; padding: 8px 12px; flex-wrap: wrap; align-items: center; }
+  .barre span { font-size: 13px; opacity: .7; width: 100%; }
+  button { font: inherit; color: #eef; background: #2a3044; border: 1px solid #40486a; border-radius: 999px; padding: 8px 14px; }
+  button.actif { background: #3b68c6; border-color: #7fa6ff; }
+</style>
+</head>
+<body>
+<header><h1>Atelier des personnages</h1><a href="./">← le jeu</a></header>
+<div id="scene"><canvas id="c"></canvas></div>
+<div class="barre" id="persos"><span>Personnage</span></div>
+<div class="barre" id="anims"><span>Animation</span></div>
+<div class="barre" id="vues"><span>Affichage</span></div>
+<script src="persos/poupee.js?v=1"></script>
+<script src="persos/pieces.js?v=1"></script>
+<script src="persos/fiches.js?v=1"></script>
+<script>
+'use strict';
+const q = new URLSearchParams(location.search);
+const c = document.getElementById('c'), g = c.getContext('2d');
+const etat = {
+  perso: q.get('perso') || Object.keys(Poupee.fiches)[0],
+  anim: q.get('anim') || 'marche',
+  volume: q.has('plat') ? 0 : 1, os: q.has('os'), fond: q.get('fond') || 'scene',
+  fige: q.has('t') ? +q.get('t') : null,      // ?t=0.2 : image figée (pour les essais)
+};
+let poupee = null, W = 0, H = 0, dpr = 1, taille = 0;
+function boutons(id, liste, cle, apres) {
+  const div = document.getElementById(id);
+  for (const [val, nom] of liste) {
+    const b = document.createElement('button'); b.textContent = nom; b.dataset.v = val;
+    b.onclick = () => { etat[cle] = typeof etat[cle] === 'boolean' ? !etat[cle] : val; maj(); if (apres) apres(); };
+    div.appendChild(b);
+  }
+}
+function maj() {
+  for (const [id, cle] of [['persos', 'perso'], ['anims', 'anim']])
+    for (const b of document.querySelectorAll('#' + id + ' button')) b.classList.toggle('actif', b.dataset.v === String(etat[cle]));
+  for (const b of document.querySelectorAll('#vues button')) {
+    const v = b.dataset.v;
+    b.classList.toggle('actif', v === 'os' ? etat.os : v === 'volume' ? etat.volume === 1 : etat.fond === v);
+  }
+}
+function refaire() {
+  const r = c.parentElement.getBoundingClientRect();
+  dpr = Math.min(3, window.devicePixelRatio || 1);
+  W = c.width = Math.round(r.width * dpr); H = c.height = Math.round(r.height * dpr);
+  taille = Math.min(H * .8, W * .85);
+  poupee = Poupee.fabrique(etat.perso, {echelle: taille / 100, volume: etat.volume});
+}
+boutons('persos', Object.values(Poupee.fiches).map(f => [f.id, f.nom]), 'perso', refaire);
+boutons('anims', [['repos', 'Pose'], ['attente', 'Attente'], ['marche', 'Marche']], 'anim');
+const vues = document.getElementById('vues');
+for (const [v, nom] of [['volume', 'Ombrage'], ['os', 'Squelette'], ['scene', 'Fond scène'], ['clair', 'Fond clair'], ['sombre', 'Fond sombre']]) {
+  const b = document.createElement('button'); b.textContent = nom; b.dataset.v = v;
+  b.onclick = () => {
+    if (v === 'volume') { etat.volume = etat.volume ? 0 : 1; refaire(); }
+    else if (v === 'os') etat.os = !etat.os; else etat.fond = v;
+    maj();
+  };
+  vues.appendChild(b);
+}
+function fond(sol) {
+  if (etat.fond === 'clair') { g.fillStyle = '#f4f1e8'; g.fillRect(0, 0, W, H); }
+  else if (etat.fond === 'sombre') { g.fillStyle = '#3f4d5c'; g.fillRect(0, 0, W, H); }
+  else {
+    const ciel = g.createLinearGradient(0, 0, 0, sol); ciel.addColorStop(0, '#20263c'); ciel.addColorStop(1, '#4a3a55');
+    g.fillStyle = ciel; g.fillRect(0, 0, W, sol);
+    const bois = g.createLinearGradient(0, sol, 0, H); bois.addColorStop(0, '#c98f4e'); bois.addColorStop(1, '#8e5a2c');
+    g.fillStyle = bois; g.fillRect(0, sol - taille * .12, W, H);
+  }
+}
+function image(ms) {
+  const t = etat.fige !== null ? etat.fige : ms / 1000;
+  const sol = H * .5 + taille * .5, x = W / 2;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  fond(sol);
+  const pose = etat.anim === 'repos' ? Poupee.pose() : Poupee.poseA(etat.anim, t);
+  // ombre au sol
+  g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(x, sol, taille * .2, taille * .035, 0, 0, 7); g.fill();
+  Poupee.dessine(g, poupee, x, sol, pose, {taille});
+  if (etat.os) {
+    const m = Poupee.matrices(pose), k = taille / 100;
+    for (const [nom, os] of Object.entries(Poupee.OS)) {
+      const a = m[nom], [px, py] = os.p, X = (a[0] * px + a[2] * py + a[4]) * k + x, Y = (a[1] * px + a[3] * py + a[5]) * k + sol;
+      g.fillStyle = '#ff3b6b'; g.beginPath(); g.arc(X, Y, 4 * dpr, 0, 7); g.fill();
+      g.strokeStyle = '#fff'; g.lineWidth = dpr; g.stroke();
+    }
+  }
+  if (etat.fige === null) requestAnimationFrame(image);
+}
+addEventListener('resize', refaire);
+refaire(); maj(); requestAnimationFrame(image);
+</script>
+</body>
+</html>
