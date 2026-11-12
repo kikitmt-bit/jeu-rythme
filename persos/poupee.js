@@ -170,7 +170,14 @@ function couchesDuCorps(f) {
     // avant-bras : le vêtement de dessous (il s'arrête sous le début du gant)
     const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n, sg = n * .25;
     c.push({os: os2, z: z + 1, dessin(p) {
-      p.forme(P.capsule(cx, cy, cx - ux * (b.gant ? sg + .8 : n), cy - uy * (b.gant ? sg + .8 : n), 2.7, 2.6), b.dessous || peau);
+      if (!b.gant) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau); return; }
+      // entre la manche et le gant, le bras est un morceau aux bords bien DROITS (pas de creux au coude) :
+      // il part du bord de la manche et file tout droit jusque sous le début du gant
+      const l = Math.hypot(cx - ex, cy - ey), vx = (cx - ex) / l, vy = (cy - ey) / l, fin = l * .7;
+      const A = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);          // le long du haut du bras
+      const B = (a, t) => (cx - ux * a + uy * t).toFixed(2) + ',' + (cy - uy * a - ux * t).toFixed(2);          // le long de l'avant-bras
+      p.dans(`M ${A(fin, -9)} L ${A(fin, 9)} L ${A(fin + 14, 9)} L ${A(fin + 14, -9)} Z`,                       // seulement après le bord de la manche
+             () => p.forme(`M ${A(fin - 2, 3.35)} L ${B(sg + 1, 3.05)} L ${B(sg + 1, -3.05)} L ${A(fin - 2, -3.35)} Z`, b.dessous || peau));
     }});
     // La main et le gant sont une couche à part : la main qui tient l'arme passe devant l'arme.
     // La main est une BOULE. Le gant est UNE seule forme, sans trait entre ses parties : il couvre la moitié de la
