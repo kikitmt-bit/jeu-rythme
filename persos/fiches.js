@@ -11,6 +11,6 @@ Poupee.fiche({
   tenue: {modele: 'tunique', couleur: '#3f9b3f', col: '#6cc05e', ceinture: '#7a4a2c', bandouliere: '#7a4a2c', boucle: '#e8be45'},
   bras: {manche: '#3f9b3f', dessous: '#f3eee2', gant: '#7a4a2c'},
   jambes: {collant: '#f3eee2', botte: '#84502e'},
-  arme: {modele: 'epee', lame: '#e4eaf1', garde: '#e0b23a', poignee: '#6b4630', pierre: '#d8483f'},
-  bouclier: {modele: 'ecu', bord: '#c9d1da', fond: '#3b68c6', embleme: 'note', couleurEmbleme: '#f0c648'},
+  arme: {modele: 'epee-ailee', lame: '#e6ebf2', garde: '#5a4bb8', pierre: '#f2cf4a'},
+  bouclier: {modele: 'ecu', bord: '#c9d1da', fond: '#3b68c6', embleme: 'note', couleurEmbleme: '#f0c648', taille: 1.18},
 });

@@ -41,7 +41,7 @@ const Z = {queue: 5, cheveuxArr: 8, arme: 10, brasD: 20, jambeD: 30, jambeG: 40,
 P.Z = Z;
 
 /* Tête : mêmes mesures pour tout le monde */
-const TETE = 'M -1,-87 C 12,-87 22,-77 22,-64 C 22,-50 13,-43 -1,-43 C -16,-43 -24,-50 -24,-64 C -24,-77 -14,-87 -1,-87 Z';
+const TETE = 'M -1,-87 C 13,-87 22.6,-77 22.8,-61 C 23,-50.5 16.5,-43.2 5,-43.2 L -7,-43.2 C -18.5,-43.2 -25,-50.5 -24.8,-61 C -24.6,-77 -15,-87 -1,-87 Z';
 P.TETE = TETE;
 
 /* ---------- Couleurs ---------- */
@@ -87,7 +87,7 @@ const chemin = d => typeof d === 'string' ? new Path2D(d) : d;
 /* ---------- Le pinceau : la seule façon de peindre, donc le même rendu partout ----------
    forme(d, couleur, {taille})  : aplat + volume (ombre douce en bas à droite, lumière en haut à gauche)
      taille : 'g' gros volume (tête, bouclier), 'm' moyen (membres, vêtements), 'p' petit détail, 0 = à plat */
-const VOLUMES = {g: [5.5, 2.6, .62, .5], m: [2.6, 1.2, .6, .42], p: [1.1, .5, .5, .35]};
+const VOLUMES = {g: [6, 2.8, .78, .55], m: [2.8, 1.3, .72, .45], p: [1.1, .5, .55, .35]};
 function pinceau(ctx, S, volume) {
   const LOIN = 30000;
   const p = {
@@ -110,6 +110,17 @@ function pinceau(ctx, S, volume) {
       ctx.fill(inv, 'evenodd');
       ctx.restore();
       return p;
+    },
+    // ombre portée par une forme sur ce qui est dessous (visible seulement à l'intérieur de `limite`) ;
+    // couleur = celle de la surface qui reçoit l'ombre
+    portee(d, limite, couleur, o = {}) {
+      if (volume <= 0) return p;
+      ctx.save(); ctx.clip(chemin(limite));
+      const m = ctx.getTransform();
+      ctx.setTransform(m.a, m.b, m.c, m.d, m.e - LOIN, m.f);
+      ctx.shadowColor = ombreDe(couleur, (o.force || .5) * volume); ctx.shadowBlur = (o.flou || 2.5) * S;
+      ctx.shadowOffsetX = LOIN + (o.dx || 0) * S; ctx.shadowOffsetY = (o.dy === undefined ? 1.5 : o.dy) * S;
+      ctx.fillStyle = '#000'; ctx.fill(chemin(d)); ctx.restore(); return p;
     },
     trait(d, couleur, largeur = .6, a = 1) {
       ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = couleur; ctx.lineWidth = largeur; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -147,7 +158,16 @@ function couchesDuCorps(f) {
     }});
     c.push({os: os2, z: z + 1, dessin(p) {
       p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.gant || b.dessous || peau);
-      p.forme(P.ell(mx, my, 3, 2.9), peau);                                                         // la main
+      const main = P.ell(mx, my, 3.1, 3);
+      p.forme(main, peau);                                                                          // la main
+      if (b.gant) {                                                                                 // gant : la moitié de la main, côté poignet
+        const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n, d = -.4;
+        const q = (a, t) => (mx + ux * a - uy * t).toFixed(2) + ',' + (my + uy * a + ux * t).toFixed(2);
+        p.dans(main, () => p.forme(`M ${q(d, -5)} L ${q(d, 5)} L ${q(6, 5)} L ${q(6, -5)} Z`, b.gant, {taille: 'p'}));
+        const m2 = .82;                                                                             // revers du gant, près du coude
+        const r = (a, t) => (cx + (mx - cx) * a + uy * t).toFixed(2) + ',' + (cy + (my - cy) * a - ux * t).toFixed(2);
+        p.forme(`M ${r(.05, -3.3)} L ${r(.05, 3.3)} L ${r(.3, 3.1)} L ${r(.3, -3.1)} Z`, P.clair(b.gant, .14), {taille: 'p'});
+      }
     }});
   };
   const jambe = (os1, os2, z) => {
@@ -167,22 +187,23 @@ function couchesDuCorps(f) {
   c.push({os: 'torse', z: Z.cou, dessin(p) { p.forme(P.capsule(0, -46, 0, -41, 3.2), peau, {taille: 'p'}); }});
   // la tête et le visage : identiques pour tous (seules les couleurs changent)
   c.push({os: 'tete', z: Z.tete, dessin(p) {
-    p.forme(TETE, peau, {taille: 'g'});
-    p.dans(TETE, () => { p.halo(-17.5, -53.5, 5.2, '#ff7d8c', .5); p.halo(11, -53.5, 5.8, '#ff7d8c', .5); });
-    p.forme(P.ell(-7.4, -55, .5, .42), ombreDe(peau, .6), {taille: 0});                      // le nez : un point
-    p.forme('M -6.9,-53 Q -4,-52.3 -1.1,-53 Q -1.9,-50.2 -4,-50.2 Q -6.1,-50.2 -6.9,-53 Z', '#e8607c', {taille: 'p', force: .6});
+    p.forme(TETE, peau, {taille: 'g', force: 1.1});
+    p.dans(TETE, () => { p.halo(-19, -53, 5, '#ff7d8c', .36); p.halo(12.5, -53, 5.6, '#ff7d8c', .36); });
+    p.forme(P.ell(-6.9, -54.5, .5, .42), ombreDe(peau, .7), {taille: 0});                        // le nez : un point
+    p.forme('M -7.3,-52.3 Q -4.7,-51.7 -2.1,-52.3 Q -2.9,-49.8 -4.7,-49.8 Q -6.5,-49.8 -7.3,-52.3 Z', '#e8607c', {taille: 'p', force: .7});
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'ouverts'}, dessin(p) {
-    const haut = P.fonce(yeux, .55), bas = P.clair(yeux, .12);
-    p.forme(P.ell(-14.3, -60.4, 2.7, 4.2), p.degrade(0, -64.5, 0, -56.7, haut, yeux, bas), {taille: 0});
-    p.forme(P.ell(2.6, -60.4, 3.2, 4.4), p.degrade(0, -64.7, 0, -56.5, haut, yeux, bas), {taille: 0});
+    const haut = P.fonce(yeux, .5), bas = P.clair(yeux, .16);
+    p.forme(P.ell(-15, -60.1, 2.9, 4.3), p.degrade(0, -64.4, 0, -55.8, haut, yeux, bas), {taille: 0});
+    p.forme(P.ell(4, -60.1, 3.4, 4.5), p.degrade(0, -64.6, 0, -55.6, haut, yeux, bas), {taille: 0});
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'fermes'}, dessin(p) {
-    p.trait('M -16.8,-60 Q -14.3,-58 -11.8,-60', P.fonce(yeux, .5), .9);
-    p.trait('M -.4,-60 Q 2.6,-57.8 5.6,-60', P.fonce(yeux, .5), .9);
+    p.trait('M -17.8,-59.6 Q -15,-57.4 -12.2,-59.6', P.fonce(yeux, .5), .9);
+    p.trait('M .8,-59.6 Q 4,-57.2 7.2,-59.6', P.fonce(yeux, .5), .9);
   }});
   if (f.oreilles === 'pointues') c.push({os: 'tete', z: Z.oreille, dessin(p) {
-    p.forme('M 18.6,-64.5 Q 25,-62 29.5,-55.5 Q 23.5,-52.6 18.4,-53.2 Z', peau, {taille: 'p', force: 1.3});
+    p.forme('M 19,-66 Q 27.5,-63.5 33.5,-56 Q 26.5,-52 18.8,-52.4 Z', peau, {taille: 'p', force: 1.4});
+    p.forme('M 21.5,-62.6 Q 26.5,-60.6 30,-56.6 Q 25.5,-55 21.4,-55.4 Z', ombreDe(peau, .28), {taille: 0});
   }});
   return c;
 }

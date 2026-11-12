@@ -1,47 +1,53 @@
 /* ============================================================
    Bibliothèque de pièces pour habiller le mannequin (persos/poupee.js).
-   Chaque pièce reçoit ses options (couleurs…) et rend des couches :
+   Chaque pièce reçoit ses options (couleurs…) et la fiche, et rend des couches :
      {os: à quel os elle est accrochée, z: ordre d'empilement, dessin(p): ce qu'elle peint}
    On dessine en pose de repos, dans le repère de la poupée (pieds en 0,0, ~100 de haut).
    Nouveau personnage → on réutilise ces pièces ; s'il en manque une, on l'ajoute ici.
    ============================================================ */
 (function () {
 'use strict';
-const P = window.Poupee, Z = P.Z, OS = P.OS;
+const P = window.Poupee, Z = P.Z, OS = P.OS, PEAU = '#f9d5b5';
 const {coiffures, coiffes, tenues, armes, boucliers} = P.pieces;
 
 /* ---------- Coiffures ---------- */
-// raie sur le côté, deux grandes mèches qui encadrent le visage, longues pattes devant les oreilles
-coiffures.raie = o => {
-  const c = o.couleur, f = P.fonce(c, .72);
+// raie sur le côté : deux grosses mèches bombées qui encadrent le visage et descendent en pattes jusqu'au menton
+coiffures.raie = (o, fiche) => {
+  const c = o.couleur, f = P.fonce(c, .7), peau = fiche.peau || PEAU;
+  const gauche = 'M -6,-78.5 C -6.6,-83 -6,-86.5 -4,-89.5 C -18.5,-91 -28.6,-80.5 -28.6,-65 C -29.2,-56 -27.6,-49.5 -23.4,-44.6 C -22.2,-50.5 -21.8,-56 -21,-61 C -20.2,-63.2 -19.2,-64.2 -18,-64.4 C -12.5,-66.5 -7,-72 -6,-78.5 Z';
+  const droite = 'M -6,-78.5 C -3,-71.5 5,-66.6 12,-64.4 C 12.8,-56 14.2,-46.6 17.8,-39.4 C 22,-45.6 25.2,-53 25,-62 L 24.6,-72 C 18.5,-83.5 8,-89.5 -4,-89.5 C -6,-86.5 -6.6,-83 -6,-78.5 Z';
   return [{os: 'tete', z: Z.cheveux, dessin(p) {
-    // le dessus du crâne
-    p.forme('M -8,-84 C -17,-88 -4,-91 6,-89.5 C 16,-88 23,-80 23,-70 L 20,-74 C 12,-82 2,-85 -8,-84 Z', c);
-    // mèche de gauche (deux épaisseurs)
-    p.forme('M -8,-84.8 C -18,-87 -28,-79 -27.4,-64 C -27,-58.5 -22.5,-56 -18.6,-59.6 C -18.6,-69 -14.5,-77.5 -8,-84.8 Z', c);
-    p.forme('M -26.6,-67 C -28,-58 -26.4,-50.5 -22.4,-45.5 C -21.2,-51.5 -21.6,-58 -20.6,-63.5 Z', c);
-    // mèche de droite
-    p.forme('M -8,-84.8 C 3,-88 16,-84 22,-73 L 23,-61 C 20.5,-64.5 16.5,-65 13,-62.2 C 10.5,-71.5 3,-79.5 -8,-84.8 Z', c);
-    p.forme('M 13.2,-70 C 19.5,-72 24.4,-66.5 24.4,-60 C 24.8,-51.5 21.6,-45 18.4,-39.6 C 15.4,-46 14.4,-55 13.4,-64 Z', c);
+    p.portee(gauche, P.TETE, peau, {dy: 1.6, dx: .6, flou: 3, force: .55});
+    p.portee(droite, P.TETE, peau, {dy: 1.6, dx: -.4, flou: 3, force: .55});
+    p.forme(droite, c, {taille: 'g'});
+    p.forme(gauche, c, {taille: 'g'});
+    // mèches du dessus, pour l'épaisseur
+    p.forme('M -5.6,-80 C -12,-84.5 -21.5,-80 -24.6,-68 C -18.5,-72.5 -11,-76.5 -5.6,-80 Z', P.clair(c, .1), {taille: 'p', force: .7});
+    p.forme('M -5,-81 C 3,-84.5 13.5,-80.5 19,-70.5 C 12.5,-74.5 4,-78.5 -5,-81 Z', P.clair(c, .1), {taille: 'p', force: .7});
     // quelques cheveux
-    p.trait('M -11,-82.6 C -18,-79 -23,-72 -23.8,-63', f, .45, .55);
-    p.trait('M -3,-83.3 C 6,-81.5 13.5,-76 17.5,-68', f, .45, .55);
-    p.trait('M 18.6,-66 C 20,-58 19.6,-52 18.2,-46', f, .45, .5);
+    p.trait('M -24.6,-68 C -26,-60 -25.6,-53 -23.6,-47.5', f, .45, .5);
+    p.trait('M -13,-71.5 C -16,-69 -18.4,-66.6 -19.6,-63.4', f, .4, .45);
+    p.trait('M 19,-70.5 C 21,-62 20.6,-52 18.2,-43.5', f, .45, .5);
+    p.trait('M 5,-70.5 C 8,-68.6 10.4,-66.8 11.8,-64.6', f, .4, .45);
   }}];
 };
 
 /* ---------- Coiffes ---------- */
 // long bonnet souple qui retombe derrière la tête
 coiffes.bonnet = o => {
-  const c = o.couleur, f = P.fonce(c, .8);
+  const c = o.couleur, f = P.fonce(c, .78);
   return [
     {os: 'queue', z: Z.queue, dessin(p) {
-      p.forme('M 8,-90 C 21,-97 33.5,-88 33.5,-72 C 33.5,-60 31.5,-51 27.5,-44 C 23.5,-49 21.5,-58 20.5,-66 L 8,-80 Z', c, {taille: 'g'});
+      p.forme('M 8,-90 C 21,-97 34.5,-88 34.5,-72 C 34.5,-60 32.5,-50 28,-42.5 C 24.4,-48 22.4,-58 21.4,-66 L 8,-80 Z', c, {taille: 'g'});
+      p.trait('M 27,-88 C 30.5,-78 30.4,-62 28,-48', f, .5, .45);
     }},
     {os: 'tete', z: Z.coiffe, dessin(p) {
-      const dome = 'M -11.5,-86.2 C -5,-96.5 13,-99.5 22.5,-89 C 28,-82.5 27.6,-72.5 24.2,-65.5 L 20.8,-69.5 C 16.5,-78.5 6,-85.5 -11.5,-86.2 Z';
+      const dome = 'M -12,-86.6 C -5.5,-97 13,-100 23,-89.4 C 28.6,-83 28.4,-73 25.4,-65.4 L 21.6,-69.6 C 17,-79 6,-86 -12,-86.6 Z';
       p.forme(dome, c, {taille: 'g'});
-      p.dans(dome, () => p.trait('M -11.5,-86.2 C 6,-85.5 16.5,-78.5 22.4,-67.2', f, 2.6, .8));
+      p.dans(dome, () => {                                             // le revers du bonnet
+        p.trait('M -12,-86.6 C 6,-86 17,-79 23.2,-67.4', f, 3.4, .9);
+        p.trait('M -10.5,-88.4 C 6.5,-88.2 18.5,-81 24.6,-70.2', P.clair(c, .25), .5, .7);
+      });
     }},
   ];
 };
@@ -51,26 +57,32 @@ coiffes.bonnet = o => {
 tenues.tunique = o => {
   const c = o.couleur;
   const robe = 'M -8,-44.5 L 8,-44.5 C 10.4,-43.6 11.2,-41 11.3,-38.5 L 13.8,-18.6 Q 0,-14.8 -13.8,-18.6 L -11.3,-38.5 C -11.2,-41 -10.4,-43.6 -8,-44.5 Z';
+  const boucle = (x, y, l, h, a) => p => p.repere(x, y, a, () => {      // boucle : cadre doré, trou, ardillon
+    p.forme(`M ${-l},${-h} L ${l},${-h} L ${l},${h} L ${-l},${h} Z`, o.boucle, {taille: 'p'});
+    p.forme(`M ${-l + .9},${-h + .9} L ${l - .9},${-h + .9} L ${l - .9},${h - .9} L ${-l + .9},${h - .9} Z`, P.fonce(o.ceinture || o.bandouliere, .8), {taille: 0});
+    p.forme(`M ${-l + .5},-.35 L ${l - .7},-.35 L ${l - .7},.35 L ${-l + .5},.35 Z`, P.clair(o.boucle, .3), {taille: 0});
+  });
   return [{os: 'torse', z: Z.torse, dessin(p) {
     p.forme(robe, c, {taille: 'g', force: .9});
+    p.portee(P.ell(-1, -53, 15, 9.5), robe, c, {dy: 1.2, flou: 3.2, force: .6});        // l'ombre de la tête
     p.dans(robe, () => {
-      if (o.col) p.forme('M -5.2,-45 L 0,-38.6 L 5.2,-45 L 3,-45 L 0,-41.2 L -3,-45 Z', o.col, {taille: 'p'});
+      p.trait('M -6,-21 Q -5.6,-19 -6.4,-16.6', P.fonce(c, .78), .45, .5);              // plis du bas
+      p.trait('M 5,-21.4 Q 5.6,-19 5,-16.4', P.fonce(c, .78), .45, .5);
+      if (o.col) p.forme('M -5.4,-45 L 0,-38.2 L 5.4,-45 L 3.1,-45 L 0,-41 L -3.1,-45 Z', o.col, {taille: 'p'});
       if (o.bandouliere) {
-        p.forme('M 6.6,-45 L 9.4,-43.6 L -11.6,-26 L -12.6,-28.8 Z', o.bandouliere, {taille: 'p'});
-        if (o.boucle) p.forme('M -4.4,-36.6 L -1.6,-36.2 L -2.4,-33 L -5.2,-33.4 Z', o.boucle, {taille: 'p'});
+        p.forme('M 6.4,-45 L 9.6,-43.4 L -11.6,-25.6 L -12.8,-29 Z', o.bandouliere, {taille: 'p'});
+        if (o.boucle) boucle(-3.4, -34.9, 1.9, 1.7, -40)(p);
       }
       if (o.ceinture) {
-        p.forme('M -14,-27.4 Q 0,-25.4 14,-27.4 L 14,-24.4 Q 0,-22.4 -14,-24.4 Z', o.ceinture, {taille: 'p'});
-        if (o.boucle) {
-          p.forme('M -4.6,-27.2 L -.6,-27 L -.6,-23.2 L -4.6,-23.4 Z', o.boucle, {taille: 'p'});
-          p.forme('M -3.5,-26.1 L -1.7,-26 L -1.7,-24.2 L -3.5,-24.3 Z', o.ceinture, {taille: 0});
-        }
+        p.forme('M -14,-27.6 Q 0,-25.4 14,-27.6 L 14,-24.2 Q 0,-22 -14,-24.2 Z', o.ceinture, {taille: 'p'});
+        if (o.boucle) boucle(-2.6, -25.1, 2.5, 2.4, 0)(p);
       }
     });
   }}];
 };
 
 /* ---------- Armes (dessinées droites, poignée en 0,0, lame vers le haut ; tenues dans la main droite) ---------- */
+// épée droite à garde simple
 armes.epee = o => {
   const [mx, my] = OS.arme.p, lame = o.lame || '#e4eaf1', garde = o.garde || '#e0b23a', L = o.longueur || 47;
   return [{os: 'arme', z: Z.arme, dessin(p) {
@@ -81,6 +93,27 @@ armes.epee = o => {
       p.forme('M -6.4,-5.4 Q 0,-3.4 6.4,-5.4 Q 7.4,-4 6.6,-2.6 Q 0,-1 -6.6,-2.6 Q -7.4,-4 -6.4,-5.4 Z', garde, {taille: 'p'});
       p.forme(P.ell(0, -3.7, 1.2, 1.2), o.pierre || '#d8483f', {taille: 'p'});
       p.forme(P.ell(0, 6.2, 1.7, 1.7), garde, {taille: 'p'});
+    });
+  }}];
+};
+// grande épée à garde ailée : lame large à la base, deux ailes relevées, pierre au centre
+armes['epee-ailee'] = o => {
+  const [mx, my] = OS.arme.p, lame = o.lame || '#e6ebf2', garde = o.garde || '#5a4bb8', L = o.longueur || 54;
+  const aile = s => `M ${s * 1.2},-9 C ${s * 4},-10.4 ${s * 7},-10 ${s * 11},-14.6 C ${s * 10.6},-10.6 ${s * 8.4},-7 ${s * 5.4},-5.6 C ${s * 3.6},-4.8 ${s * 2},-4.6 ${s * 1.2},-5 Z`;
+  const plume = s => `M ${s * 2.6},-7 C ${s * 5},-7.4 ${s * 7.6},-8.8 ${s * 9.8},-12`;
+  return [{os: 'arme', z: Z.arme, dessin(p) {
+    p.repere(mx, my, o.angle === undefined ? -22 : o.angle, () => {
+      const forme = `M -2.5,-8 L -3.3,-13.4 L -2.5,-16 L -2.5,${-L + 7} L 0,${-L} L 2.5,${-L + 7} L 2.5,-16 L 3.3,-13.4 L 2.5,-8 Z`;
+      p.forme(forme, lame, {taille: 'p', force: .9});
+      p.forme(`M 0,-8 L 0,${-L} L 2.5,${-L + 7} L 2.5,-16 L 3.3,-13.4 L 2.5,-8 Z`, P.fonce(lame, .85), {taille: 0});
+      p.trait(`M 0,-15 L 0,${-L + 8}`, P.clair(lame, .6), .35, .8);
+      p.forme('M -1.35,-5 L 1.35,-5 L 1.2,5.2 L -1.2,5.2 Z', P.fonce(garde, .85), {taille: 'p'});      // poignée
+      for (const y of [-1.4, .6, 2.6]) p.trait(`M -1.2,${y} L 1.2,${y + .8}`, P.clair(garde, .3), .35, .7);
+      p.forme('M -1.9,5 L 1.9,5 L 1.5,7.6 Q 0,8.6 -1.5,7.6 Z', garde, {taille: 'p'});                 // pommeau
+      p.forme(aile(-1), garde, {taille: 'p', force: 1.2}); p.forme(aile(1), garde, {taille: 'p', force: 1.2});
+      p.trait(plume(-1), P.clair(garde, .35), .4, .8); p.trait(plume(1), P.clair(garde, .35), .4, .8);
+      p.forme('M -2.2,-9.4 L 2.2,-9.4 L 2.6,-4.4 L -2.6,-4.4 Z', garde, {taille: 'p'});               // cœur de la garde
+      p.forme('M 0,-9 L 1.5,-7 L 0,-5 L -1.5,-7 Z', o.pierre || '#f2cf4a', {taille: 'p'});
     });
   }}];
 };
@@ -99,15 +132,19 @@ const EMBLEMES = {
     p.forme(d + 'Z', c, {taille: 'p'});
   },
 };
+// écu à large bord de métal riveté
 boucliers.ecu = o => {
   const [mx, my] = OS.bouclier.p, bord = o.bord || '#c9d1da', fond = o.fond || '#3b68c6';
-  const forme = 'M -13,-15 Q 0,-18.5 13,-15 L 13,-2 C 13,9 6,15 0,19 C -6,15 -13,9 -13,-2 Z';
+  const forme = 'M -13.6,-15.4 Q -7,-17.6 0,-16 Q 7,-17.6 13.6,-15.4 L 13.2,-3 C 12.6,8 6,14.6 0,19.6 C -6,14.6 -12.6,8 -13.2,-3 Z';
   return [{os: 'bouclier', z: Z.bouclier, dessin(p) {
-    p.repere(mx + 4.5, my - .5, o.angle === undefined ? 7 : o.angle, () => {
+    p.repere(mx + 5, my - 1, o.angle === undefined ? 7 : o.angle, () => {
       p.forme(forme, bord, {taille: 'g'});
-      p.repere(0, .3, 0, () => p.forme(forme, fond, {taille: 'g', force: .8}), .8);
-      for (const [x, y] of [[-11.6, -14], [11.6, -14], [-11.7, -3], [11.7, -3], [-7.6, 9.4], [7.6, 9.4], [0, 16.8], [0, -15.6]])
-        p.forme(P.ell(x, y, .7, .7), P.fonce(bord, .7), {taille: 0});
+      p.repere(0, .4, 0, () => {
+        p.forme(forme, P.fonce(bord, .72), {taille: 0});
+      }, .86);
+      p.repere(0, .5, 0, () => p.forme(forme, fond, {taille: 'g', force: .9}), .8);
+      for (const [x, y] of [[-11.8, -14.2], [11.8, -14.2], [-11.9, -3], [11.9, -3], [-7.8, 9.6], [7.8, 9.6], [0, 17.2], [0, -14.8], [-10.6, 4], [10.6, 4]])
+        p.forme(P.ell(x, y, .75, .75), P.fonce(bord, .62), {taille: 0}).forme(P.ell(x - .2, y - .2, .3, .3), P.clair(bord, .6), {taille: 0});
       const e = EMBLEMES[o.embleme];
       if (e) e(p, o.couleurEmbleme || '#f0c648');
     }, o.taille || 1);
