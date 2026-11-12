@@ -21,9 +21,9 @@ coiffures.raie = (o, fiche) => {
     p.portee(droite, P.TETE, peau, {dy: 1.4, dx: -.4, flou: 2.6, force: .42});
     p.forme(droite, c, {taille: 'g'});
     p.forme(gauche, c, {taille: 'g'});
-    // mèches du dessus, pour l'épaisseur
-    p.forme('M -5.6,-80 C -12,-84.5 -21.5,-80 -24.6,-68 C -18.5,-72.5 -11,-76.5 -5.6,-80 Z', P.clair(c, .1), {taille: 'p', force: .7});
-    p.forme('M -5,-81 C 3,-84.5 13.5,-80.5 19,-70.5 C 12.5,-74.5 4,-78.5 -5,-81 Z', P.clair(c, .1), {taille: 'p', force: .7});
+    // mèches du dessus, à peine plus claires (discrètes : Kiki les trouvait trop marquées)
+    p.forme('M -5.6,-80 C -12,-84.5 -21.5,-80 -24.6,-68 C -18.5,-72.5 -11,-76.5 -5.6,-80 Z', P.clair(c, .045), {taille: 0});
+    p.forme('M -5,-81 C 3,-84.5 13.5,-80.5 19,-70.5 C 12.5,-74.5 4,-78.5 -5,-81 Z', P.clair(c, .045), {taille: 0});
     // quelques cheveux
     p.trait('M -24.6,-68 C -26,-60 -25.6,-53 -23.6,-47.5', f, .45, .5);
     p.trait('M -13,-71.5 C -16,-69 -18.4,-66.6 -19.6,-63.4', f, .4, .45);
@@ -53,36 +53,44 @@ coiffes.bonnet = o => {
 /* ---------- Tenues ---------- */
 // tunique évasée à manches courtes, ceinture et bandoulière en option
 tenues.tunique = o => {
-  const c = o.couleur;
+  const c = o.couleur, dessous = o.dessous || '#f3eee2';
   const robe = 'M -8,-44.5 L 8,-44.5 C 10.4,-43.6 11.2,-41 11.3,-38.5 L 13.8,-18.6 Q 0,-14.8 -13.8,-18.6 L -11.3,-38.5 C -11.2,-41 -10.4,-43.6 -8,-44.5 Z';
-  const boucle = (x, y, l, h, a) => p => p.repere(x, y, a, () => {      // boucle : un simple cadre doré
+  const boucle = (p, x, y, l, h, a, fond) => p.repere(x, y, a, () => {      // boucle : un simple cadre doré
     p.forme(`M ${-l},${-h} L ${l},${-h} L ${l},${h} L ${-l},${h} Z`, o.boucle, {taille: 'p'});
-    p.forme(`M ${-l + .9},${-h + .9} L ${l - .9},${-h + .9} L ${l - .9},${h - .9} L ${-l + .9},${h - .9} Z`, P.fonce(o.ceinture || o.bandouliere, .8), {taille: 0});
+    p.forme(`M ${-l + .9},${-h + .9} L ${l - .9},${-h + .9} L ${l - .9},${h - .9} L ${-l + .9},${h - .9} Z`, P.fonce(fond, .8), {taille: 0});
   });
-  return [{os: 'torse', z: Z.torse, dessin(p) {
+  // Le col : la tunique remonte autour du cou (on ne voit pas le cou), ouverte en V sur le vêtement de dessous.
+  // Le perso est de trois quarts : le V est décalé vers la gauche, le pan gauche est très fin, le droit est large.
+  const V = 'M -9,-50 L 1.6,-50 L -3.6,-40 Z';
+  const panG = 'M -10.6,-43.4 L -10.4,-50 L -9.2,-50.2 L -3.6,-39.6 L -3.6,-36.8 L -8,-43.4 Z';
+  const panD = 'M 9.8,-43.2 L 8,-50 L 1.8,-50.2 L -3.6,-39.6 L -3.6,-36.8 L .6,-43.2 Z';
+  const couches = [{os: 'torse', z: Z.torse, dessin(p) {
     p.forme(robe, c, {taille: 'g', force: .9});
     p.portee(P.ell(-1, -53, 14, 9.5), robe, c, {dy: 1.2, flou: 3, force: .55});        // l'ombre de la tête
-    // le col : la tunique remonte autour du cou (on ne voit pas le cou), ouverte en V sur le vêtement de dessous
-    const v = 'M -6.2,-50 L 6.2,-50 L 0,-39.8 Z';
-    p.forme(v, o.dessous || '#f3eee2', {taille: 0});
-    p.portee(P.ell(-1, -53, 13, 7.6), v, o.dessous || '#f3eee2', {dy: 1, flou: 1.4, force: .4});
-    for (const k of [-1, 1]) {
-      p.forme(`M ${k * 9.8},-43.2 L ${k * 8},-50 L ${k * 6.4},-50.2 L 0,-39.6 L 0,-36.8 L ${k * 4.2},-43.2 Z`, c, {taille: 'p', force: .9});
-      if (o.col) p.trait(`M ${k * 6.5},-50 L ${k * .3},-39.9`, o.col, .6, .9);
-    }
+    p.forme(V, dessous, {taille: 0});
+    p.portee(P.ell(-1, -53, 13, 7.6), V, dessous, {dy: 1, flou: 1.4, force: .4});
+    p.forme(panG, c, {taille: 'p', force: .9}); p.forme(panD, c, {taille: 'p', force: .9});
+    if (o.col) { p.trait('M -9.1,-50 L -3.7,-39.9', o.col, .6, .9); p.trait('M 1.7,-50 L -3.5,-39.9', o.col, .6, .9); }
     p.dans(robe, () => {
       p.trait('M -6,-21 Q -5.6,-19 -6.4,-16.6', P.fonce(c, .78), .45, .5);              // plis du bas
       p.trait('M 5,-21.4 Q 5.6,-19 5,-16.4', P.fonce(c, .78), .45, .5);
-      if (o.bandouliere) {
-        p.forme('M 6.4,-45 L 9.6,-43.4 L -11.6,-25.6 L -12.8,-29 Z', o.bandouliere, {taille: 'p'});
-        if (o.boucle) boucle(-3.4, -34.9, 1.9, 1.7, -40)(p);
-      }
       if (o.ceinture) {
         p.forme('M -14,-27.6 Q 0,-25.4 14,-27.6 L 14,-24.2 Q 0,-22 -14,-24.2 Z', o.ceinture, {taille: 'p'});
-        if (o.boucle) boucle(-2.6, -25.1, 2.5, 2.4, 0)(p);
+        if (o.boucle) boucle(p, -2.6, -25.1, 2.5, 2.4, 0, o.ceinture);
       }
     });
   }}];
+  // la bandoulière passe PAR-DESSUS l'épaule : elle est peinte après le haut du bras
+  if (o.bandouliere) couches.push({os: 'torse', z: Z.brasG + .5, dessin(p) {
+    const [ex, ey] = OS.brasG1.p, [cx, cy] = OS.brasG2.p;
+    const zone = new Path2D(robe); zone.addPath(new Path2D(panD));
+    zone.addPath(P.capsule(ex, ey, ex + (cx - ex) * .55, ey + (cy - ey) * .55, 3.7, 3.5));      // la manche (voir poupee.js)
+    p.dans(zone, () => {
+      p.forme('M 7.6,-47.4 L 12.4,-44 L -11.6,-25.8 L -12.8,-29.2 Z', o.bandouliere, {taille: 'p'});
+      if (o.boucle) boucle(p, -3.2, -34.6, 1.9, 1.7, -37, o.bandouliere);
+    });
+  }});
+  return couches;
 };
 
 /* ---------- Armes (dessinées droites, poignée en 0,0, lame vers le haut ; tenues dans la main droite) ---------- */

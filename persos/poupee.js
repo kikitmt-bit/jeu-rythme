@@ -191,7 +191,7 @@ function couchesDuCorps(f) {
   bras('brasG1', 'brasG2', Z.brasG);
   jambe('jambeD1', 'jambeD2', Z.jambeD);
   jambe('jambeG1', 'jambeG2', Z.jambeG);
-  c.push({os: 'torse', z: Z.cou, dessin(p) { const cou = P.capsule(0, -49, 0, -42, 2.4);
+  c.push({os: 'torse', z: Z.cou, dessin(p) { const cou = P.capsule(-1.5, -49, -1.5, -42, 2.4);
     p.forme(cou, peau, {taille: 'p'});
     p.portee(P.ell(-1, -53, 12, 6), cou, peau, {dy: 1, flou: 1.6, force: .5});                // l'ombre du menton
   }});
@@ -199,18 +199,18 @@ function couchesDuCorps(f) {
   c.push({os: 'tete', z: Z.tete, dessin(p) {
     p.forme(TETE, peau, {taille: 'g', force: .5});
     p.dans(TETE, () => { p.halo(-19, -53.4, 4.8, '#ff7d8c', .3); p.halo(12.5, -53.4, 5.4, '#ff7d8c', .3); });
-    p.forme(P.ell(-6.9, -54.5, .5, .42), P.fonce(peau, .36), {taille: 0});                        // le nez : un point
-    p.forme('M -7,-51.5 Q -4.7,-52.9 -2.4,-51.5 Q -3.3,-49.7 -4.7,-49.7 Q -6.1,-49.7 -7,-51.5 Z', '#e2647c', {taille: 0});          // petite bouche neutre
-    p.trait('M -7,-51.5 Q -4.7,-52.9 -2.4,-51.5', '#b0445c', .4, .8);
+    // le nez : un tout petit ovale couché, presque noir
+    p.forme(P.ell(-6.6, -55.9, 1.25, .52), '#4a2c1c', {taille: 0});
+    // la bouche : un petit toit rose très plat, pointe vers la gauche
+    p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, '#e9539a', '#f77fb4'), {taille: 0});
   }});
+  // les deux yeux ont exactement la même taille : ovales pleins, bien écartés, à peine plus sombres en bas
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'ouverts'}, dessin(p) {
-    const haut = yeux, bas = P.fonce(yeux, .8);   // œil plein, à peine plus sombre en bas
-    p.forme(P.ell(-15, -60.1, 2.9, 4.3), p.degrade(0, -64.4, 0, -55.8, haut, haut, bas), {taille: 0});
-    p.forme(P.ell(4, -60.1, 3.4, 4.5), p.degrade(0, -64.6, 0, -55.6, haut, haut, bas), {taille: 0});
+    const bas = P.fonce(yeux, .8);
+    for (const x of [-15.6, 5.2]) p.forme(P.ell(x, -60.4, 3.15, 3.95), p.degrade(0, -64.3, 0, -56.4, yeux, yeux, bas), {taille: 0});
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'fermes'}, dessin(p) {
-    p.trait('M -17.8,-59.6 Q -15,-57.4 -12.2,-59.6', P.fonce(yeux, .5), .9);
-    p.trait('M .8,-59.6 Q 4,-57.2 7.2,-59.6', P.fonce(yeux, .5), .9);
+    for (const x of [-15.6, 5.2]) p.trait(`M ${x - 3},-59.8 Q ${x},-57.5 ${x + 3},-59.8`, P.fonce(yeux, .5), .9);
   }});
   if (f.oreilles === 'pointues') c.push({os: 'tete', z: Z.oreille, dessin(p) {
     p.forme('M 19,-66 Q 27.5,-63.5 33.5,-56 Q 26.5,-52 18.8,-52.4 Z', peau, {taille: 'p', force: 1.4});
