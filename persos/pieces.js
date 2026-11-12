@@ -17,8 +17,8 @@ coiffures.raie = (o, fiche) => {
   const gauche = 'M -6,-78.5 C -6.6,-83 -6,-86.5 -4,-89.5 C -18.5,-91 -28.6,-80.5 -28.6,-65 C -29.2,-56 -27.6,-49.5 -23.4,-44.6 C -22.2,-50.5 -21.8,-56 -21,-61 C -20.2,-63.2 -19.2,-64.2 -18,-64.4 C -12.5,-66.5 -7,-72 -6,-78.5 Z';
   const droite = 'M -6,-78.5 C -3,-71.5 5,-66.6 12,-64.4 C 12.8,-56 14.2,-46.6 17.8,-39.4 C 22,-45.6 25.2,-53 25,-62 L 24.6,-72 C 18.5,-83.5 8,-89.5 -4,-89.5 C -6,-86.5 -6.6,-83 -6,-78.5 Z';
   return [{os: 'tete', z: Z.cheveux, dessin(p) {
-    p.portee(gauche, P.TETE, peau, {dy: 1.6, dx: .6, flou: 3, force: .55});
-    p.portee(droite, P.TETE, peau, {dy: 1.6, dx: -.4, flou: 3, force: .55});
+    p.portee(gauche, P.TETE, peau, {dy: 1.4, dx: .5, flou: 2.6, force: .42});
+    p.portee(droite, P.TETE, peau, {dy: 1.4, dx: -.4, flou: 2.6, force: .42});
     p.forme(droite, c, {taille: 'g'});
     p.forme(gauche, c, {taille: 'g'});
     // mèches du dessus, pour l'épaisseur
@@ -37,17 +37,15 @@ coiffures.raie = (o, fiche) => {
 coiffes.bonnet = o => {
   const c = o.couleur, f = P.fonce(c, .78);
   return [
+    // la pointe qui pend dans le dos
     {os: 'queue', z: Z.queue, dessin(p) {
-      p.forme('M 8,-90 C 21,-97 34.5,-88 34.5,-72 C 34.5,-60 32.5,-50 28,-42.5 C 24.4,-48 22.4,-58 21.4,-66 L 8,-80 Z', c, {taille: 'g'});
-      p.trait('M 27,-88 C 30.5,-78 30.4,-62 28,-48', f, .5, .45);
+      p.forme('M 8,-90 C 21,-97 35.5,-88 35.5,-72 C 35.5,-60 33,-50 28.4,-42 C 24.6,-48 22.4,-58 21.4,-66 L 8,-80 Z', c, {taille: 'g'});
+      p.trait('M 29,-86 C 32,-76 31.6,-61 28.6,-48', f, .5, .45);
     }},
-    {os: 'tete', z: Z.coiffe, dessin(p) {
-      const dome = 'M -12,-86.6 C -5.5,-97 13,-100 23,-89.4 C 28.6,-83 28.4,-73 25.4,-65.4 L 21.6,-69.6 C 17,-79 6,-86 -12,-86.6 Z';
-      p.forme(dome, c, {taille: 'g'});
-      p.dans(dome, () => {                                             // le revers du bonnet
-        p.trait('M -12,-86.6 C 6,-86 17,-79 23.2,-67.4', f, 3.4, .9);
-        p.trait('M -10.5,-88.4 C 6.5,-88.2 18.5,-81 24.6,-70.2', P.clair(c, .25), .5, .7);
-      });
+    // le bonnet est posé à l'arrière du crâne : il passe DERRIÈRE les cheveux et dépasse au-dessus
+    {os: 'tete', z: Z.coiffeArr, dessin(p) {
+      p.forme('M -9,-84 C -6,-97 9,-103.5 22,-97 C 31,-92 36,-82 35.4,-70 L 22,-64 L -4,-78 Z', c, {taille: 'g'});
+      p.trait('M 2,-98.4 C 14,-99.4 26,-93 31.4,-80', f, .5, .4);
     }},
   ];
 };
@@ -64,7 +62,7 @@ tenues.tunique = o => {
   });
   return [{os: 'torse', z: Z.torse, dessin(p) {
     p.forme(robe, c, {taille: 'g', force: .9});
-    p.portee(P.ell(-1, -53, 15, 9.5), robe, c, {dy: 1.2, flou: 3.2, force: .6});        // l'ombre de la tête
+    p.portee(P.ell(-1, -55, 14, 9.5), robe, c, {dy: 1.2, flou: 3, force: .55});        // l'ombre de la tête
     p.dans(robe, () => {
       p.trait('M -6,-21 Q -5.6,-19 -6.4,-16.6', P.fonce(c, .78), .45, .5);              // plis du bas
       p.trait('M 5,-21.4 Q 5.6,-19 5,-16.4', P.fonce(c, .78), .45, .5);
@@ -99,8 +97,9 @@ armes.epee = o => {
 // grande épée à garde ailée : lame large à la base, deux ailes relevées, pierre au centre
 armes['epee-ailee'] = o => {
   const [mx, my] = OS.arme.p, lame = o.lame || '#e6ebf2', garde = o.garde || '#5a4bb8', L = o.longueur || 54;
-  const aile = s => `M ${s * 1.2},-9 C ${s * 4},-10.4 ${s * 7},-10 ${s * 11},-14.6 C ${s * 10.6},-10.6 ${s * 8.4},-7 ${s * 5.4},-5.6 C ${s * 3.6},-4.8 ${s * 2},-4.6 ${s * 1.2},-5 Z`;
-  const plume = s => `M ${s * 2.6},-7 C ${s * 5},-7.4 ${s * 7.6},-8.8 ${s * 9.8},-12`;
+  // chaque aile part du cœur de la garde, s'écarte puis remonte en corne
+  const aile = s => `M ${s * 1.4},-9 C ${s * 4},-8.4 ${s * 6.4},-9 ${s * 7.6},-10.8 C ${s * 8.4},-12 ${s * 8.8},-13.2 ${s * 8.7},-14.6 C ${s * 11.4},-12 ${s * 11.6},-7.6 ${s * 8.4},-5 C ${s * 6.2},-3.4 ${s * 3.4},-3.6 ${s * 1.4},-4.8 Z`;
+  const plume = s => `M ${s * 3},-6.2 C ${s * 6},-5.6 ${s * 9.4},-7.6 ${s * 9.8},-12.4`;
   return [{os: 'arme', z: Z.arme, dessin(p) {
     p.repere(mx, my, o.angle === undefined ? -22 : o.angle, () => {
       const forme = `M -2.5,-8 L -3.3,-13.4 L -2.5,-16 L -2.5,${-L + 7} L 0,${-L} L 2.5,${-L + 7} L 2.5,-16 L 3.3,-13.4 L 2.5,-8 Z`;
@@ -148,6 +147,14 @@ boucliers.ecu = o => {
       const e = EMBLEMES[o.embleme];
       if (e) e(p, o.couleurEmbleme || '#f0c648');
     }, o.taille || 1);
+  }}];
+};
+// bouclier dont l'image est fournie par Kiki (paquet chiffré) ; tant qu'elle n'est pas chargée, on dessine `secours`
+boucliers.image = (o, fiche) => {
+  const [mx, my] = OS.bouclier.p;
+  if (!P.images[o.image]) return o.secours ? boucliers[o.secours.modele](o.secours, fiche) : [];
+  return [{os: 'bouclier', z: Z.bouclier, dessin(p) {
+    p.repere(mx + (o.dx === undefined ? 5 : o.dx), my + (o.dy || 0), o.angle === undefined ? 6 : o.angle, () => p.image(o.image, 0, 0, o.hauteur || 44));
   }}];
 };
 })();

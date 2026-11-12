@@ -3,6 +3,9 @@
    Le style (proportions, visage, ombrage, animations) vient de persos/poupee.js.
    Personnages originaux seulement dans ce fichier (le dépôt est public).
    ============================================================ */
+/* Paquets d'images chiffrées à charger (voir Poupee.chargerImages) : rien pour l'instant. */
+Poupee.paquets = [];
+
 Poupee.fiche({
   id: 'heros-vert', nom: 'Héros vert',
   peau: '#f9d5b5', yeux: '#1d6b5d', oreilles: 'pointues',
@@ -12,5 +15,6 @@ Poupee.fiche({
   bras: {manche: '#3f9b3f', dessous: '#f3eee2', gant: '#7a4a2c'},
   jambes: {collant: '#f3eee2', botte: '#84502e'},
   arme: {modele: 'epee-ailee', lame: '#e6ebf2', garde: '#5a4bb8', pierre: '#f2cf4a'},
-  bouclier: {modele: 'ecu', bord: '#c9d1da', fond: '#3b68c6', embleme: 'note', couleurEmbleme: '#f0c648', taille: 1.18},
+  bouclier: {modele: 'image', image: 'bouclier-heros.png', hauteur: 45,
+             secours: {modele: 'ecu', bord: '#c9d1da', fond: '#3b68c6', embleme: 'note', couleurEmbleme: '#f0c648', taille: 1.18}},
 });

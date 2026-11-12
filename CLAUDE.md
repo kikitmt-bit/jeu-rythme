@@ -56,7 +56,9 @@ Kiki envoie 2-3 croquis ou images + une description. Claude :
 3. **Ne touche jamais** au visage, aux proportions ni au pinceau de `poupee.js` pour un seul perso : tout changement là s'applique à tous (c'est voulu).
 4. Vérifie à l'œil : `atelier.html?perso=<id>&anim=repos&fond=sombre&t=0` (image figée, `&plat` = sans ombrage, `&os` = squelette), capture Playwright, comparer avec les modèles de Kiki, corriger, recommencer.
 5. Les animations sont dans `Poupee.animations` (poupee.js), écrites une fois pour le squelette : `attente`, `marche`. Angles en degrés par os ; positif = dans le sens des aiguilles d'une montre (jambe vers l'avant).
-- Personnages **originaux ou « inspirés de »** uniquement dans `fiches.js` (dépôt public, pas de logo ni d'emblème d'un vrai jeu : le bouclier porte la croche de l'équipe).
+- Personnages **originaux ou « inspirés de »** uniquement dans `fiches.js` (dépôt public). Claude ne redessine pas les emblèmes d'un vrai jeu.
+- **Images fournies par Kiki** (emblème, bouclier d'un vrai jeu…) : Kiki envoie le PNG dans la conversation, Claude le détoure et le range dans un paquet chiffré : `MDP_FAMILLE=... python3 outils/chiffrer.py images images/persos.bin <dossier> <image.png>...`, puis ajoute `'images/persos.bin?v=1'` à `Poupee.paquets` (fiches.js). Une pièce l'utilise avec `p.image(nom, x, y, hauteur)` (voir `boucliers.image`) et prévoit un dessin de `secours` tant que le jeu n'est pas déverrouillé. Le jeu et l'atelier chargent le paquet dès qu'ils ont la clé (`Poupee.chargerImages`).
+- Réglages communs décidés avec Kiki (12/11) : tête ronde (pas carrée), réduite à 0,9 et relevée pour voir le cou (`OS.tete`), yeux pleins à peine plus sombres en bas, petite bouche neutre, ombres roses et légères sur la peau (jamais jaunes), coiffe posée derrière les cheveux (`Z.coiffeArr`), bouclier au premier plan.
 - Monstres : plus tard, même pinceau, squelettes plus simples.
 
 ## Mapper un nouveau morceau (méthode validée par Kiki le 08/11)

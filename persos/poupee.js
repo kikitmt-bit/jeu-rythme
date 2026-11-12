@@ -23,7 +23,7 @@ const OS = {
   jambeG1:  {p: [4.6, -21],    parent: 'racine'},
   jambeG2:  {p: [4.6, -12],    parent: 'jambeG1'},
   torse:    {p: [0, -22],      parent: 'racine'},
-  tete:     {p: [0, -45],      parent: 'torse'},
+  tete:     {p: [0, -45],      parent: 'torse', e: .9, d: [0, -5.2]},   // tête un peu réduite et relevée : on voit le cou
   queue:    {p: [20, -82],     parent: 'tete'},     // ce qui pend derrière la tête (bonnet, couette…)
   brasD1:   {p: [-8.5, -40],   parent: 'torse'},    // bras droit du perso = côté éloigné (à gauche à l'écran)
   brasD2:   {p: [-14, -33.5],  parent: 'brasD1'},
@@ -37,11 +37,11 @@ P.OS = OS;
 
 /* Ordre d'empilement des couches (du fond vers le devant) */
 const Z = {queue: 5, cheveuxArr: 8, arme: 10, brasD: 20, jambeD: 30, jambeG: 40, cou: 45, torse: 50,
-           brasG: 60, bouclier: 70, tete: 80, visage: 82, oreille: 84, cheveux: 86, coiffe: 90};
+           brasG: 60, coiffeArr: 78, tete: 80, visage: 82, oreille: 84, cheveux: 86, coiffe: 90, bouclier: 95};
 P.Z = Z;
 
 /* Tête : mêmes mesures pour tout le monde */
-const TETE = 'M -1,-87 C 13,-87 22.6,-77 22.8,-61 C 23,-50.5 16.5,-43.2 5,-43.2 L -7,-43.2 C -18.5,-43.2 -25,-50.5 -24.8,-61 C -24.6,-77 -15,-87 -1,-87 Z';
+const TETE = 'M -1,-87 C 12.5,-87 22.6,-77.5 22.6,-64.5 C 22.6,-51.2 13.6,-43 -1,-43 C -15.6,-43 -24.6,-51.2 -24.6,-64.5 C -24.6,-77.5 -14.5,-87 -1,-87 Z';
 P.TETE = TETE;
 
 /* ---------- Couleurs ---------- */
@@ -67,7 +67,7 @@ const css = (t, s, l, a) => `hsla(${t.toFixed(1)},${(Math.min(1, s) * 100).toFix
 // l'ombre d'une couleur : plus foncée, un peu plus saturée, tirée vers le froid
 function ombreDe(c, a) {
   let [t, s, l] = tsl(rvb(c));
-  if (t > 20 && t < 200) t += 14; else if (t <= 20 || t > 320) t -= 10;
+  if (t >= 70 && t < 200) t += 14; else if (t < 70) t = Math.max(8, t - 12); else if (t > 320) t -= 10;
   return css(t, s * 1.15 + .05, l * .55, a);
 }
 function lumiereDe(c, a) { const [t, s, l] = tsl(rvb(c)); return css(t, s * .8, l + (1 - l) * .6, a); }
@@ -121,6 +121,12 @@ function pinceau(ctx, S, volume) {
       ctx.shadowColor = ombreDe(couleur, (o.force || .5) * volume); ctx.shadowBlur = (o.flou || 2.5) * S;
       ctx.shadowOffsetX = LOIN + (o.dx || 0) * S; ctx.shadowOffsetY = (o.dy === undefined ? 1.5 : o.dy) * S;
       ctx.fillStyle = '#000'; ctx.fill(chemin(d)); ctx.restore(); return p;
+    },
+    // image fournie (paquet chiffré) : centrée en (x, y), hauteur h ; rend false si elle n'est pas chargée
+    image(nom, x, y, h) {
+      const im = P.images[nom]; if (!im) return false;
+      const l = h * im.width / im.height;
+      ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, x - l / 2, y - h / 2, l, h); return true;
     },
     trait(d, couleur, largeur = .6, a = 1) {
       ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = couleur; ctx.lineWidth = largeur; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -184,18 +190,22 @@ function couchesDuCorps(f) {
   bras('brasG1', 'brasG2', Z.brasG);
   jambe('jambeD1', 'jambeD2', Z.jambeD);
   jambe('jambeG1', 'jambeG2', Z.jambeG);
-  c.push({os: 'torse', z: Z.cou, dessin(p) { p.forme(P.capsule(0, -46, 0, -41, 3.2), peau, {taille: 'p'}); }});
+  c.push({os: 'torse', z: Z.cou, dessin(p) { const cou = P.capsule(0, -51, 0, -42, 2.8);
+    p.forme(cou, peau, {taille: 'p'});
+    p.portee(P.ell(-1, -55.5, 12, 6), cou, peau, {dy: 1, flou: 1.6, force: .5});                // l'ombre du menton
+  }});
   // la tête et le visage : identiques pour tous (seules les couleurs changent)
   c.push({os: 'tete', z: Z.tete, dessin(p) {
-    p.forme(TETE, peau, {taille: 'g', force: 1.1});
-    p.dans(TETE, () => { p.halo(-19, -53, 5, '#ff7d8c', .36); p.halo(12.5, -53, 5.6, '#ff7d8c', .36); });
-    p.forme(P.ell(-6.9, -54.5, .5, .42), ombreDe(peau, .7), {taille: 0});                        // le nez : un point
-    p.forme('M -7.3,-52.3 Q -4.7,-51.7 -2.1,-52.3 Q -2.9,-49.8 -4.7,-49.8 Q -6.5,-49.8 -7.3,-52.3 Z', '#e8607c', {taille: 'p', force: .7});
+    p.forme(TETE, peau, {taille: 'g', force: .5});
+    p.dans(TETE, () => { p.halo(-19, -53.4, 4.8, '#ff7d8c', .3); p.halo(12.5, -53.4, 5.4, '#ff7d8c', .3); });
+    p.forme(P.ell(-6.9, -54.5, .5, .42), P.fonce(peau, .5), {taille: 0});                        // le nez : un point
+    p.forme('M -7,-51.5 Q -4.7,-52.9 -2.4,-51.5 Q -3.3,-49.7 -4.7,-49.7 Q -6.1,-49.7 -7,-51.5 Z', '#e2647c', {taille: 0});          // petite bouche neutre
+    p.trait('M -7,-51.5 Q -4.7,-52.9 -2.4,-51.5', '#b0445c', .4, .8);
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'ouverts'}, dessin(p) {
-    const haut = P.fonce(yeux, .5), bas = P.clair(yeux, .16);
-    p.forme(P.ell(-15, -60.1, 2.9, 4.3), p.degrade(0, -64.4, 0, -55.8, haut, yeux, bas), {taille: 0});
-    p.forme(P.ell(4, -60.1, 3.4, 4.5), p.degrade(0, -64.6, 0, -55.6, haut, yeux, bas), {taille: 0});
+    const haut = yeux, bas = P.fonce(yeux, .8);   // œil plein, à peine plus sombre en bas
+    p.forme(P.ell(-15, -60.1, 2.9, 4.3), p.degrade(0, -64.4, 0, -55.8, haut, haut, bas), {taille: 0});
+    p.forme(P.ell(4, -60.1, 3.4, 4.5), p.degrade(0, -64.6, 0, -55.6, haut, haut, bas), {taille: 0});
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'fermes'}, dessin(p) {
     p.trait('M -17.8,-59.6 Q -15,-57.4 -12.2,-59.6', P.fonce(yeux, .5), .9);
@@ -211,6 +221,23 @@ function couchesDuCorps(f) {
 /* ---------- Fabrication : chaque couche est peinte une fois, puis réutilisée à chaque image ---------- */
 P.pieces = {coiffures: {}, coiffes: {}, tenues: {}, armes: {}, boucliers: {}};
 P.fiches = {};
+/* Images qui ne peuvent pas être dessinées par le code (emblèmes de vrais jeux…) : c'est Kiki qui les fournit,
+   elles sont rangées dans un paquet chiffré avec le mot de passe familial (outils/chiffrer.py images). */
+P.images = {};
+P.paquets = [];
+P.chargerImages = async function (cle) {
+  let neuf = false;
+  for (const url of P.paquets) try {
+    const r = await fetch(url); if (!r.ok) continue;
+    const o = new Uint8Array(await r.arrayBuffer());
+    const clair = await crypto.subtle.decrypt({name: 'AES-GCM', iv: o.slice(0, 12)}, cle, o.slice(12));
+    const paquet = JSON.parse(new TextDecoder().decode(clair));
+    await Promise.all(Object.entries(paquet).map(([nom, b]) => new Promise(ok => {
+      const i = new Image(); i.onload = () => { P.images[nom] = i; neuf = true; ok(); }; i.onerror = ok; i.src = 'data:image/png;base64,' + b;
+    })));
+  } catch (e) {}
+  return neuf;
+};
 P.fiche = f => { P.fiches[f.id] = f; return f; };
 
 const CADRE = [-75, -112, 75, 12];   // zone de travail en unités
@@ -263,7 +290,8 @@ function matrices(pose) {
   for (const nom of ORDRE_OS) {
     const os = OS[nom], a = (pose[nom] || 0) * rad, c = Math.cos(a), s = Math.sin(a), [px, py] = os.p;
     // rotation autour du pivot (+ déplacement pour la racine)
-    let l = [c, s, -s, c, px - c * px + s * py, py - s * px - c * py];
+    const e = os.e || 1, dx = os.d ? os.d[0] : 0, dy = os.d ? os.d[1] : 0;
+    let l = [c * e, s * e, -s * e, c * e, px - e * (c * px - s * py) + dx, py - e * (s * px + c * py) + dy];
     if (!os.parent) { l[4] += pose.x || 0; l[5] += pose.y || 0; }
     const q = os.parent && m[os.parent];
     m[nom] = q ? [q[0] * l[0] + q[2] * l[1], q[1] * l[0] + q[3] * l[1], q[0] * l[2] + q[2] * l[3], q[1] * l[2] + q[3] * l[3],

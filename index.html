@@ -106,9 +106,9 @@ td:last-child{text-align:right;font-weight:800}
   <div class="ligne"><button id="rejouer">Rejouer</button><button id="menu" class="discret">Menu</button></div>
 </div>
 
-<script src="persos/poupee.js?v=2"></script>
-<script src="persos/pieces.js?v=2"></script>
-<script src="persos/fiches.js?v=2"></script>
+<script src="persos/poupee.js?v=3"></script>
+<script src="persos/pieces.js?v=3"></script>
+<script src="persos/fiches.js?v=3"></script>
 <script>
 "use strict";
 /* ============================================================
@@ -1006,6 +1006,7 @@ function hud(st, dt) {
    ============================================================ */
 const EQUIPE = ['heros-vert'];
 let poupees = [], poupeesEchelle = 0;
+function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) poupeesEchelle = 0; }); }
 function dessinerEquipe(st, horloge) {
   if (!window.Poupee) return;
   const taille = H * .27, ech = taille * DPR / 100;
@@ -1188,7 +1189,7 @@ $('formMdp').onsubmit = async e => {
   $('msgMdp').textContent = 'Vérification…';
   const k = await cleDepuisMdp(mdp);
   if (!(await verifierCle(k))) { $('msgMdp').textContent = 'Mot de passe incorrect.'; return; }
-  cle = k; $('champMdp').value = '';
+  cle = k; $('champMdp').value = ''; chargerImagesPersos();
   try { localStorage.setItem('jeu-rythme-cle', vers64(await crypto.subtle.exportKey('raw', k))); } catch (e) {}
   $('bsecours').classList.remove('cache');
   afficher('accueil');
@@ -1225,6 +1226,7 @@ async function demarrer() {
       if (await verifierCle(k)) cle = k;
     } catch (e) {}
     $('bsecours').classList.toggle('cache', !cle);
+    chargerImagesPersos();
   }
   const m = location.search.match(/niveau=([\w-]+)/);
   if (m) choisirNiveau(m[1]);
