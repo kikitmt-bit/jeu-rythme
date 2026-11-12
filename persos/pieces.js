@@ -55,18 +55,24 @@ coiffes.bonnet = o => {
 tenues.tunique = o => {
   const c = o.couleur;
   const robe = 'M -8,-44.5 L 8,-44.5 C 10.4,-43.6 11.2,-41 11.3,-38.5 L 13.8,-18.6 Q 0,-14.8 -13.8,-18.6 L -11.3,-38.5 C -11.2,-41 -10.4,-43.6 -8,-44.5 Z';
-  const boucle = (x, y, l, h, a) => p => p.repere(x, y, a, () => {      // boucle : cadre doré, trou, ardillon
+  const boucle = (x, y, l, h, a) => p => p.repere(x, y, a, () => {      // boucle : un simple cadre doré
     p.forme(`M ${-l},${-h} L ${l},${-h} L ${l},${h} L ${-l},${h} Z`, o.boucle, {taille: 'p'});
     p.forme(`M ${-l + .9},${-h + .9} L ${l - .9},${-h + .9} L ${l - .9},${h - .9} L ${-l + .9},${h - .9} Z`, P.fonce(o.ceinture || o.bandouliere, .8), {taille: 0});
-    p.forme(`M ${-l + .5},-.35 L ${l - .7},-.35 L ${l - .7},.35 L ${-l + .5},.35 Z`, P.clair(o.boucle, .3), {taille: 0});
   });
   return [{os: 'torse', z: Z.torse, dessin(p) {
     p.forme(robe, c, {taille: 'g', force: .9});
-    p.portee(P.ell(-1, -55, 14, 9.5), robe, c, {dy: 1.2, flou: 3, force: .55});        // l'ombre de la tête
+    p.portee(P.ell(-1, -53, 14, 9.5), robe, c, {dy: 1.2, flou: 3, force: .55});        // l'ombre de la tête
+    // le col : la tunique remonte autour du cou (on ne voit pas le cou), ouverte en V sur le vêtement de dessous
+    const v = 'M -6.2,-50 L 6.2,-50 L 0,-39.8 Z';
+    p.forme(v, o.dessous || '#f3eee2', {taille: 0});
+    p.portee(P.ell(-1, -53, 13, 7.6), v, o.dessous || '#f3eee2', {dy: 1, flou: 1.4, force: .4});
+    for (const k of [-1, 1]) {
+      p.forme(`M ${k * 9.8},-43.2 L ${k * 8},-50 L ${k * 6.4},-50.2 L 0,-39.6 L 0,-36.8 L ${k * 4.2},-43.2 Z`, c, {taille: 'p', force: .9});
+      if (o.col) p.trait(`M ${k * 6.5},-50 L ${k * .3},-39.9`, o.col, .6, .9);
+    }
     p.dans(robe, () => {
       p.trait('M -6,-21 Q -5.6,-19 -6.4,-16.6', P.fonce(c, .78), .45, .5);              // plis du bas
       p.trait('M 5,-21.4 Q 5.6,-19 5,-16.4', P.fonce(c, .78), .45, .5);
-      if (o.col) p.forme('M -5.4,-45 L 0,-38.2 L 5.4,-45 L 3.1,-45 L 0,-41 L -3.1,-45 Z', o.col, {taille: 'p'});
       if (o.bandouliere) {
         p.forme('M 6.4,-45 L 9.6,-43.4 L -11.6,-25.6 L -12.8,-29 Z', o.bandouliere, {taille: 'p'});
         if (o.boucle) boucle(-3.4, -34.9, 1.9, 1.7, -40)(p);
@@ -114,6 +120,16 @@ armes['epee-ailee'] = o => {
       p.forme('M -2.2,-9.4 L 2.2,-9.4 L 2.6,-4.4 L -2.6,-4.4 Z', garde, {taille: 'p'});               // cœur de la garde
       p.forme('M 0,-9 L 1.5,-7 L 0,-5 L -1.5,-7 Z', o.pierre || '#f2cf4a', {taille: 'p'});
     });
+  }}];
+};
+
+// arme dont l'image est fournie par Kiki (paquet chiffré). `ancre` = l'endroit de l'image que la main tient
+// (0 à 1 en largeur et en hauteur). Tant qu'elle n'est pas chargée, on dessine `secours`.
+armes.image = (o, fiche) => {
+  const [mx, my] = OS.arme.p, [ax, ay] = o.ancre || [.5, .85];
+  if (!P.images[o.image]) return o.secours ? armes[o.secours.modele](o.secours, fiche) : [];
+  return [{os: 'arme', z: Z.arme, dessin(p) {
+    p.repere(mx, my, o.angle || 0, () => p.image(o.image, 0, 0, o.hauteur || 60, ax, ay));
   }}];
 };
 

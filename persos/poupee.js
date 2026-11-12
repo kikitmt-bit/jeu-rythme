@@ -23,7 +23,7 @@ const OS = {
   jambeG1:  {p: [4.6, -21],    parent: 'racine'},
   jambeG2:  {p: [4.6, -12],    parent: 'jambeG1'},
   torse:    {p: [0, -22],      parent: 'racine'},
-  tete:     {p: [0, -45],      parent: 'torse', e: .9, d: [0, -5.2]},   // tête un peu réduite et relevée : on voit le cou
+  tete:     {p: [0, -45],      parent: 'torse', e: .9, d: [0, -2.6]},   // tête un peu réduite ; le cou est caché dans le col
   queue:    {p: [20, -82],     parent: 'tete'},     // ce qui pend derrière la tête (bonnet, couette…)
   brasD1:   {p: [-8.5, -40],   parent: 'torse'},    // bras droit du perso = côté éloigné (à gauche à l'écran)
   brasD2:   {p: [-14, -33.5],  parent: 'brasD1'},
@@ -122,11 +122,12 @@ function pinceau(ctx, S, volume) {
       ctx.shadowOffsetX = LOIN + (o.dx || 0) * S; ctx.shadowOffsetY = (o.dy === undefined ? 1.5 : o.dy) * S;
       ctx.fillStyle = '#000'; ctx.fill(chemin(d)); ctx.restore(); return p;
     },
-    // image fournie (paquet chiffré) : centrée en (x, y), hauteur h ; rend false si elle n'est pas chargée
-    image(nom, x, y, h) {
+    // image fournie (paquet chiffré), hauteur h ; son point d'ancrage (ax, ay : 0 à 1 dans l'image, le centre par défaut)
+    // est posé en (x, y) ; rend false si elle n'est pas chargée
+    image(nom, x, y, h, ax = .5, ay = .5) {
       const im = P.images[nom]; if (!im) return false;
       const l = h * im.width / im.height;
-      ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, x - l / 2, y - h / 2, l, h); return true;
+      ctx.imageSmoothingQuality = 'high'; ctx.drawImage(im, x - l * ax, y - h * ay, l, h); return true;
     },
     trait(d, couleur, largeur = .6, a = 1) {
       ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = couleur; ctx.lineWidth = largeur; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -190,15 +191,15 @@ function couchesDuCorps(f) {
   bras('brasG1', 'brasG2', Z.brasG);
   jambe('jambeD1', 'jambeD2', Z.jambeD);
   jambe('jambeG1', 'jambeG2', Z.jambeG);
-  c.push({os: 'torse', z: Z.cou, dessin(p) { const cou = P.capsule(0, -51, 0, -42, 2.8);
+  c.push({os: 'torse', z: Z.cou, dessin(p) { const cou = P.capsule(0, -49, 0, -42, 2.4);
     p.forme(cou, peau, {taille: 'p'});
-    p.portee(P.ell(-1, -55.5, 12, 6), cou, peau, {dy: 1, flou: 1.6, force: .5});                // l'ombre du menton
+    p.portee(P.ell(-1, -53, 12, 6), cou, peau, {dy: 1, flou: 1.6, force: .5});                // l'ombre du menton
   }});
   // la tête et le visage : identiques pour tous (seules les couleurs changent)
   c.push({os: 'tete', z: Z.tete, dessin(p) {
     p.forme(TETE, peau, {taille: 'g', force: .5});
     p.dans(TETE, () => { p.halo(-19, -53.4, 4.8, '#ff7d8c', .3); p.halo(12.5, -53.4, 5.4, '#ff7d8c', .3); });
-    p.forme(P.ell(-6.9, -54.5, .5, .42), P.fonce(peau, .5), {taille: 0});                        // le nez : un point
+    p.forme(P.ell(-6.9, -54.5, .5, .42), P.fonce(peau, .36), {taille: 0});                        // le nez : un point
     p.forme('M -7,-51.5 Q -4.7,-52.9 -2.4,-51.5 Q -3.3,-49.7 -4.7,-49.7 Q -6.1,-49.7 -7,-51.5 Z', '#e2647c', {taille: 0});          // petite bouche neutre
     p.trait('M -7,-51.5 Q -4.7,-52.9 -2.4,-51.5', '#b0445c', .4, .8);
   }});
