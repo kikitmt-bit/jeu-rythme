@@ -167,19 +167,34 @@ function couchesDuCorps(f) {
       p.dans(`M ${pt(-8, -8)} L ${pt(-8, 8)} L ${pt(fin, 8)} L ${pt(fin, -8)} Z`,
              () => p.forme(P.capsule(ex, ey, ex + vx * l, ey + vy * l, 3.7, 4), b.manche));
     }});
-    // avant-bras : le vêtement de dessous
-    const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n;
-    c.push({os: os2, z: z + 1, dessin(p) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau); }});
+    // avant-bras : le vêtement de dessous (il s'arrête sous le début du gant)
+    const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n, sg = n * .25;
+    c.push({os: os2, z: z + 1, dessin(p) {
+      p.forme(P.capsule(cx, cy, cx - ux * (b.gant ? sg + .8 : n), cy - uy * (b.gant ? sg + .8 : n), 2.7, 2.6), b.dessous || peau);
+    }});
     // La main et le gant sont une couche à part : la main qui tient l'arme passe devant l'arme.
-    // Le gant est UNE seule forme (main + moitié de l'avant-bras) : pas de trait entre les deux, seulement des ombres.
-    // Ses deux bords (côté doigts et côté coude) sont de légers arcs, comme le bord d'un tube vu de trois quarts.
+    // La main est une BOULE. Le gant est UNE seule forme, sans trait entre ses parties : il couvre la moitié de la
+    // boule, se resserre au poignet (bien plus fin), puis s'évase vers le coude. Ses deux bords (côté doigts et
+    // côté coude) sont de légers arcs, comme le bord d'un tube vu de trois quarts.
     c.push({os: os2, z: os1 === 'brasD1' ? Z.mainD : z + 1, dessin(p) {
       p.forme(P.ell(mx, my, 3.1, 3), peau);                                                         // la main
       if (b.gant) {
-        const R = 7, sg = n * .32, gx = cx - ux * sg, gy = cy - uy * sg;                             // début du gant sur l'avant-bras
+        const RB = 3.12, s0 = sg - .7, sw = n - 2.45, rw = Math.sqrt(RB * RB - (sw - n) * (sw - n)), r0 = 3.4;
+        // rayon du gant le long du bras (s = distance depuis le coude) : évasé, poignet fin, puis la boule
+        let ray = [];
+        for (let i = 0; i <= 60; i++) {
+          const d = s0 + (n + RB - s0) * i / 60;
+          ray.push(d < sw ? rw + (r0 - rw) * Math.pow((sw - d) / (sw - s0), .85) : Math.sqrt(Math.max(0, RB * RB - (d - n) * (d - n))));
+        }
+        for (let k = 0; k < 2; k++) ray = ray.map((v, i) => i && i < 60 ? (ray[i - 1] + 2 * v + ray[i + 1]) / 4 : v);   // poignet adouci
+        const pt = (i, cote) => { const d = s0 + (n + RB - s0) * i / 60, t = ray[i] * cote; return (cx - ux * d + uy * t).toFixed(2) + ',' + (cy - uy * d - ux * t).toFixed(2); };
+        let d = 'M ' + pt(0, 1);
+        for (let i = 1; i <= 60; i++) d += ' L ' + pt(i, 1);
+        for (let i = 60; i >= 0; i--) d += ' L ' + pt(i, -1);
+        const R = 7, gx = cx - ux * sg, gy = cy - uy * sg;                                           // début du gant sur l'avant-bras
         const zone = new Path2D(); zone.arc(gx - ux * R, gy - uy * R, R, 0, 7);                      // au-delà de l'arc côté coude…
         zone.moveTo(mx - ux * R + R, my - uy * R); zone.arc(mx - ux * R, my - uy * R, R, 0, 2 * Math.PI, true);   // …et avant l'arc côté doigts
-        p.dans(zone, () => p.forme(P.capsule(gx, gy, mx, my, 2.85, 3.12), b.gant));
+        p.dans(zone, () => p.forme(d + ' Z', b.gant));
       }
     }});
   };
