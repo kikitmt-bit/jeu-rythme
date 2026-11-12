@@ -163,20 +163,24 @@ function couchesDuCorps(f) {
       p.forme(P.capsule(ex, ey, cx, cy, 3.1, 2.7), b.dessous || peau);
       p.forme(P.capsule(ex, ey, ex + (cx - ex) * .55, ey + (cy - ey) * .55, 3.7, 3.5), b.manche);   // manche courte
     }});
+    // avant-bras : on voit le vêtement de dessous, puis le gant qui ne remonte qu'à mi-chemin, avec son revers plus clair
+    const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n;
+    const r = (a, t) => (cx + (mx - cx) * a + uy * t).toFixed(2) + ',' + (cy + (my - cy) * a - ux * t).toFixed(2);
     c.push({os: os2, z: z + 1, dessin(p) {
-      p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.gant || b.dessous || peau);
+      p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau);
+      if (b.gant) {
+        const g = .3;
+        p.forme(P.capsule(cx + (mx - cx) * (g + .12), cy + (my - cy) * (g + .12), mx, my, 2.75, 2.6), b.gant);
+        p.forme(`M ${r(g - .1, -3.3)} L ${r(g - .1, 3.3)} L ${r(g + .14, 3.15)} L ${r(g + .14, -3.15)} Z`, P.clair(b.gant, .14), {taille: 'p'});
+      }
     }});
     // la main est une couche à part : celle qui tient l'arme passe devant l'arme
     c.push({os: os2, z: os1 === 'brasD1' ? Z.mainD : z + 1, dessin(p) {
       const main = P.ell(mx, my, 3.1, 3);
       p.forme(main, peau);                                                                          // la main
       if (b.gant) {                                                                                 // gant : la moitié de la main, côté poignet
-        const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n, d = -.4;
-        const q = (a, t) => (mx + ux * a - uy * t).toFixed(2) + ',' + (my + uy * a + ux * t).toFixed(2);
+        const d = -.4, q = (a, t) => (mx + ux * a - uy * t).toFixed(2) + ',' + (my + uy * a + ux * t).toFixed(2);
         p.dans(main, () => p.forme(`M ${q(d, -5)} L ${q(d, 5)} L ${q(6, 5)} L ${q(6, -5)} Z`, b.gant, {taille: 'p'}));
-        const m2 = .82;                                                                             // revers du gant, près du coude
-        const r = (a, t) => (cx + (mx - cx) * a + uy * t).toFixed(2) + ',' + (cy + (my - cy) * a - ux * t).toFixed(2);
-        p.forme(`M ${r(.05, -3.3)} L ${r(.05, 3.3)} L ${r(.3, 3.1)} L ${r(.3, -3.1)} Z`, P.clair(b.gant, .14), {taille: 'p'});
       }
     }});
   };
@@ -216,9 +220,9 @@ function couchesDuCorps(f) {
     for (const x of [-15.6, 5.2]) p.trait(`M ${x - 3},-59.8 Q ${x},-57.5 ${x + 3},-59.8`, P.fonce(yeux, .5), .9);
   }});
   if (f.oreilles === 'pointues') c.push({os: 'tete', z: Z.oreille, dessin(p) {
-    // oreille pointue : courte (elle n'atteint pas le bord de la coiffe), bord du haut presque horizontal, pointe à peine relevée
-    p.forme('M 19,-63.6 Q 26,-64.5 32,-64.8 Q 28.8,-56.6 18.8,-53.6 Z', peau, {taille: 'p', force: 1.4});
-    p.forme('M 22,-62 Q 26,-62.6 29.2,-62.8 Q 26.8,-58 22,-56.4 Z', ombreDe(peau, .26), {taille: 0});
+    // oreille pointue : courte (elle n'atteint pas le bord de la coiffe), bord du haut presque horizontal, pointe à peine relevée et légèrement arrondie (pas piquante)
+    p.forme('M 19,-63.6 Q 26,-64.5 30.4,-64.8 Q 32.7,-64.7 32,-62.7 Q 28.6,-56.4 18.8,-53.6 Z', peau, {taille: 'p', force: 1.4});
+    p.forme('M 22,-62 Q 26,-62.6 28.8,-62.7 Q 26.6,-58 22,-56.4 Z', ombreDe(peau, .26), {taille: 0});
   }});
   return c;
 }

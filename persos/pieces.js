@@ -33,9 +33,9 @@ coiffures.raie = (o, fiche) => {
 // long bonnet souple qui retombe derrière la tête
 coiffes.bonnet = o => {
   // Posé à l'arrière du crâne : il passe DERRIÈRE les cheveux, suit la forme de la tête (peu bombé) et redescend
-  // derrière l'oreille. Aucun trait : le volume vient seulement des ombres. (Forme tracée par Kiki le 12/11.)
+  // derrière l'oreille jusqu'à l'épaule (le bas passe derrière le bouclier). Aucun trait : le volume vient seulement des ombres. (Forme tracée par Kiki le 12/11.)
   return [{os: 'tete', z: Z.coiffeArr, dessin(p) {
-    p.forme('M -20,-84 C -17,-91 -10,-96 -2,-98 C 8,-100.5 20,-99.5 28,-93.5 C 34.5,-88.5 37.2,-80 37.3,-71 C 37.4,-63 36,-57 33,-53 C 31,-50.5 28,-49.5 25,-50 L 20,-62 L -4,-78 Z', o.couleur, {taille: 'g'});
+    p.forme('M -20,-84 C -17,-91 -10,-96 -2,-98 C 8,-100.5 20,-99.5 28,-93.5 C 34.5,-88.5 37.2,-80 37.3,-71 C 37.4,-62 37.8,-52 36.8,-46 C 36,-41.2 32.6,-38.4 29.6,-39.4 C 27.6,-42 26.4,-46 26,-50 L 20,-62 L -4,-78 Z', o.couleur, {taille: 'g'});
   }}];
 };
 
