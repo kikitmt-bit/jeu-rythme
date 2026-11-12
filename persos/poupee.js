@@ -36,8 +36,8 @@ const ORDRE_OS = Object.keys(OS);
 P.OS = OS;
 
 /* Ordre d'empilement des couches (du fond vers le devant) */
-const Z = {queue: 5, cheveuxArr: 8, arme: 10, brasD: 20, jambeD: 30, jambeG: 40, cou: 45, torse: 50,
-           brasG: 60, coiffeArr: 78, tete: 80, visage: 82, oreille: 84, cheveux: 86, coiffe: 90, bouclier: 95};
+const Z = {queue: 5, cheveuxArr: 8, brasD: 20, jambeD: 30, jambeG: 40, cou: 45, torse: 50,
+           brasG: 60, coiffeArr: 78, tete: 80, visage: 82, oreille: 84, cheveux: 86, coiffe: 90, arme: 92, mainD: 93, bouclier: 95};   // l'arme est au premier plan, la main qui la tient par-dessus
 P.Z = Z;
 
 /* Tête : mêmes mesures pour tout le monde */
@@ -165,6 +165,9 @@ function couchesDuCorps(f) {
     }});
     c.push({os: os2, z: z + 1, dessin(p) {
       p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.gant || b.dessous || peau);
+    }});
+    // la main est une couche à part : celle qui tient l'arme passe devant l'arme
+    c.push({os: os2, z: os1 === 'brasD1' ? Z.mainD : z + 1, dessin(p) {
       const main = P.ell(mx, my, 3.1, 3);
       p.forme(main, peau);                                                                          // la main
       if (b.gant) {                                                                                 // gant : la moitié de la main, côté poignet

@@ -15,7 +15,7 @@ Poupee.fiche({
   bras: {manche: '#3f9b3f', dessous: '#f3eee2', gant: '#7a4a2c'},
   jambes: {collant: '#f3eee2', botte: '#84502e'},
   // l'épée et le bouclier viennent d'une image de Kiki (paquet chiffré) ; `secours` = ce qu'on voit sans le mot de passe
-  arme: {modele: 'image', image: 'epee-heros.png', hauteur: 74, ancre: [.627, .795],
+  arme: {modele: 'image', image: 'epee-heros.png', hauteur: 74, ancre: [.715, .842],   // le milieu du manche
          secours: {modele: 'epee-ailee', lame: '#e6ebf2', garde: '#5a4bb8', pierre: '#f2cf4a'}},
   bouclier: {modele: 'image', image: 'bouclier-heros.png', hauteur: 47, dx: 9, dy: -1.5, angle: 6,
              secours: {modele: 'ecu', bord: '#c9d1da', fond: '#3b68c6', embleme: 'note', couleurEmbleme: '#f0c648', taille: 1.18}},
