@@ -160,7 +160,7 @@ function couchesDuCorps(f) {
   const bras = (os1, os2, z) => {
     const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
     c.push({os: os1, z, dessin(p) {
-      p.forme(P.capsule(ex, ey, cx, cy, 3.1, 2.7), b.dessous || peau);
+      p.forme(P.capsule(ex, ey, cx, cy, 3, b.gant ? 2.2 : 2.7), b.dessous || peau);
       // manche courte, un peu évasée, qui se termine par un bord droit
       const l = Math.hypot(cx - ex, cy - ey), vx = (cx - ex) / l, vy = (cy - ey) / l, fin = l * .7;
       const pt = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);
@@ -173,11 +173,12 @@ function couchesDuCorps(f) {
       if (!b.gant) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau); return; }
       // entre la manche et le gant, le bras est un morceau aux bords bien DROITS (pas de creux au coude) :
       // il part du bord de la manche et file tout droit jusque sous le début du gant
+      // Il est toujours PLUS FIN que le gant (environ 1 unité de marge de chaque côté) : c'est lui qui sort du gant.
       const l = Math.hypot(cx - ex, cy - ey), vx = (cx - ex) / l, vy = (cy - ey) / l, fin = l * .7;
       const A = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);          // le long du haut du bras
       const B = (a, t) => (cx - ux * a + uy * t).toFixed(2) + ',' + (cy - uy * a - ux * t).toFixed(2);          // le long de l'avant-bras
       p.dans(`M ${A(fin, -9)} L ${A(fin, 9)} L ${A(fin + 14, 9)} L ${A(fin + 14, -9)} Z`,                       // seulement après le bord de la manche
-             () => p.forme(`M ${A(fin - 2, 3.35)} L ${B(sg + 1, 3.05)} L ${B(sg + 1, -3.05)} L ${A(fin - 2, -3.35)} Z`, b.dessous || peau));
+             () => p.forme(`M ${A(fin - 2, 3)} L ${B(sg + 1.4, 2.25)} L ${B(sg + 1.4, -2.25)} L ${A(fin - 2, -3)} Z`, b.dessous || peau));
     }});
     // La main et le gant sont une couche à part : la main qui tient l'arme passe devant l'arme.
     // La main est une BOULE. Le gant est UNE seule forme, sans trait entre ses parties : il couvre la moitié de la
