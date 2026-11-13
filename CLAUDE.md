@@ -25,6 +25,7 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 | `images/persos.bin` | Images des personnages fournies par Kiki, **chiffrées** : JSON `{nom.png: PNG base64}`. Pour l'instant `epee-heros.png` et `bouclier-heros.png` (belles images détourées envoyées par Kiki le 12/11, réduites à ~700 px de haut). `triforce.png` (emblème du tablier de la princesse, envoyé le 13/11) est prévu dans la fiche mais pas encore dans le paquet : il faut le mot de passe pour l'ajouter (sans lui, losange doré). Pour ajouter une image il faut **redonner toutes les images** à `chiffrer.py images` (le paquet est réécrit en entier) : les récupérer d'abord en déchiffrant le paquet |
 | `outils/persos/` | `capture.js` (captures de l'atelier, avec les images chiffrées si on donne `MDP=…`) et `comparer.py` (modèle de Kiki et poupée côte à côte) |
 | `outils/analyse/` | Analyse audio (numpy + scipy) qui a servi à mapper Great Fairy's Fountain |
+| `polices/` | Polices du HUD (licence OFL, venues de fontsource) : Cinzel 700/900 (score, chaîne, CRITICAL, TIME), Libre Baskerville 700 (titre du morceau) |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
 ## Règles absolues
@@ -48,6 +49,16 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 - Personnages (12/11) : style « poupée » façon Theatrhythm (grosse tête, yeux ovales, joues roses, petit corps), en **marionnettes articulées dessinées par le code** (plus de planches d'images, plus de ChatGPT). L'ancienne scène (Link pixel art, Ganon, Grande Fée, planche chibi de Link) a été supprimée à la demande de Kiki.
 - Pour l'instant : deux persos en bas de l'écran, qui marchent au rythme (un pas par temps) : le héros (`heros-vert`, terminé le 12/11 après 10 passes avec Kiki ; son épée et son bouclier sont des images de Kiki) et la princesse (`princesse`, créée le 13/11 en carte blanche d'après 3 images de Kiki). `EQUIPE` et `dessinerEquipe` dans index.html.
 - Vision de Kiki pour la suite (capture Final Bar Line, 12/11) : l'équipe de 4 regroupée en bas à droite, une piste par perso (il tape quand on réussit sa note), attaque spéciale au bout de N notes avec un bandeau en triangle à droite (gros plan du perso + nom du coup), monstres à gauche qui meurent et sont remplacés. Une dizaine d'actions par perso (attaque, coup spécial, touché, à genoux, saut de victoire…), les mêmes pour tous.
+- **Interface de la partie (HUD) façon Final Bar Line** (13/11, d'après 4 captures de Kiki ; le menu, lui, n'a pas changé) :
+  pistes = fins traits blancs, cibles = gros anneaux blancs à droite (x = W − 0,298 H, pistes de 0,2 H à 0,554 H) ;
+  en haut à gauche, bandeau du titre (jaquette aux couleurs du morceau, logo de difficulté dont la couleur dépend des notes/s :
+  vert Facile < 1,5, bleu Normal < 2,5, orange Difficile < 3,5, rouge Expert ; nom du morceau, jeu, nombre de notes) — **toucher le bandeau = pause** ;
+  en haut au centre « 196 CHAIN » (chiffres irisés penchés) ; en haut à droite le score (chiffres chromés, il défile) ;
+  en bas la barre TIME ; en bas à droite le panneau du capitaine (= `EQUIPE[0]`, sa tête dans un rond, PV, jauge du coup spécial, coffres).
+  Effet Critical = cercle magique **de la couleur de la note** (rouge, vert, doré) avec croches qui tournent + petits triangles, texte à droite de la cible.
+  **Coffres** : quelques notes rouges portent un coffre (1 pour ~45 notes) ; Critical/Great = attrapé (il vole vers le compteur), sinon il tombe. Total sur l'écran de fin.
+  **Coup spécial** : la jauge se remplit (Critical 1, Great 0,6, Good 0,3 ; pleine à notes/5) → triangle bleu avec le gros plan du capitaine + bandeau bleu du nom du coup (`coup:` dans la fiche du perso). Pas d'effet sur le score pour l'instant.
+  Code : section « Look façon Final Bar Line » (sprites, `stylise` = textes stylés pré-dessinés) et section « HUD » (`preparerHud`, `hud`, `dessinerCoup`) de index.html. `TETE` = position de la tête dans le repère des poupées (portrait et gros plan).
 - Fluidité : 60 i/s visés. Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
 
 ## Créer un personnage (process du 12/11)

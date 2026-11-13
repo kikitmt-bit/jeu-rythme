@@ -44,7 +44,8 @@ td:last-child{text-align:right;font-weight:800}
 #tourner .tel{font-size:64px;animation:pivote 2s ease-in-out infinite}
 @keyframes pivote{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
 @media (orientation:portrait){#tourner{display:flex}}
-#bpause{position:fixed;top:8px;right:8px;width:42px;height:42px;padding:0;border-radius:50%;font-size:14px;background:rgba(0,0,0,.35);color:#fff;border:1px solid rgba(255,255,255,.45);box-shadow:none}
+#bpause{position:fixed;left:0;top:0;width:240px;height:60px;padding:0;border-radius:0;font-size:1px;background:transparent;color:transparent;border:0;box-shadow:none}
+#bpause:active{transform:none;box-shadow:none}
 </style>
 </head>
 <body>
@@ -101,14 +102,15 @@ td:last-child{text-align:right;font-weight:800}
       <tr><td style="color:#8fe3ff">Good</td><td id="rGood">0</td></tr>
       <tr><td style="color:#aaa">Miss</td><td id="rMiss">0</td></tr>
       <tr><td>Combo max</td><td id="rCombo">0</td></tr>
+      <tr><td style="color:#ffc46a">Coffres</td><td id="rCoffres">0</td></tr>
     </table>
   </div>
   <div class="ligne"><button id="rejouer">Rejouer</button><button id="menu" class="discret">Menu</button></div>
 </div>
 
-<script src="persos/poupee.js?v=16"></script>
-<script src="persos/pieces.js?v=16"></script>
-<script src="persos/fiches.js?v=16"></script>
+<script src="persos/poupee.js?v=17"></script>
+<script src="persos/pieces.js?v=17"></script>
+<script src="persos/fiches.js?v=17"></script>
 <script>
 "use strict";
 /* ============================================================
@@ -424,30 +426,66 @@ const CX = [0, 0, 0, 0], CY = [0, 0, 0, 0];   // position des 4 cibles
 function toile(n, h = n) { const c = document.createElement('canvas'); c.width = n; c.height = h; return [c, c.getContext('2d')]; }
 const rond = (x, r) => { x.beginPath(); x.arc(0, 0, r, 0, 7); x.fill(); };
 
-/* Notes façon Final Bar Line. Unité : rayon de la note = 64 px, toile de 160 px (halo autour). */
-function bille(clair, vif, sombre, fond, centre) {
+/* ============================================================
+   Look façon Final Bar Line (captures de Kiki, 13/11) : notes, cibles, effets, textes du HUD.
+   Polices dans polices/ (licence OFL) : Cinzel pour les chiffres et les mots (CHAIN, CRITICAL, TIME),
+   Libre Baskerville pour le titre du morceau.
+   ============================================================ */
+const POLICE = 'Cinzel,"Times New Roman",serif', POLICE_TITRE = '"Libre Baskerville",Georgia,serif';
+const POLICE_SANS = 'system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+function chargerPolices() {
+  if (!window.FontFace || !document.fonts) return Promise.resolve();
+  return Promise.all([['Cinzel', 'cinzel-700', '700'], ['Cinzel', 'cinzel-900', '900'], ['Libre Baskerville', 'libre-baskerville-700', '700']]
+    .map(([nom, f, w]) => new FontFace(nom, `url(polices/${f}.woff2)`, {weight: w}).load().then(p => document.fonts.add(p)).catch(() => {})));
+}
+// chemin d'un rectangle aux coins arrondis
+function rr(x, l, t, w, h, r) {
+  x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r);
+  x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath();
+}
+
+/* Couleurs des trois sortes de notes : [clair, vif, foncé, nuit] */
+const TEINTES = {tap: ['#ff7a7a', '#f2141f', '#8a0010', '#3a0006'], hold: ['#a4ffa4', '#1fd640', '#0b6a1c', '#03290a'], swipe: ['#ffe98a', '#ffbd0a', '#a86a00', '#2c1c00']};
+
+/* Une note (toile de 160 px, rayon 64) : rouge = taper, verte = maintenir (gros point blanc au centre),
+   dorée = glisser (pastille dorée au centre, la flèche est peinte par-dessus) */
+function bille(type) {
+  const [clair, vif, fonce, nuit] = TEINTES[type];
   const [c, x] = toile(160); x.translate(80, 80);
-  let gr = x.createRadialGradient(0, 0, 54, 0, 0, 80);
-  gr.addColorStop(0, vif + 'aa'); gr.addColorStop(1, vif + '00');
-  x.fillStyle = gr; rond(x, 80);                                   // halo
-  x.fillStyle = sombre; rond(x, 65);                               // bord foncé
-  gr = x.createLinearGradient(0, -62, 0, 62);
-  gr.addColorStop(0, clair); gr.addColorStop(.45, vif); gr.addColorStop(1, sombre);
-  x.fillStyle = gr; rond(x, 61);                                   // anneau coloré
-  x.fillStyle = 'rgba(0,0,0,.45)'; rond(x, 44);
-  if (centre === 'blanc') {
-    gr = x.createRadialGradient(0, -6, 4, 0, 0, 42); gr.addColorStop(0, fond); gr.addColorStop(1, sombre);
-    x.fillStyle = gr; rond(x, 41);                                 // intérieur foncé
-    x.fillStyle = 'rgba(0,0,0,.35)'; rond(x, 25);
-    gr = x.createLinearGradient(0, -22, 0, 22); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#e4e4e4');
-    x.fillStyle = gr; rond(x, 22);                                 // point blanc
+  let gr = x.createRadialGradient(0, 0, 52, 0, 0, 80);
+  gr.addColorStop(0, vif + 'bb'); gr.addColorStop(1, vif + '00');
+  x.fillStyle = gr; rond(x, 80);                                         // halo
+  gr = x.createLinearGradient(0, -64, 0, 64);
+  gr.addColorStop(0, clair); gr.addColorStop(.45, vif); gr.addColorStop(1, fonce);
+  x.fillStyle = gr; rond(x, 64);                                         // gros anneau vif
+  if (type === 'swipe') {
+    x.fillStyle = 'rgba(46,30,0,.92)'; rond(x, 50);                      // intérieur sombre
+    gr = x.createRadialGradient(0, 0, 0, 0, 0, 50); gr.addColorStop(.55, 'rgba(255,190,40,0)'); gr.addColorStop(1, 'rgba(255,190,40,.28)');
+    x.fillStyle = gr; rond(x, 50);
+    x.fillStyle = '#c66c00'; rond(x, 21);                                 // pastille dorée
+    gr = x.createRadialGradient(-3, -4, 1, 0, 0, 17); gr.addColorStop(0, '#fff6b8'); gr.addColorStop(.5, '#ffcf2a'); gr.addColorStop(1, '#f09a00');
+    x.fillStyle = gr; rond(x, 17);
   } else {
-    gr = x.createRadialGradient(0, 0, 0, 0, 0, 41);
-    gr.addColorStop(0, '#fff7c0'); gr.addColorStop(.25, '#ffd23a'); gr.addColorStop(.6, '#7a5200'); gr.addColorStop(1, fond);
-    x.fillStyle = gr; rond(x, 41);                                 // cœur doré lumineux
+    gr = x.createRadialGradient(0, 0, 30, 0, 0, 47); gr.addColorStop(0, fonce); gr.addColorStop(1, nuit);
+    x.fillStyle = gr; rond(x, 47);                                       // bande sombre
+    x.fillStyle = vif; rond(x, 35);                                       // fin anneau vif autour du point
+    gr = x.createLinearGradient(0, -30, 0, 30); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#dedede');
+    x.fillStyle = gr; rond(x, 29);                                       // gros point blanc
   }
-  x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 4;        // reflet
-  x.beginPath(); x.arc(0, 0, 55, Math.PI * 1.15, Math.PI * 1.6); x.stroke();
+  x.strokeStyle = 'rgba(255,255,255,.45)'; x.lineWidth = 3.5;            // reflet
+  x.beginPath(); x.arc(0, 0, 59, Math.PI * 1.15, Math.PI * 1.6); x.stroke();
+  return c;
+}
+/* Bout d'une note tenue (le début de la bande, côté gauche) : point blanc cerclé de vert */
+function boutTenue() {
+  const [clair, vif, fonce] = TEINTES.hold;
+  const [c, x] = toile(160); x.translate(80, 80);
+  let gr = x.createRadialGradient(0, 0, 50, 0, 0, 80); gr.addColorStop(0, vif + '99'); gr.addColorStop(1, vif + '00');
+  x.fillStyle = gr; rond(x, 80);
+  gr = x.createLinearGradient(0, -64, 0, 64); gr.addColorStop(0, clair); gr.addColorStop(.5, vif); gr.addColorStop(1, fonce);
+  x.fillStyle = gr; rond(x, 64);
+  gr = x.createLinearGradient(0, -44, 0, 44); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#e2e2e2');
+  x.fillStyle = gr; rond(x, 44);
   return c;
 }
 /* Flèche des notes à glisser : blanche, cernée de foncé, elle part du centre et sort largement du rond.
@@ -455,29 +493,29 @@ function bille(clair, vif, sombre, fond, centre) {
 function fleche() {
   const [c, x] = toile(256); x.translate(128, 128); x.scale(64, 64);
   x.beginPath();
-  x.moveTo(1.8, 0); x.lineTo(.86, -.68); x.lineTo(1.02, -.17); x.lineTo(-.1, -.17);
-  x.lineTo(-.1, .17); x.lineTo(1.02, .17); x.lineTo(.86, .68); x.closePath();
+  x.moveTo(1.85, 0); x.lineTo(.84, -.64); x.lineTo(1.0, -.11); x.lineTo(-.05, -.11);
+  x.lineTo(-.05, .11); x.lineTo(1.0, .11); x.lineTo(.84, .64); x.closePath();
   x.lineJoin = 'round';
   x.shadowColor = 'rgba(0,0,0,.7)'; x.shadowBlur = 10;
-  x.lineWidth = .2; x.strokeStyle = '#2b1a00'; x.stroke();
+  x.lineWidth = .16; x.strokeStyle = '#3a2400'; x.stroke();
   x.shadowBlur = 0;
-  const gr = x.createLinearGradient(0, -.6, 0, .6); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#fff1c4');
+  const gr = x.createLinearGradient(0, -.6, 0, .6); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#fff3cf');
   x.fillStyle = gr; x.fill();
   return c;
 }
-/* Cible : rond sombre cerclé de blanc (toile 256, anneau de rayon 100 = R) */
+/* Cible : gros anneau blanc, intérieur sombre (toile 256, anneau de rayon 100 = R) */
 function cible() {
   const [c, x] = toile(256); x.translate(128, 128);
-  let gr = x.createRadialGradient(0, 0, 92, 0, 0, 128);
-  gr.addColorStop(0, 'rgba(160,255,240,.55)'); gr.addColorStop(1, 'rgba(160,255,240,0)');
-  x.fillStyle = gr; rond(x, 128);
-  x.fillStyle = '#ffffff'; rond(x, 101);
-  x.fillStyle = '#bfe9e4'; rond(x, 90);
-  gr = x.createRadialGradient(0, -20, 6, 0, 0, 86);
-  gr.addColorStop(0, '#2e4a48'); gr.addColorStop(.7, '#0b1716'); gr.addColorStop(1, '#030707');
-  x.fillStyle = gr; rond(x, 86);
-  x.strokeStyle = 'rgba(190,255,245,.22)'; x.lineWidth = 3; x.beginPath(); x.arc(0, 0, 62, 0, 7); x.stroke();
-  x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 5; x.beginPath(); x.arc(0, 0, 76, Math.PI * 1.15, Math.PI * 1.55); x.stroke();
+  let gr = x.createRadialGradient(0, 0, 94, 0, 0, 126);
+  gr.addColorStop(0, 'rgba(215,255,250,.5)'); gr.addColorStop(1, 'rgba(215,255,250,0)');
+  x.fillStyle = gr; rond(x, 126);                                        // lueur
+  gr = x.createLinearGradient(0, -101, 0, 101); gr.addColorStop(0, '#ffffff'); gr.addColorStop(1, '#cdd8d9');
+  x.fillStyle = gr; rond(x, 101);                                        // anneau blanc
+  gr = x.createRadialGradient(0, -10, 4, 0, 0, 80);
+  gr.addColorStop(0, '#26423f'); gr.addColorStop(.65, '#0e1c1d'); gr.addColorStop(1, '#020606');
+  x.fillStyle = gr; rond(x, 80);                                         // intérieur sombre
+  x.strokeStyle = 'rgba(150,230,225,.17)'; x.lineWidth = 3; x.beginPath(); x.arc(0, 0, 50, 0, 7); x.stroke();
+  x.strokeStyle = 'rgba(0,0,0,.4)'; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 79, 0, 7); x.stroke();
   return c;
 }
 function lueur(col) {
@@ -487,23 +525,107 @@ function lueur(col) {
   x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
   return c;
 }
-function etoile() {
-  const [c, x] = toile(64);
-  x.translate(32, 32);
-  const gr = x.createRadialGradient(0, 0, 0, 0, 0, 30); gr.addColorStop(0, '#fff'); gr.addColorStop(.3, '#ffe68a'); gr.addColorStop(1, 'rgba(255,200,60,0)');
-  x.fillStyle = gr;
-  x.beginPath();
-  for (let i = 0; i < 8; i++) { const r = i % 2 ? 6 : 30, a = i * Math.PI / 4; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
-  x.closePath(); x.fill();
+/* Petite croche (ou double croche), tête en (0, 0), ~40 de haut */
+function croche(x, double) {
+  x.beginPath(); x.ellipse(0, 0, 9, 6.5, -.4, 0, 7); x.fill();
+  x.fillRect(6, -33, 3.4, 33);
+  if (double) {
+    x.beginPath(); x.ellipse(22, -5, 9, 6.5, -.4, 0, 7); x.fill();
+    x.fillRect(28, -38, 3.4, 33);
+    x.beginPath(); x.moveTo(6, -33); x.lineTo(31.4, -38); x.lineTo(31.4, -30); x.lineTo(6, -25); x.closePath(); x.fill();
+  } else {
+    x.beginPath(); x.moveTo(9.4, -33); x.quadraticCurveTo(24, -25, 19, -9); x.quadraticCurveTo(18, -19, 9.4, -22); x.closePath(); x.fill();
+  }
+}
+/* Effet Critical (toile 512) : cercle magique de la couleur de la note, traits qui rayonnent */
+function cercleMagique(type) {
+  const [clair, vif] = TEINTES[type];
+  const [c, x] = toile(512); x.translate(256, 256);
+  const rnd = hasard(type.length * 97 + 3);
+  x.lineCap = 'round'; x.globalCompositeOperation = 'lighter';
+  x.shadowColor = vif; x.shadowBlur = 24;
+  x.strokeStyle = vif; x.globalAlpha = .6; x.lineWidth = 44; x.beginPath(); x.arc(0, 0, 190, 0, 7); x.stroke();
+  x.globalAlpha = 1; x.lineWidth = 16; x.beginPath(); x.arc(0, 0, 190, 0, 7); x.stroke();
+  x.strokeStyle = clair; x.lineWidth = 6; x.beginPath(); x.arc(0, 0, 192, 0, 7); x.stroke();
+  x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 228, 0, 7); x.stroke();
+  x.globalAlpha = .9; x.lineWidth = 3.5; x.beginPath(); x.arc(0, 0, 148, 0, 7); x.stroke();
+  x.globalAlpha = 1; x.lineWidth = 8;
+  for (let i = 0; i < 14; i++) {
+    const a = i / 14 * Math.PI * 2 + rnd() * .25, r0 = 200 + rnd() * 12, r1 = r0 + 20 + rnd() * 30;
+    x.beginPath(); x.moveTo(Math.cos(a) * r0, Math.sin(a) * r0); x.lineTo(Math.cos(a) * r1, Math.sin(a) * r1); x.stroke();
+  }
   return c;
 }
+/* … et la couronne de notes de musique qui tourne à l'intérieur */
+function cercleNotes(type) {
+  const [clair, vif] = TEINTES[type];
+  const [c, x] = toile(512); x.translate(256, 256);
+  const rnd = hasard(type.length * 31 + 7);
+  x.shadowColor = vif; x.shadowBlur = 10;
+  for (let i = 0; i < 9; i++) {
+    const a = i / 9 * Math.PI * 2 + rnd() * .3, r = 160 + rnd() * 22;
+    x.save(); x.translate(Math.cos(a) * r, Math.sin(a) * r); x.rotate(a + Math.PI / 2 + (rnd() - .5) * .8);
+    x.scale(.85, .85); x.fillStyle = i % 3 ? '#ffffff' : clair; croche(x, i % 4 === 1); x.restore();
+  }
+  return c;
+}
+/* Petit triangle (contour) qui s'envole autour de la cible */
+function triangle(col) {
+  const [c, x] = toile(48); x.translate(24, 26);
+  x.shadowColor = col; x.shadowBlur = 6; x.strokeStyle = col; x.lineWidth = 3.6; x.lineJoin = 'round';
+  x.beginPath();
+  for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 3; x.lineTo(Math.cos(a) * 14, Math.sin(a) * 14); }
+  x.closePath(); x.stroke();
+  return c;
+}
+/* Coffre au trésor (toile 96 × 84) */
+function coffre() {
+  const [c, x] = toile(96, 84); x.translate(48, 48);
+  x.lineJoin = 'round';
+  const couvercle = () => { x.beginPath(); x.moveTo(-38, -10); x.lineTo(-38, -20); x.bezierCurveTo(-38, -42, 38, -42, 38, -20); x.lineTo(38, -10); x.closePath(); };
+  x.fillStyle = '#3a1200'; rr(x, -42, -12, 84, 46, 7); x.fill();                       // contour sombre
+  x.strokeStyle = '#3a1200'; x.lineWidth = 8; couvercle(); x.stroke();
+  let gr = x.createLinearGradient(0, -10, 0, 30); gr.addColorStop(0, '#f0582a'); gr.addColorStop(1, '#a3240c');
+  x.fillStyle = gr; rr(x, -38, -10, 76, 40, 5); x.fill();                              // caisse
+  gr = x.createLinearGradient(0, -40, 0, -10); gr.addColorStop(0, '#ff8a4a'); gr.addColorStop(1, '#c2360f');
+  x.fillStyle = gr; couvercle(); x.fill();                                             // couvercle bombé
+  const or = x.createLinearGradient(0, -40, 0, 30); or.addColorStop(0, '#fff2a0'); or.addColorStop(.5, '#f2c040'); or.addColorStop(1, '#b07818');
+  x.fillStyle = or;
+  for (const bx of [-30, 22]) x.fillRect(bx, -34, 8, 64);                              // bandes dorées
+  x.fillRect(-38, -14, 76, 7);                                                          // bord du couvercle
+  rr(x, -8, -16, 16, 20, 3); x.fill();                                                 // serrure
+  x.fillStyle = '#3a1200'; x.beginPath(); x.arc(0, -9, 3, 0, 7); x.fill(); x.fillRect(-1.5, -9, 3, 8);
+  x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(-26, -32, 40, 3);                  // reflet
+  return c;
+}
+/* Cristal du coup spécial (hexagone, toile 128) */
+function cristal() {
+  const [c, x] = toile(128); x.translate(64, 64);
+  const hex = r => { x.beginPath(); for (let i = 0; i < 6; i++) { const a = -Math.PI / 2 + i * Math.PI / 3; x.lineTo(Math.cos(a) * r, Math.sin(a) * r); } x.closePath(); };
+  let gr = x.createLinearGradient(0, -62, 0, 62); gr.addColorStop(0, '#fff3b8'); gr.addColorStop(.5, '#e2a93a'); gr.addColorStop(1, '#8a5a12');
+  x.fillStyle = gr; hex(62); x.fill();                                                  // cadre doré
+  x.fillStyle = '#2a1800'; hex(54); x.fill();
+  gr = x.createLinearGradient(-30, -50, 30, 50); gr.addColorStop(0, '#d8f8ff'); gr.addColorStop(.4, '#52b6ff'); gr.addColorStop(1, '#12307e');
+  x.fillStyle = gr; hex(50); x.fill();                                                  // pierre bleue
+  for (let i = 0; i < 6; i++) {                                                         // facettes
+    const a = -Math.PI / 2 + i * Math.PI / 3, b = a + Math.PI / 3;
+    x.fillStyle = i % 2 ? 'rgba(255,255,255,.16)' : 'rgba(0,20,60,.18)';
+    x.beginPath(); x.moveTo(0, 0); x.lineTo(Math.cos(a) * 50, Math.sin(a) * 50); x.lineTo(Math.cos(b) * 50, Math.sin(b) * 50); x.fill();
+  }
+  x.fillStyle = 'rgba(255,255,255,.85)'; hex(15); x.fill();
+  x.fillStyle = 'rgba(160,230,255,.9)'; hex(11); x.fill();
+  return c;
+}
+const TRI_COULEURS = ['#6fe8ff', '#ffe65a', '#8dff7a', '#ff8ac8', '#ffffff'];
 const SPR = {
-  tap: bille('#ff8a8a', '#f01c2a', '#6e0010', '#8a0a18', 'blanc'),
-  hold: bille('#a6ffaa', '#25cf3c', '#0a4d14', '#0f6a1e', 'blanc'),
-  swipe: bille('#fff3a0', '#f2b705', '#6b4300', '#2a1c00', 'or'),
-  fleche: fleche(), cible: cible(),
-  lueurOr: lueur('rgba(255,220,120,.8)'), lueurRose: lueur('rgba(255,140,210,.7)'), lueurVert: lueur('rgba(120,255,150,.7)'), lueurBleu: lueur('rgba(130,220,255,.6)'),
-  etoile: etoile(),
+  tap: bille('tap'), hold: bille('hold'), swipe: bille('swipe'), bout: boutTenue(),
+  fleche: fleche(), cible: cible(), coffre: coffre(), cristal: cristal(),
+  lueurOr: lueur('rgba(255,220,120,.8)'), lueurVert: lueur('rgba(120,255,150,.7)'), lueurBleu: lueur('rgba(130,220,255,.6)'),
+  lueur: {tap: lueur('rgba(255,90,90,.8)'), hold: lueur('rgba(110,255,130,.75)'), swipe: lueur('rgba(255,215,90,.8)')},
+  cercle: {tap: cercleMagique('tap'), hold: cercleMagique('hold'), swipe: cercleMagique('swipe')},
+  notesCercle: {tap: cercleNotes('tap'), hold: cercleNotes('hold'), swipe: cercleNotes('swipe')},
+  tri: TRI_COULEURS.map(triangle),
+  points: TRI_COULEURS.map(c => lueur(c)),
 };
 // une flèche déjà tournée par sens de glissé (évite save/rotate/restore à chaque image)
 const FLECHES_TOURNEES = {};
@@ -511,32 +633,85 @@ for (const d of ['r', 'dr', 'd', 'dl', 'l', 'ul', 'u', 'ur']) {
   const [c, x] = toile(256); x.translate(128, 128); x.rotate(DIR_ANGLE[d] * Math.PI / 180); x.drawImage(SPR.fleche, -128, -128);
   FLECHES_TOURNEES[d] = c;
 }
+// dessine une image centrée en (x, y), tournée
+function dessinTourne(img, x, y, l, h, angle) {
+  const c = Math.cos(angle) * DPR, s = Math.sin(angle) * DPR;
+  g.setTransform(c, s, -s, c, x * DPR, y * DPR);
+  g.drawImage(img, -l / 2, -h / 2, l, h);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
 
-/* Textes pré-dessinés (jugements, score, chaîne) : on ne redessine un texte que quand il change */
-let TXT = {};
-function texteImage(txt, taille, remplissage, contourCol, italique = true) {
-  const [m, mx] = toile(4);
-  const police = `${italique ? 'italic ' : ''}900 ${taille}px system-ui,sans-serif`;
-  mx.font = police;
-  const larg = Math.ceil(mx.measureText(txt).width + taille * .7), haut = Math.ceil(taille * 1.5);
-  const [c, x] = toile(Math.ceil(larg * DPR), Math.ceil(haut * DPR));
-  x.scale(DPR, DPR); x.font = police; x.textBaseline = 'middle'; x.textAlign = 'center'; x.lineJoin = 'round';
-  x.lineWidth = Math.max(3, taille * .24); x.strokeStyle = contourCol; x.strokeText(txt, larg / 2, haut / 2);
-  x.fillStyle = typeof remplissage === 'function' ? remplissage(x, larg, haut) : remplissage; x.fillText(txt, larg / 2, haut / 2);
-  c.l = larg; c.h = haut;
+/* Textes stylés, pré-dessinés à la bonne résolution (on ne redessine que quand la taille change).
+   o = {taille, poids, police, remplissage (couleur ou fonction(x, haut, bas, largeur)), contours: [[épaisseur en taille, couleur]],
+        lueur: [flou en px, couleur], penche (italique), etire (largeur)} */
+function stylise(txt, o) {
+  const t = o.taille, police = `${o.poids || 900} ${t}px ${o.police || POLICE}`, et = o.etire || 1, pe = o.penche || 0;
+  const [, mx] = toile(4); mx.font = police;
+  const larg = mx.measureText(txt).width;
+  const marge = t * .25 + (o.lueur ? o.lueur[0] : 0);
+  const haut = t * 1.05 + marge * 2, base = marge + t * .82;
+  const l = larg * et + t * pe * .8 + marge * 2;
+  const [c, x] = toile(Math.ceil(l * DPR), Math.ceil(haut * DPR));
+  x.scale(DPR, DPR); x.translate(marge, base); x.transform(et, 0, -pe, 1, 0, 0);
+  x.font = police; x.textBaseline = 'alphabetic'; x.lineJoin = 'round';
+  if (o.espace && 'letterSpacing' in x) x.letterSpacing = o.espace + 'px';
+  if (o.lueur) { x.shadowColor = o.lueur[1]; x.shadowBlur = o.lueur[0] * DPR; }
+  for (const [ep, col] of o.contours || []) { x.lineWidth = ep * t; x.strokeStyle = col; x.strokeText(txt, 0, 0); x.shadowColor = 'transparent'; }
+  const r = o.remplissage || '#fff';
+  x.fillStyle = typeof r === 'function' ? r(x, -t * .72, 0, larg) : r; x.fillText(txt, 0, 0);
+  Object.assign(c, {l, h: haut, base, marge, t, avance: larg * et});
   return c;
 }
-const arcEnCiel = (x, l) => { const gr = x.createLinearGradient(l * .1, 0, l * .9, 0); ['#ff6fd0', '#ffb34a', '#fff35a', '#6dff9a', '#5fd6ff', '#b98bff'].forEach((c, i) => gr.addColorStop(i / 5, c)); return gr; };
-const vertical = (...cs) => (x, l, h) => { const gr = x.createLinearGradient(0, h * .2, 0, h * .8); cs.forEach((c, i) => gr.addColorStop(i / (cs.length - 1), c)); return gr; };
+const degrade = (x, h, b, stops) => { const gr = x.createLinearGradient(0, h, 0, b); stops.forEach(([p, c]) => gr.addColorStop(p, c)); return gr; };
+const CHROME = (x, h, b) => degrade(x, h, b, [[0, '#ffffff'], [.4, '#ddf0fb'], [.5, '#8eaec4'], [.58, '#d3e8f4'], [1, '#ffffff']]);
+const IRISE = (x, h, b, l) => {
+  const gr = x.createLinearGradient(0, h, l * .9, b);
+  ['#ffa6dc', '#ffe98c', '#adffb4', '#8eeaff', '#c9adff', '#ffb3e0'].forEach((c, i, a) => gr.addColorStop(i / (a.length - 1), c));
+  return gr;
+};
+const ARC_EN_CIEL = (x, h, b, l) => {
+  const gr = x.createLinearGradient(0, 0, l, 0);
+  [[0, '#ff86d2'], [.2, '#ffbf5c'], [.37, '#fff27a'], [.55, '#90ff9e'], [.72, '#70e2ff'], [.87, '#86a2ff'], [1, '#c88cff']].forEach(([p, c]) => gr.addColorStop(p, c));
+  return gr;
+};
+const DEGRADE = (...cs) => (x, h, b) => degrade(x, h, b, cs.map((c, i) => [i / (cs.length - 1), c]));
+function chiffresStyle(o) { const a = {}; for (const ch of '0123456789') a[ch] = stylise(ch, o); return a; }
+// écrit un nombre avec des chiffres pré-dessinés ; cale = 1 : aligné à droite sur x, 0 : à gauche. Rend le bord gauche.
+function ecrireNombre(atlas, txt, x, yBase, ech = 1, cale = 1) {
+  let w = 0;
+  for (const ch of txt) w += atlas[ch].avance;
+  let px = x - w * ech * cale;
+  const gauche = px;
+  for (const ch of txt) {
+    const img = atlas[ch];
+    g.drawImage(img, px - img.marge * ech, yBase - img.base * ech, img.l * ech, img.h * ech);
+    px += img.avance * ech;
+  }
+  return gauche;
+}
+
+/* Textes pré-dessinés (jugements, chiffres du score et de la chaîne) : refaits quand la taille de l'écran change */
+let TXT = {}, CHIF = {};
 function preparerTextes() {
-  const t = Math.round(R * .62);
+  const tj = R * 1.02;
+  const jug = (txt, rempl, sombre = '#151a3e') => stylise(txt, {taille: tj, remplissage: rempl, contours: [[.2, sombre], [.075, '#ffffff']], lueur: [tj * .2, 'rgba(255,255,255,.5)'], etire: .74});
   TXT = {
-    CRITICAL: texteImage('CRITICAL', t, arcEnCiel, '#ffffff'),
-    GREAT: texteImage('GREAT', t, vertical('#fff0fa', '#ff5fb8'), '#ffffff'),
-    GOOD: texteImage('GOOD', t, vertical('#effcff', '#3fb8ff'), '#ffffff'),
-    MISS: texteImage('MISS', t, vertical('#dddddd', '#777777'), '#222222'),
+    CRITICAL: jug('CRITICAL', ARC_EN_CIEL),
+    GREAT: jug('GREAT', DEGRADE('#fff8d0', '#ffd04a', '#ff9a1a')),
+    GOOD: jug('GOOD', DEGRADE('#eafff4', '#7dffb0', '#22b86a')),
+    MISS: stylise('MISS', {taille: tj, remplissage: DEGRADE('#ececf4', '#8a8aa0'), contours: [[.2, '#1a1a26']], etire: .74}),
   };
+  const ts = H * .083;
+  CHIF.score = chiffresStyle({taille: ts, poids: 700, remplissage: CHROME, contours: [[.085, '#0c1a2c']], lueur: [ts * .1, 'rgba(0,0,0,.55)']});
+  const tc = H * .135;
+  CHIF.chaine = chiffresStyle({taille: tc, poids: 900, remplissage: IRISE, contours: [[.12, '#0b1630'], [.045, 'rgba(255,255,255,.95)']], lueur: [tc * .13, 'rgba(110,230,255,.85)'], penche: .2});
+  TXT.CHAIN = stylise('CHAIN', {taille: tc * .34, poids: 900, remplissage: CHROME, contours: [[.17, '#0b1e2e']], lueur: [tc * .34 * .3, 'rgba(110,230,255,.9)']});
+  CHIF.petit = chiffresStyle({taille: H * .036, poids: 700, remplissage: DEGRADE('#ffffff', '#e6e6e6'), contours: [[.18, '#2a1a08']]});
   cacheHud = {};
+}
+/* Petits textes d'aide (police du système) */
+function texteImage(txt, taille, remplissage, contourCol) {
+  return stylise(txt, {taille, poids: 800, police: POLICE_SANS, remplissage, contours: [[.24, contourCol]]});
 }
 let cacheHud = {};
 function texteCache(cle, txt, ...args) {
@@ -627,37 +802,32 @@ function miseEnPage() {
   W = innerWidth; H = innerHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
   g.setTransform(DPR, 0, 0, DPR, 0, 0);
-  // jeu en paysage uniquement (style Switch) : notes de gauche à droite, cibles à droite,
-  // pistes dans la moitié haute, une bande libre en bas de l'écran pour les pouces.
-  const haut = H * .19, bas = H * .64, ecart = (bas - haut) / 3;
-  R = Math.min(ecart * .44, W * .055);
-  for (let i = 0; i < 4; i++) { CX[i] = W * .82; CY[i] = bas - i * ecart; }   // aigu = en haut
+  // jeu en paysage uniquement (style Switch, proportions de Final Bar Line) : notes de gauche à droite,
+  // cibles à droite, pistes dans la moitié haute, le bas de l'écran est libre pour les pouces et l'équipe.
+  const haut = H * .2, ecart = H * .118;
+  R = Math.min(H * .051, W * .035);
+  for (let i = 0; i < 4; i++) { CX[i] = W - H * .298; CY[i] = haut + (3 - i) * ecart; }   // aigu = en haut
   XFAR = -R * 1.5;
-  RN = R * .8;   // rayon d'une note
+  RN = R * .74;   // rayon d'une note
   fond = decor();
   pistesFixes();
-  preparerTextes();
+  preparerHud();
   lucioles = Array.from({length: 28}, () => ({x: Math.random() * W, y: Math.random() * H * .8, p: Math.random() * 6, v: .2 + Math.random() * .5, s: 2 + Math.random() * 3}));
 }
-// les pistes ne bougent pas : on les peint une fois pour toutes dans le décor
-let surbrillance = [];
+// les pistes ne bougent pas : on les peint une fois pour toutes dans le décor (fins traits blancs, comme sur Switch)
 function pistesFixes() {
   const d = fond.getContext('2d');
   d.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const y0 = CY[3] - R * 1.5, y1 = CY[0] + R * 1.5;
+  const y0 = CY[3] - R * 1.4, y1 = CY[0] + R * 1.4;
   const gb = d.createLinearGradient(0, 0, W, 0);
-  gb.addColorStop(0, 'rgba(10,20,30,0)'); gb.addColorStop(.3, 'rgba(10,20,30,.22)'); gb.addColorStop(1, 'rgba(10,20,30,.32)');
+  gb.addColorStop(0, 'rgba(5,12,20,0)'); gb.addColorStop(.35, 'rgba(5,12,20,.14)'); gb.addColorStop(1, 'rgba(5,12,20,.2)');
   d.fillStyle = gb; d.fillRect(0, y0, W, y1 - y0);
   for (let i = 0; i < 4; i++) {
-    d.fillStyle = 'rgba(0,0,0,.25)'; d.fillRect(0, CY[i] - .5, W, 3);
-    d.fillStyle = 'rgba(255,255,255,.55)'; d.fillRect(0, CY[i] - 1, W, 2);
+    const gr = d.createLinearGradient(0, 0, CX[i], 0);
+    gr.addColorStop(0, 'rgba(225,248,255,.1)'); gr.addColorStop(.3, 'rgba(225,248,255,.4)'); gr.addColorStop(1, 'rgba(225,248,255,.5)');
+    d.fillStyle = 'rgba(0,0,0,.2)'; d.fillRect(0, CY[i] + .6, CX[i], 1.4);
+    d.fillStyle = gr; d.fillRect(0, CY[i] - .8, CX[i], 1.4);
   }
-  // dégradés réutilisés à chaque image pour éclairer la piste de la prochaine note
-  surbrillance = [0, 1, 2, 3].map(i => {
-    const far = proj(i, 1), gg = g.createLinearGradient(far.x, far.y, CX[i], CY[i]);
-    gg.addColorStop(0, 'rgba(255,240,200,0)'); gg.addColorStop(1, 'rgba(255,240,200,.25)');
-    return gg;
-  });
 }
 let lucioles = [];
 addEventListener('resize', () => { if (innerHeight > innerWidth) mettrePause(); miseEnPage(); });
@@ -680,7 +850,8 @@ function bande(lane, s0, s1, w) {
    ============================================================ */
 let etat = 'menu', notes = [], prochaine = 0, total = 0;
 let score = 0, points = 0, combo = 0, comboMax = 0, hp = 100, comptes = {};
-let effets = [], textes = [], appuis = [0, 0, 0, 0], comboPop = 0, autoStart = 0;
+let effets = [], textes = [], appuis = [0, 0, 0, 0], autoStart = 0;
+let coffres = 0, coffresMax = 0, jauge = 0, JAUGE_MAX = 30;
 const gestes = new Map();
 
 function nouvellePartie() {
@@ -689,38 +860,67 @@ function nouvellePartie() {
   prochaine = 0; score = 0; points = 0; combo = 0; comboMax = 0; hp = 100;
   comptes = {CRITICAL: 0, GREAT: 0, GOOD: 0, MISS: 0};
   effets = []; textes = []; gestes.clear();
+  // coffres : quelques notes rouges portent un coffre ; on l'attrape avec un Critical ou un Great
+  const cand = notes.filter((n, i) => i >= 8 && n.type === 'tap' && n.paire === undefined);
+  coffresMax = Math.min(cand.length, Math.max(2, Math.round(notes.length / 45)));
+  for (let k = 0; k < coffresMax; k++) cand[Math.floor((k + .5) * cand.length / coffresMax)].coffre = true;
+  coffres = 0; coffrePop = 0; scoreAffiche = 0; comboAge = 9;
+  // coup spécial du capitaine : la jauge se remplit avec les bonnes notes (environ 4 coups par morceau)
+  jauge = 0; JAUGE_MAX = Math.max(20, Math.round(notes.length / 5)); coup = null;
+  preparerBandeau();
 }
 
-function noter(j, lane, special) {
+function noter(j, n) {
   if (!j) j = 'GOOD';
+  const lane = n.lane;
   comptes[j]++;
   if (j === 'MISS') { combo = 0; hp = Math.max(0, hp - 8); }
   else {
-    combo++; comboMax = Math.max(comboMax, combo); comboPop = 1;
+    combo++; comboMax = Math.max(comboMax, combo); comboAge = 0;
     points += MULT[j];
     score += Math.round(MULT[j] * 1000000 / total * (1 + Math.min(combo, 120) / 240));
     if (j === 'CRITICAL') hp = Math.min(100, hp + 1);
     if (navigator.vibrate && !AUTO) try { navigator.vibrate(j === 'CRITICAL' ? 18 : 10); } catch (e) {}
+    jauge += j === 'CRITICAL' ? 1 : j === 'GREAT' ? .6 : .3;
+    if (jauge >= JAUGE_MAX && !coup) { jauge = 0; coup = {age: 0}; }
   }
+  if (n.coffre && !n.coffreFini) { n.coffreFini = true; if (j === 'CRITICAL' || j === 'GREAT') attraperCoffre(lane); else perdreCoffre(lane); }
+  for (let i = textes.length - 1; i >= 0; i--) if (textes[i].lane === lane) textes.splice(i, 1);
   textes.push({j, lane, age: 0});
-  if (textes.length > 4) textes.shift();
-  eclat(j, lane);
+  eclat(j, n);
 }
 
-function eclat(j, lane) {
-  const x = CX[lane], y = CY[lane];
+/* Effets quand on réussit une note : comme sur Switch, un cercle magique de la couleur de la note
+   (rouge, vert ou doré) avec des croches qui tournent, des traits qui rayonnent et des petits triangles. */
+function eclat(j, n) {
+  const lane = n.lane, x = CX[lane], y = CY[lane], sorte = n.type;
   appuis[lane] = 1;
   if (j === 'MISS') return;
-  const crit = j === 'CRITICAL';
-  const spr = crit ? SPR.lueurOr : j === 'GREAT' ? SPR.lueurRose : SPR.lueurBleu;
-  effets.push({type: 'flash', x, y, age: 0, vie: .28, spr, taille: R * (crit ? 4.2 : 3.2)});
-  effets.push({type: 'anneau', x, y, age: 0, vie: .4, r0: R, r1: R * (crit ? 2.5 : 1.9), col: crit ? 'rgb(255,225,120)' : j === 'GREAT' ? 'rgb(255,160,215)' : 'rgb(150,220,255)', w: crit ? 6 : 4});
-  if (crit) effets.push({type: 'anneau', x, y, age: -.06, vie: .45, r0: R * .8, r1: R * 3.1, col: 'rgb(255,255,255)', w: 2.5});
-  const n = crit ? 14 : j === 'GREAT' ? 8 : 4;
-  for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2, v = R * (2.5 + Math.random() * 4.5);
-    effets.push({type: crit ? 'etoile' : 'point', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - R * 2, age: 0, vie: .45 + Math.random() * .3, s: R * (crit ? .5 + Math.random() * .4 : .3), rot: Math.random() * 6});
+  const crit = j === 'CRITICAL', great = j === 'GREAT';
+  effets.push({type: 'flash', x, y, age: 0, vie: .25, spr: SPR.lueur[sorte], taille: R * (crit ? 3.6 : 2.8)});
+  if (crit || great) effets.push({type: 'cercle', x, y, age: 0, vie: crit ? .6 : .45, sorte, taille: R * (crit ? 4.4 : 3.3), rot: Math.random() * 6});
+  effets.push({type: 'anneau', x, y, age: 0, vie: .3, r0: R, r1: R * 1.7, col: TEINTES[sorte][0], w: 4});
+  const nt = crit ? 12 : great ? 6 : 2;
+  for (let i = 0; i < nt; i++) {
+    const a = Math.random() * Math.PI * 2, r0 = R * (1 + Math.random() * .7), v = R * (2.5 + Math.random() * 3.5);
+    effets.push({type: 'tri', x: x + Math.cos(a) * r0, y: y + Math.sin(a) * r0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, age: 0, vie: .5 + Math.random() * .35,
+      s: R * (.24 + Math.random() * .16), rot: Math.random() * 6, vr: (Math.random() - .5) * 10, k: Math.floor(Math.random() * SPR.tri.length)});
   }
+  for (let i = 0; i < (crit ? 10 : 4); i++) {
+    const a = Math.random() * Math.PI * 2, v = R * (1.5 + Math.random() * 4);
+    effets.push({type: 'point', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, age: 0, vie: .4 + Math.random() * .3, s: R * (.12 + Math.random() * .12), k: Math.floor(Math.random() * SPR.points.length)});
+  }
+}
+/* Coffres : attrapé, il s'envole vers le compteur du panneau ; raté, il tombe */
+function attraperCoffre(lane) {
+  const x0 = CX[lane], y0 = CY[lane] - RN * 1.55;
+  effets.push({type: 'coffre', x: x0, y: y0, age: 0, vie: .75, fin: () => {
+    coffres++; coffrePop = 1;
+    if (PANNEAU) effets.push({type: 'flash', x: PANNEAU.coffre[0], y: PANNEAU.coffre[1], age: 0, vie: .35, spr: SPR.lueurOr, taille: H * .12});
+  }});
+}
+function perdreCoffre(lane) {
+  effets.push({type: 'coffreTombe', x: CX[lane], y: CY[lane] - RN * 1.55, vx: -R * 1.5, vy: -R * 3, age: 0, vie: .7, rot: 0});
 }
 
 /* ============================================================
@@ -740,8 +940,8 @@ const juger = dt => { dt = Math.abs(dt); return dt <= W_CRIT ? 'CRITICAL' : dt <
 function appui(id, tm, x, y) {
   const n = candidate(tm);
   if (!n) { gestes.set(id, {vide: true}); return; }
-  if (n.type === 'tap') { n.fait = true; noter(juger(tm - n.t), n.lane); gestes.set(id, {vide: true}); }
-  else if (n.type === 'hold') { n.tete = true; n.tenu = true; noter(juger(tm - n.t), n.lane); gestes.set(id, {note: n, sorte: 'hold'}); }
+  if (n.type === 'tap') { n.fait = true; noter(juger(tm - n.t), n); gestes.set(id, {vide: true}); }
+  else if (n.type === 'hold') { n.tete = true; n.tenu = true; noter(juger(tm - n.t), n); gestes.set(id, {note: n, sorte: 'hold'}); }
   else { n.geste = true; gestes.set(id, {note: n, sorte: 'swipe', x, y, tm, age: performance.now()}); }
 }
 function bouge(id, x, y) {
@@ -755,14 +955,14 @@ function finGlisse(ge, angle) {
   const n = ge.note;
   n.fait = true;
   let diff = Math.abs(angle - DIR_ANGLE[n.dir]) % 360; if (diff > 180) diff = 360 - diff;
-  noter(diff <= 55 ? juger(ge.tm - n.t) || 'GOOD' : 'MISS', n.lane, true);
+  noter(diff <= 55 ? juger(ge.tm - n.t) || 'GOOD' : 'MISS', n);
 }
 function lache(id, tm) {
   const ge = gestes.get(id); gestes.delete(id);
   if (!ge || ge.vide) return;
   const n = ge.note;
-  if (ge.sorte === 'hold' && n.tenu && !n.queue) { n.tenu = false; n.queue = true; n.fait = true; noter(juger(tm - n.end) || 'MISS', n.lane); }
-  if (ge.sorte === 'swipe' && !n.fait) { n.fait = true; noter('MISS', n.lane); }
+  if (ge.sorte === 'hold' && n.tenu && !n.queue) { n.tenu = false; n.queue = true; n.fait = true; noter(juger(tm - n.end) || 'MISS', n); }
+  if (ge.sorte === 'swipe' && !n.fait) { n.fait = true; noter('MISS', n); }
 }
 
 cv.addEventListener('pointerdown', e => {
@@ -826,18 +1026,18 @@ function mettreAJour(st, dt) {
     const n = notes[i];
     if (n.t > st + 2.5) break;
     if (AUTO) {
-      if (!n.fait && !n.tete && st >= n.t) { if (n.type === 'hold') { n.tete = n.tenu = true; noter('CRITICAL', n.lane); } else { n.fait = true; noter('CRITICAL', n.lane, n.type === 'swipe'); } }
-      if (n.type === 'hold' && n.tenu && st >= n.end) { n.tenu = false; n.queue = n.fait = true; noter('CRITICAL', n.lane); }
+      if (!n.fait && !n.tete && st >= n.t) { if (n.type === 'hold') { n.tete = n.tenu = true; noter('CRITICAL', n); } else { n.fait = true; noter('CRITICAL', n); } }
+      if (n.type === 'hold' && n.tenu && st >= n.end) { n.tenu = false; n.queue = n.fait = true; noter('CRITICAL', n); }
       continue;
     }
-    if (n.type !== 'hold' && !n.fait && !n.geste && st > n.t + W_GOOD) { n.fait = true; noter('MISS', n.lane); }
+    if (n.type !== 'hold' && !n.fait && !n.geste && st > n.t + W_GOOD) { n.fait = true; noter('MISS', n); }
     if (n.type === 'hold') {
-      if (!n.tete && st > n.t + W_GOOD) { n.tete = true; n.queue = true; n.fait = true; noter('MISS', n.lane); comptes.MISS++; }
-      if (n.tenu && st > n.end + W_GOOD) { n.tenu = false; n.queue = true; n.fait = true; noter('GOOD', n.lane); }
+      if (!n.tete && st > n.t + W_GOOD) { n.tete = true; n.queue = true; n.fait = true; noter('MISS', n); comptes.MISS++; }
+      if (n.tenu && st > n.end + W_GOOD) { n.tenu = false; n.queue = true; n.fait = true; noter('GOOD', n); }
     }
   }
   // glissé commencé mais trop court : raté au bout de 0,35 s
-  for (const [id, ge] of gestes) if (ge.sorte === 'swipe' && !ge.note.fait && performance.now() - ge.age > 350) { ge.note.fait = true; noter('MISS', ge.note.lane); gestes.delete(id); }
+  for (const [id, ge] of gestes) if (ge.sorte === 'swipe' && !ge.note.fait && performance.now() - ge.age > 350) { ge.note.fait = true; noter('MISS', ge.note); gestes.delete(id); }
   while (prochaine < notes.length && notes[prochaine].fait) prochaine++;
   if (hp <= 0) return terminer(false);
   if (st > niveau.fin) terminer(true);
@@ -856,23 +1056,17 @@ function dessiner(st, dt, horloge) {
   }
   g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
 
-  // pulsation sur le temps
+  // légère pulsation des cibles sur le temps
   const beatPhase = st > niveau.debut ? ((st - niveau.debut) / niveau.temps) % 1 : 1;
-  const pulse = 1 + .045 * Math.max(0, 1 - beatPhase * 4);
-  if (etat !== 'menu') dessinerEquipe(st, horloge);
+  const pulse = 1 + .02 * Math.max(0, 1 - beatPhase * 4);
+  if (etat !== 'menu') { dessinerEquipe(st, horloge); dessinerCoup(etat === 'jeu' ? dt : 0); }
 
-  // piste de la prochaine note éclairée
-  const nn = notes[prochaine];
-  if (nn && etat === 'jeu') {
-    const s = (nn.t - st) / A;
-    if (s < 1) { g.globalAlpha = Math.max(0, Math.min(1, 1 - s)); g.fillStyle = surbrillance[nn.lane]; bande(nn.lane, 1, 0, R * .9); g.fill(); g.globalAlpha = 1; }
-  }
   // cibles
   for (let i = 0; i < 4; i++) {
-    const s = R * 2.56 * pulse * (1 + appuis[i] * .08);
+    const s = R * 2.56 * pulse * (1 + appuis[i] * .06);
     g.drawImage(SPR.cible, CX[i] - s / 2, CY[i] - s / 2, s, s);
     if (appuis[i] > 0) {
-      g.globalCompositeOperation = 'lighter'; g.globalAlpha = appuis[i] * .7;
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = appuis[i] * .5;
       const f = R * 2.6; g.drawImage(SPR.lueurBleu, CX[i] - f / 2, CY[i] - f / 2, f, f);
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
       appuis[i] = Math.max(0, appuis[i] - dt * 5);
@@ -886,15 +1080,16 @@ function dessiner(st, dt, horloge) {
     if (n.fait && !(n.type === 'hold' && n.tenu)) continue;
     vis.push(n);
   }
-  // barre qui relie les deux notes d'une double
-  g.fillStyle = 'rgba(120,235,255,.9)';
+  // barre bleue qui relie les deux notes d'une double
+  g.fillStyle = 'rgba(50,190,225,.92)';
   for (let i = 0; i + 1 < vis.length; i++) {
     const n = vis[i], m = vis[i + 1];
     if (n.paire === undefined || m.paire !== n.paire || n.fait || m.fait) continue;
     const s = (n.t - st) / A, pa = proj(n.lane, s), pb = proj(m.lane, s);
     g.globalAlpha = Math.max(0, Math.min(1, (1.02 - s) * 6));
-    const e = RN * .22 * pa.k;
-    g.fillRect(pa.x - e, Math.min(pa.y, pb.y), e * 2, Math.abs(pb.y - pa.y));
+    const e = RN * .16 * pa.k, y0 = Math.min(pa.y, pb.y), hh = Math.abs(pb.y - pa.y);
+    g.fillRect(pa.x - e, y0, e * 2, hh);
+    g.fillStyle = 'rgba(200,250,255,.7)'; g.fillRect(pa.x - e * .3, y0, e * .6, hh); g.fillStyle = 'rgba(50,190,225,.92)';
   }
   g.globalAlpha = 1;
   // corps des notes tenues (bande verte pleine, comme sur Switch)
@@ -903,15 +1098,18 @@ function dessiner(st, dt, horloge) {
     const s = (n.t - st) / A, sh = n.tenu ? 0 : s, se = Math.min(1, (n.end - st) / A);
     if (se <= sh) continue;
     g.globalAlpha = Math.max(0, Math.min(1, (1.02 - s) * 6));
-    g.fillStyle = n.tenu ? 'rgba(90,240,120,.95)' : 'rgba(40,200,70,.88)'; bande(n.lane, Math.max(sh, -.2), se, RN * .62); g.fill();
-    g.fillStyle = 'rgba(200,255,210,.55)'; bande(n.lane, Math.max(sh, -.2), se, RN * .14); g.fill();
-    if (se < 1) { const b = proj(n.lane, se), r = RN * .6 * b.k; g.drawImage(SPR.hold, b.x - r * 1.25, b.y - r * 1.25, r * 2.5, r * 2.5); }
+    const a0 = Math.max(sh, -.2), lb = RN * .56;
+    // bande verte translucide aux bords plus clairs (les pistes sont horizontales)
+    const xa = proj(n.lane, a0).x, xb = proj(n.lane, se).x, yl = CY[n.lane], ep = Math.max(1.5, lb * .1);
+    g.fillStyle = n.tenu ? 'rgba(60,235,85,.8)' : 'rgba(25,205,55,.68)'; g.fillRect(xb, yl - lb, xa - xb, lb * 2);
+    g.fillStyle = 'rgba(175,255,180,.9)'; g.fillRect(xb, yl - lb, xa - xb, ep); g.fillRect(xb, yl + lb - ep, xa - xb, ep);
+    if (se < 1) { const b = proj(n.lane, se), r = RN * .62 * b.k; g.drawImage(SPR.bout, b.x - r * 1.25, b.y - r * 1.25, r * 2.5, r * 2.5); }
     if (n.tenu) {
       g.globalAlpha = 1; g.globalCompositeOperation = 'lighter';
       const f = R * (2.6 + .3 * Math.sin(horloge * 30));
       g.drawImage(SPR.lueurVert, CX[n.lane] - f / 2, CY[n.lane] - f / 2, f, f);
       g.globalCompositeOperation = 'source-over';
-      if (Math.random() < dt * 30) effets.push({type: 'point', x: CX[n.lane] + (Math.random() - .5) * R, y: CY[n.lane], vx: (Math.random() - .5) * R * 2, vy: -R * (3 + Math.random() * 3), age: 0, vie: .4, s: R * .22, vert: true});
+      if (Math.random() < dt * 30) effets.push({type: 'point', x: CX[n.lane] + (Math.random() - .5) * R, y: CY[n.lane], vx: (Math.random() - .5) * R * 2, vy: -R * (3 + Math.random() * 3), age: 0, vie: .4, s: R * .2, k: 2});
     }
   }
   g.globalAlpha = 1;
@@ -922,7 +1120,10 @@ function dessiner(st, dt, horloge) {
     const s = n.tenu ? 0 : (n.t - st) / A;
     const p = proj(n.lane, s), r = RN * p.k;
     g.globalAlpha = Math.max(0, Math.min(1, (1.02 - s) * 6)) * (s < -.05 ? Math.max(0, 1 + (s + .05) * 8) : 1);
-    if (pass === 0) g.drawImage(SPR[n.type], p.x - r * 1.25, p.y - r * 1.25, r * 2.5, r * 2.5);
+    if (pass === 0) {
+      g.drawImage(SPR[n.type], p.x - r * 1.25, p.y - r * 1.25, r * 2.5, r * 2.5);
+      if (n.coffre && !n.coffreFini) { const cl = r * 1.55, ch = cl * 84 / 96; g.drawImage(SPR.coffre, p.x - cl / 2, p.y - r * .92 - ch * .96 + Math.sin(horloge * 6) * r * .05, cl, ch); }
+    }
     else g.drawImage(FLECHES_TOURNEES[n.dir], p.x - r * 2, p.y - r * 2, r * 4, r * 4);
   }
   g.globalAlpha = 1;
@@ -930,73 +1131,349 @@ function dessiner(st, dt, horloge) {
   g.globalCompositeOperation = 'lighter';
   let k = 0;
   for (const e of effets) {
-    if ((e.age += dt) >= e.vie) continue;
+    if ((e.age += dt) >= e.vie) { if (e.fin) e.fin(); continue; }
     effets[k++] = e;
     if (e.age < 0) continue;
     const u = e.age / e.vie;
-    if (e.type === 'flash') { g.globalAlpha = 1 - u; const s = e.taille * (.7 + u * .5); g.drawImage(e.spr, e.x - s / 2, e.y - s / 2, s, s); }
+    if (e.type === 'cercle') {
+      const s = e.taille * (.55 + .45 * doux(u * 1.6));
+      g.globalAlpha = u < .65 ? 1 : (1 - u) / .35;
+      dessinTourne(SPR.cercle[e.sorte], e.x, e.y, s, s, e.rot + u * .9);
+      dessinTourne(SPR.notesCercle[e.sorte], e.x, e.y, s * .95, s * .95, e.rot - u * 1.6);
+    }
+    else if (e.type === 'tri') {
+      const fr = Math.pow(.06, dt); e.vx *= fr; e.vy *= fr; e.x += e.vx * dt; e.y += e.vy * dt; e.rot += e.vr * dt;
+      g.globalAlpha = u < .6 ? 1 : (1 - u) / .4;
+      dessinTourne(SPR.tri[e.k], e.x, e.y, e.s * 2, e.s * 2, e.rot);
+    }
+    else if (e.type === 'coffre' || e.type === 'coffreTombe') {
+      g.globalCompositeOperation = 'source-over';
+      let x = e.x, y = e.y, s = RN * 1.6, rot = 0;
+      if (e.type === 'coffre' && PANNEAU) {
+        const v = doux(u), [x1, y1] = PANNEAU.coffre, cx = (e.x + x1) / 2 - H * .02, cy = Math.min(e.y, y1) - H * .18;
+        x = (1 - v) * (1 - v) * e.x + 2 * (1 - v) * v * cx + v * v * x1; y = (1 - v) * (1 - v) * e.y + 2 * (1 - v) * v * cy + v * v * y1;
+        s = RN * 1.6 * (1 + Math.sin(u * Math.PI) * .6) * (1 - v * .25); g.globalAlpha = 1;
+      } else {
+        e.vy += R * 14 * dt; e.x += e.vx * dt; e.y += e.vy * dt; rot = -u * 2.5; g.globalAlpha = 1 - u;
+      }
+      dessinTourne(SPR.coffre, x, y, s, s * 84 / 96, rot);
+      g.globalCompositeOperation = 'lighter';
+    }
+    else if (e.type === 'flash') { g.globalAlpha = 1 - u; const s = e.taille * (.7 + u * .5); g.drawImage(e.spr, e.x - s / 2, e.y - s / 2, s, s); }
     else if (e.type === 'anneau') { g.globalAlpha = 1 - u; g.strokeStyle = e.col; g.lineWidth = e.w * (1 - u) + .5; g.beginPath(); g.arc(e.x, e.y, e.r0 + (e.r1 - e.r0) * (1 - Math.pow(1 - u, 3)), 0, 7); g.stroke(); }
     else {
-      e.x += e.vx * dt; e.y += e.vy * dt; e.vy += R * 9 * dt; e.vx *= .97;
+      const fr = Math.pow(.15, dt); e.vx *= fr; e.vy *= fr; e.x += e.vx * dt; e.y += e.vy * dt;
       g.globalAlpha = 1 - u * u;
       const s = e.s * (1 - u * .5);
-      if (e.type === 'etoile') { g.setTransform(DPR, 0, 0, DPR, e.x * DPR, e.y * DPR); g.rotate(e.rot + u * 3); g.drawImage(SPR.etoile, -s, -s, s * 2, s * 2); g.setTransform(DPR, 0, 0, DPR, 0, 0); }
-      else g.drawImage(e.vert ? SPR.lueurVert : SPR.lueurOr, e.x - s, e.y - s, s * 2, s * 2);
+      g.drawImage(SPR.points[e.k], e.x - s, e.y - s, s * 2, s * 2);
     }
   }
   effets.length = k;
   g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
-  // jugements (images pré-dessinées)
+  // jugements (images pré-dessinées), à droite de la cible, comme sur Switch
   k = 0;
   for (const t of textes) {
     t.age += dt;
-    if (t.age > .6) continue;
+    if (t.age > .55) continue;
     textes[k++] = t;
-    const pop = t.age < .08 ? 1.5 - t.age / .08 * .5 : 1;
-    g.globalAlpha = t.age > .4 ? 1 - (t.age - .4) / .2 : 1;
-    const img = TXT[t.j], l = img.l * pop, h = img.h * pop;
-    g.drawImage(img, CX[t.lane] + R * 1.1, CY[t.lane] - t.age * 14 - h / 2, l, h);
+    const pop = t.age < .07 ? 1.15 - t.age / .07 * .15 : 1;
+    g.globalAlpha = t.age > .4 ? 1 - (t.age - .4) / .15 : 1;
+    const img = TXT[t.j], cx = CX[t.lane] + R * 1.12 + img.avance / 2;   // grossit depuis son centre
+    g.drawImage(img, cx - (img.avance / 2 + img.marge) * pop, CY[t.lane] - (img.base - img.t * .36) * pop, img.l * pop, img.h * pop);
   }
   textes.length = k;
   g.globalAlpha = 1;
   if (etat === 'jeu' && st < niveau.debut + 4) {
     const yz = (CY[0] + R * 1.6 + H) / 2;
     g.globalAlpha = Math.min(1, (niveau.debut + 4 - st) / 1.5) * .7;
-    const img = texteCache('aide', "Tape n'importe où", Math.round(Math.max(14, Math.min(W, H) * .045)), '#ffffff', 'rgba(20,10,20,.9)', false);
+    const img = texteCache('aide', "Tape n'importe où", Math.round(Math.max(14, Math.min(W, H) * .045)), '#ffffff', 'rgba(20,10,20,.9)');
     g.drawImage(img, W / 2 - img.l / 2, yz - img.h / 2, img.l, img.h);
     g.globalAlpha = 1;
   }
   if (etat !== 'menu') hud(st, dt);
 }
 
-let degradeHp = null;
-function hud(st, dt) {
-  const m = Math.max(10, H * .03);
-  // progression (en bas, comme la barre TIME sur Switch)
-  const prog = Math.max(0, Math.min(1, st / niveau.fin));
-  g.fillStyle = 'rgba(0,0,0,.4)'; g.fillRect(0, H - 4, W, 4);
-  g.fillStyle = '#6fd8ff'; g.fillRect(0, H - 4, W * prog, 4);
-  // score en haut à droite (laisse la place au bouton pause)
-  const ts = Math.round(Math.max(18, Math.min(W, H) * .06));
-  const sc = texteCache('score', String(score).padStart(7, '0'), ts, vertical('#ffffff', '#dfe8ff'), 'rgba(10,15,30,.85)');
-  g.drawImage(sc, W - 58 - sc.l, m - sc.h * .2, sc.l, sc.h);
-  // HP en haut à gauche
-  const bw = Math.min(200, W * .22), by = m + 4;
-  g.fillStyle = 'rgba(0,0,0,.5)'; g.fillRect(m, by, bw, 10);
-  g.fillStyle = hp > 30 ? '#5be07a' : '#ff5a4a'; g.fillRect(m, by, bw * hp / 100, 10);
-  g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.5; g.strokeRect(m, by, bw, 10);
-  // chaîne en haut au centre : « 125 CHAIN »
-  comboPop = Math.max(0, comboPop - dt * 6);
-  if (combo >= 2) {
-    const tc = Math.round(Math.max(26, Math.min(W, H) * .085));
-    const nb = texteCache('chaine', String(combo), tc, vertical('#ffffff', '#bff4ff', '#6fd0ff'), 'rgba(20,30,60,.9)');
-    const mot = texteCache('chaineMot', 'CHAIN', Math.round(tc * .38), vertical('#ffffff', '#bff4ff'), 'rgba(20,30,60,.9)');
-    const z = 1 + comboPop * .2, l = nb.l * z, h = nb.h * z;
-    const total = nb.l + mot.l * .9, x0 = W / 2 - total / 2;
-    const y0 = m * .3;
-    g.drawImage(nb, x0 + nb.l - l, y0 + nb.h - h, l, h);
-    g.drawImage(mot, x0 + nb.l - mot.l * .12, y0 + nb.h * .72 - mot.h / 2, mot.l, mot.h);
+/* ============================================================
+   HUD façon Final Bar Line (captures de Kiki, 13/11) :
+   en haut à gauche le titre (jaquette, logo de difficulté, nom du morceau, jeu et nombre de notes),
+   en haut au centre la chaîne (« 196 CHAIN »), en haut à droite le score, en bas la barre TIME,
+   en bas à droite le panneau du capitaine (sa tête dans un rond, PV, jauge du coup spécial, coffres),
+   et le coup spécial (gros plan du capitaine dans un triangle + nom du coup).
+   Tout ce qui ne bouge pas est pré-dessiné ; chaque image ne peint que des images toutes prêtes.
+   ============================================================ */
+const DIFFICULTES = [['Facile', '#5ad66c'], ['Normal', '#4aa8ff'], ['Difficile', '#ff9b22'], ['Expert', '#ff4a5a']];
+function infosNiveau() {
+  const nb = notes.length, t0n = nb ? notes[0].t : 0, t1n = nb ? notes[nb - 1].t : 1;
+  const dens = nb / Math.max(10, t1n - t0n);
+  return {titre: niveau.nom, jeu: niveau.info ? niveau.info.jeu : 'Composition originale', nb,
+          dif: dens < 1.5 ? 0 : dens < 2.5 ? 1 : dens < 3.5 ? 2 : 3};
+}
+const teinteDe = txt => { let h = 0; for (const ch of String(txt)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+
+/* Bandeau du titre, en haut à gauche */
+let BANDEAU = null;
+function preparerBandeau() {
+  if (!notes.length) { BANDEAU = null; return; }
+  const inf = infosNiveau(), col = DIFFICULTES[inf.dif][1];
+  const m = H * .016, h = H * .07, jq = h, ic = h * .52, tt = H * .033, ts = H * .0145;
+  const [, mx] = toile(4);
+  mx.font = `700 ${tt}px ${POLICE_TITRE}`; const lt = mx.measureText(inf.titre).width;
+  const sous = `${inf.jeu}   ·   ${inf.nb} notes`.toUpperCase();
+  mx.font = `600 ${ts}px ${POLICE_SANS}`; const ls = mx.measureText(sous).width + sous.length * ts * .06;
+  const xt = m + jq + h * .14 + ic + h * .2, fin = Math.max(H * .44, xt + Math.max(lt, ls) + h * .95);
+  const L = fin + m, Ht = h + m * 2;
+  const [c, x] = toile(Math.ceil(L * DPR), Math.ceil(Ht * DPR)); x.scale(DPR, DPR);
+  const y0 = m + h * .02, y1 = m + h * .98, pente = h * .45;
+  // bande sombre au bout biseauté, filets dorés en haut et en bas, portée de musique en fond
+  const forme = () => { x.beginPath(); x.moveTo(m + jq * .5, y0); x.lineTo(fin, y0); x.lineTo(fin - pente, y1); x.lineTo(m + jq * .5, y1); x.closePath(); };
+  let gr = x.createLinearGradient(m, 0, fin, 0); gr.addColorStop(0, 'rgba(22,9,3,.9)'); gr.addColorStop(.7, 'rgba(22,9,3,.78)'); gr.addColorStop(1, 'rgba(22,9,3,.55)');
+  x.fillStyle = gr; forme(); x.fill();
+  x.save(); forme(); x.clip();
+  x.fillStyle = 'rgba(255,190,130,.1)';
+  for (let i = 1; i <= 4; i++) x.fillRect(m + jq, y0 + (y1 - y0) * i / 5, fin, 1);
+  x.restore();
+  x.strokeStyle = '#e8963a'; x.lineWidth = 1.6;
+  x.beginPath(); x.moveTo(m + jq * .5, y0); x.lineTo(fin, y0); x.lineTo(fin - pente, y1); x.lineTo(m + jq * .5, y1); x.stroke();
+  x.strokeStyle = 'rgba(232,150,58,.45)'; x.lineWidth = 1;
+  x.beginPath(); x.moveTo(m + jq, y0 + 3); x.lineTo(fin - 4, y0 + 3); x.moveTo(m + jq, y1 - 3); x.lineTo(fin - pente - 2, y1 - 3); x.stroke();
+  // jaquette : un petit tableau aux couleurs du morceau
+  const hue = teinteDe(inf.titre);
+  gr = x.createRadialGradient(m + jq * .5, m + jq * .42, 0, m + jq * .5, m + jq * .5, jq * .75);
+  gr.addColorStop(0, `hsl(${hue},85%,78%)`); gr.addColorStop(.45, `hsl(${hue},65%,46%)`); gr.addColorStop(1, `hsl(${(hue + 40) % 360},70%,14%)`);
+  x.fillStyle = gr; x.fillRect(m, m, jq, jq);
+  const rnd = hasard(hue + 5);
+  x.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 14; i++) {
+    const sx = m + rnd() * jq, sy = m + rnd() * jq, sr = jq * (.01 + rnd() * .035);
+    const g2 = x.createRadialGradient(sx, sy, 0, sx, sy, sr * 3); g2.addColorStop(0, 'rgba(255,255,240,.95)'); g2.addColorStop(1, 'rgba(255,255,240,0)');
+    x.fillStyle = g2; x.fillRect(sx - sr * 3, sy - sr * 3, sr * 6, sr * 6);
   }
+  x.globalCompositeOperation = 'source-over';
+  x.save(); x.translate(m + jq * .4, m + jq * .66); x.scale(jq / 60, jq / 60);
+  x.fillStyle = 'rgba(255,255,255,.92)'; x.shadowColor = 'rgba(0,0,0,.5)'; x.shadowBlur = 4; croche(x, true); x.restore();
+  x.strokeStyle = '#e07a1a'; x.lineWidth = 2; x.strokeRect(m + 1, m + 1, jq - 2, jq - 2);
+  // logo de difficulté : une page à coin plié, croches de la couleur de la difficulté
+  const ix = m + jq + h * .14, iy = m + h * .16, coin = ic * .26;
+  const page = () => { x.beginPath(); x.moveTo(ix, iy); x.lineTo(ix + ic, iy); x.lineTo(ix + ic, iy + ic - coin); x.lineTo(ix + ic - coin, iy + ic); x.lineTo(ix, iy + ic); x.closePath(); };
+  x.fillStyle = '#1c0d04'; page(); x.fill();
+  x.strokeStyle = col; x.lineWidth = Math.max(1.5, ic * .08); page(); x.stroke();
+  x.save(); x.translate(ix + ic * .24, iy + ic * .74); x.scale(ic / 50, ic / 50); x.fillStyle = col; croche(x, true); x.restore();
+  // nom du morceau (serif) et, dessous, le jeu et le nombre de notes
+  x.textBaseline = 'alphabetic';
+  x.font = `700 ${tt}px ${POLICE_TITRE}`; x.fillStyle = '#ffffff'; x.shadowColor = 'rgba(0,0,0,.85)'; x.shadowBlur = 4 * DPR; x.shadowOffsetY = 1;
+  x.fillText(inf.titre, xt, m + h * .54);
+  x.font = `600 ${ts}px ${POLICE_SANS}`; if ('letterSpacing' in x) x.letterSpacing = (ts * .06) + 'px';
+  x.fillText(sous, xt + h * .04, m + h * .86);
+  x.shadowColor = 'transparent';
+  // pause : deux petits traits au bout du bandeau (on touche le bandeau pour mettre en pause)
+  x.fillStyle = 'rgba(255,255,255,.55)';
+  const px = fin - pente * .5 - h * .42, pw = h * .055, ph = h * .24;
+  x.fillRect(px, m + h * .5 - ph / 2, pw, ph); x.fillRect(px + pw * 2.2, m + h * .5 - ph / 2, pw, ph);
+  Object.assign(c, {l: L, h: Ht});
+  BANDEAU = c;
+  const b = $('bpause').style;
+  b.left = '0px'; b.top = '0px'; b.width = Math.round(fin) + 'px'; b.height = Math.round(Ht) + 'px';
+}
+
+/* Barre TIME, tout en bas */
+let TEMPS = null;
+function preparerTemps() {
+  const hb = H * .028, [c, x] = toile(Math.ceil(W * DPR), Math.ceil(hb * DPR)); x.scale(DPR, DPR);
+  const a = H * .05, b = H * .095;
+  let gr = x.createLinearGradient(0, 0, 0, hb); gr.addColorStop(0, 'rgba(0,0,0,.72)'); gr.addColorStop(1, 'rgba(0,0,0,.92)');
+  x.fillStyle = gr; x.beginPath(); x.moveTo(a, hb); x.quadraticCurveTo(b - H * .03, hb, b, 0); x.lineTo(W - b, 0); x.quadraticCurveTo(W - b + H * .03, hb, W - a, hb); x.closePath(); x.fill();
+  const t = stylise('TIME', {taille: hb * .78, poids: 700, remplissage: '#9c9c9c', etire: .78});
+  x.drawImage(t, H * .118 - t.marge, hb * .5 + t.t * .36 - t.base, t.l, t.h);
+  const x0 = H * .2, x1 = W - H * .2, e = Math.max(4, H * .009), y = hb / 2 - e / 2;
+  x.fillStyle = '#121212'; x.fillRect(x0 - 1.5, y - 1.5, x1 - x0 + 3, e + 3);
+  gr = x.createLinearGradient(0, y, 0, y + e); gr.addColorStop(0, '#6a6a6a'); gr.addColorStop(1, '#3e3e3e');
+  x.fillStyle = gr; x.fillRect(x0, y, x1 - x0, e);
+  const rempl = g.createLinearGradient(0, H - hb + y, 0, H - hb + y + e); rempl.addColorStop(0, '#6f7bff'); rempl.addColorStop(1, '#2f3ce6');
+  Object.assign(c, {h: hb, x0, x1, e, y: H - hb + y, rempl});
+  TEMPS = c;
+}
+
+/* Capitaine (premier perso de l'équipe) : sa tête dans un rond et son gros plan pour le coup spécial.
+   TETE = où est la tête dans le repère des poupées (unités : pieds en 0, ~100 de haut). */
+const TETE = {x: -1, y: -71, l: 60};
+let PORTRAIT = null, GROS_PLAN = null, capH = 0;
+function preparerCapitaine(force) {
+  if (!window.Poupee || !Poupee.fiches[EQUIPE[0]] || (!force && capH === H)) return;
+  capH = H;
+  const id = EQUIPE[0], pose = Poupee.pose({}), dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // portrait (rond de rayon r)
+  const r = H * .046, k = r * 2.15 / TETE.l;
+  const [p, px] = toile(Math.ceil(r * 2 * dpr)); px.scale(dpr, dpr);
+  px.beginPath(); px.arc(r, r, r, 0, 7); px.clip();
+  let gr = px.createRadialGradient(r, r * .8, 0, r, r, r); gr.addColorStop(0, '#fffaf0'); gr.addColorStop(1, '#e8d7b4');
+  px.fillStyle = gr; px.fillRect(0, 0, r * 2, r * 2);
+  Poupee.dessine(px, Poupee.fabrique(id, {echelle: k * dpr}), r - TETE.x * k, r * 1.08 - TETE.y * k, pose, {taille: k * 100});
+  Object.assign(p, {r});
+  PORTRAIT = p;
+  // gros plan : la tête en très grand, découpée plus tard par le triangle
+  const L = H * .64, Hc = H * .39, k2 = H * .28 / TETE.l;
+  const [q, qx] = toile(Math.ceil(L * dpr), Math.ceil(Hc * dpr)); qx.scale(dpr, dpr);
+  Poupee.dessine(qx, Poupee.fabrique(id, {echelle: k2 * dpr}), L * .52 - TETE.x * k2, H * .21 - TETE.y * k2, pose, {taille: k2 * 100});
+  Object.assign(q, {l: L, h: Hc});
+  GROS_PLAN = q;
+  preparerPanneau();
+}
+
+/* Panneau du capitaine, en bas à droite */
+let PANNEAU = null;
+function preparerPanneau() {
+  const u = H, [c, x] = toile(Math.ceil(u * .42 * DPR), Math.ceil(u * .2 * DPR)); x.scale(DPR, DPR);
+  const X = v => u * .42 - v, Y = v => u * .2 - v;          // positions comptées depuis le coin en bas à droite
+  // bande du haut (jauge + coffres) : sombre
+  x.fillStyle = 'rgba(46,28,12,.78)';
+  x.beginPath(); x.moveTo(X(.33 * u), Y(.113 * u)); x.lineTo(X(.09 * u), Y(.113 * u)); x.lineTo(X(.09 * u), Y(.074 * u)); x.lineTo(X(.345 * u), Y(.074 * u)); x.closePath(); x.fill();
+  x.strokeStyle = 'rgba(255,240,210,.75)'; x.lineWidth = 1.2;
+  x.beginPath(); x.moveTo(X(.33 * u), Y(.113 * u)); x.lineTo(X(.09 * u), Y(.113 * u)); x.stroke();
+  // bande du bas (PV) : claire
+  let gr = x.createLinearGradient(0, Y(.074 * u), 0, Y(.03 * u)); gr.addColorStop(0, 'rgba(250,242,222,.92)'); gr.addColorStop(1, 'rgba(196,182,152,.92)');
+  x.fillStyle = gr;
+  x.beginPath(); x.moveTo(X(.35 * u), Y(.074 * u)); x.lineTo(X(.09 * u), Y(.074 * u)); x.lineTo(X(.09 * u), Y(.03 * u)); x.lineTo(X(.375 * u), Y(.03 * u)); x.closePath(); x.fill();
+  // rail des PV
+  const bx0 = X(.36 * u), bx1 = X(.125 * u), by = Y(.064 * u), bh = u * .022;
+  x.fillStyle = '#14242a'; rr(x, bx0 - 1.5, by - 1.5, bx1 - bx0 + 3, bh + 3, bh / 2 + 1.5); x.fill();
+  x.fillStyle = '#33464c'; rr(x, bx0, by, bx1 - bx0, bh, bh / 2); x.fill();
+  // rail de la jauge du coup spécial (bout biseauté)
+  const jx0 = X(.305 * u), jx1 = X(.22 * u), jy = Y(.1 * u), jh = u * .014;
+  const rail = (a, b) => { x.beginPath(); x.moveTo(a, jy); x.lineTo(b + jh * .6, jy); x.lineTo(b, jy + jh); x.lineTo(a, jy + jh); x.closePath(); };
+  x.fillStyle = 'rgba(255,255,255,.75)'; rail(jx0 - 1.5, jx1 + 1.5); x.lineWidth = 3; x.strokeStyle = 'rgba(230,230,230,.8)'; x.stroke();
+  x.fillStyle = '#3c3c3c'; rail(jx0, jx1); x.fill();
+  // coffre
+  const cl = u * .042, ch = cl * 84 / 96;
+  x.drawImage(SPR.coffre, X(.205 * u), Y(.094 * u) - ch * .55, cl, ch);
+  // cadre du portrait
+  const pr = u * .046, pcx = X(.074 * u), pcy = Y(.095 * u);
+  gr = x.createLinearGradient(0, pcy - pr, 0, pcy + pr); gr.addColorStop(0, '#fff2c4'); gr.addColorStop(.5, '#d6b064'); gr.addColorStop(1, '#8a6626');
+  x.fillStyle = 'rgba(0,0,0,.35)'; x.beginPath(); x.arc(pcx, pcy + 2, pr * 1.2, 0, 7); x.fill();
+  x.fillStyle = gr; x.beginPath(); x.arc(pcx, pcy, pr * 1.17, 0, 7); x.fill();
+  x.fillStyle = '#ffffff'; x.beginPath(); x.arc(pcx, pcy, pr * 1.04, 0, 7); x.fill();
+  if (PORTRAIT) x.drawImage(PORTRAIT, pcx - pr, pcy - pr, pr * 2, pr * 2);
+  else { x.fillStyle = '#e8d7b4'; x.beginPath(); x.arc(pcx, pcy, pr, 0, 7); x.fill(); }
+  // cristal
+  const cr = u * .036;
+  x.drawImage(SPR.cristal, X(.345 * u) - cr, Y(.112 * u) - cr, cr * 2, cr * 2);
+  const ox = W - u * .42, oy = H - u * .2;
+  const pv = g.createLinearGradient(ox + bx0, 0, ox + bx1, 0); pv.addColorStop(0, '#22e2b4'); pv.addColorStop(1, '#2f8cff');
+  const pvBas = g.createLinearGradient(ox + bx0, 0, ox + bx1, 0); pvBas.addColorStop(0, '#ffb43a'); pvBas.addColorStop(1, '#ff4a3a');
+  PANNEAU = {img: c, x: ox, y: oy, l: u * .42, h: u * .2, pv, pvBas,
+    b: [ox + bx0, oy + by, bx1 - bx0, bh], j: [ox + jx0, oy + jy, jx1 - jx0, jh],
+    coffre: [ox + X(.205 * u) + cl / 2, oy + Y(.094 * u) - ch * .05], nombre: [ox + X(.155 * u), oy + Y(.08 * u)],
+    cristal: [ox + X(.345 * u), oy + Y(.112 * u), cr]};
+}
+
+/* Nom du coup spécial : bandeau bleu à bord blanc */
+let NOM_COUP = null;
+function preparerNomCoup() {
+  const f = window.Poupee && Poupee.fiches[EQUIPE[0]], nom = (f && f.coup) || 'Coup spécial';
+  const l = H * .33, h = H * .05, m = 6;
+  const [c, x] = toile(Math.ceil((l + m * 2) * DPR), Math.ceil((h + m * 2) * DPR)); x.scale(DPR, DPR);
+  x.shadowColor = 'rgba(0,0,0,.45)'; x.shadowBlur = 6 * DPR;
+  x.fillStyle = '#d8dde6'; rr(x, m, m, l, h, h * .16); x.fill(); x.shadowColor = 'transparent';
+  let gr = x.createLinearGradient(0, m, 0, m + h); gr.addColorStop(0, '#3f77ec'); gr.addColorStop(.5, '#2154d2'); gr.addColorStop(1, '#173ea8');
+  x.fillStyle = gr; rr(x, m + 3, m + 3, l - 6, h - 6, h * .12); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.12)'; rr(x, m + 3, m + 3, l - 6, (h - 6) * .45, h * .12); x.fill();
+  x.font = `500 ${h * .46}px ${POLICE_SANS}`; x.fillStyle = '#ffffff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillText(nom, m + l / 2, m + h * .53);
+  Object.assign(c, {l: l + m * 2, h: h + m * 2, m});
+  NOM_COUP = c;
+}
+
+function preparerHud() {
+  preparerTextes(); preparerBandeau(); preparerTemps(); preparerCapitaine(); preparerPanneau(); preparerNomCoup();
+}
+
+/* Le coup spécial : le triangle avec le gros plan du capitaine glisse depuis la droite, le nom du coup s'affiche */
+let coup = null;
+const DUREE_COUP = 2;
+const doux = u => 1 - Math.pow(1 - Math.max(0, Math.min(1, u)), 3);
+function coinCoup() { return [[W - H * .635, H - H * .26], [W + 2, H - H * .55], [W + 2, H - H * .165]]; }
+function dessinerCoup(dt) {
+  if (!coup) return;
+  coup.age += dt;
+  const a = coup.age;
+  if (a > DUREE_COUP) { coup = null; return; }
+  const dx = (1 - doux(a / .22)) * H * .8 + doux((a - DUREE_COUP + .28) / .28) * H * .8;
+  const [T, A, B] = coinCoup().map(([x, y]) => [x + dx, y]);
+  const forme = () => { g.beginPath(); g.moveTo(T[0], T[1]); g.lineTo(A[0], A[1]); g.lineTo(B[0], B[1]); g.closePath(); };
+  g.save();
+  forme();
+  let gr = g.createLinearGradient(T[0], 0, W, 0); gr.addColorStop(0, '#0c2a7a'); gr.addColorStop(.5, '#1d52c8'); gr.addColorStop(1, '#2d6be4');
+  g.fillStyle = gr; g.fill();
+  g.clip();
+  // petits triangles blancs qui défilent
+  g.strokeStyle = 'rgba(190,225,255,.55)'; g.lineWidth = 2;
+  const pas = H * .09, dec = (a * H * .5) % pas;
+  for (let i = -1; i < 9; i++) for (let j = 0; j < 5; j++) {
+    const cx = T[0] + i * pas + dec + (j % 2) * pas * .5, cy = A[1] + (j + .5) * (B[1] - A[1]) / 5, s = H * .014;
+    g.beginPath(); g.moveTo(cx + s, cy); g.lineTo(cx - s * .6, cy - s * .9); g.lineTo(cx - s * .6, cy + s * .9); g.closePath(); g.stroke();
+  }
+  if (GROS_PLAN) g.drawImage(GROS_PLAN, W - GROS_PLAN.l + dx * 1.15, A[1] + H * .005, GROS_PLAN.l, GROS_PLAN.h);
+  g.restore();
+  // bord blanc épais, filet sombre à l'intérieur
+  g.lineJoin = 'miter';
+  forme(); g.strokeStyle = '#ffffff'; g.lineWidth = H * .016; g.stroke();
+  forme(); g.strokeStyle = '#0d1d4a'; g.lineWidth = H * .004; g.stroke();
+}
+function dessinerNomCoup() {
+  if (!coup || !NOM_COUP) return;
+  const a = coup.age, al = Math.min(1, a / .15) * Math.min(1, (DUREE_COUP - a) / .25);
+  g.globalAlpha = Math.max(0, al);
+  g.drawImage(NOM_COUP, W - H * .022 - NOM_COUP.l + NOM_COUP.m, H - H * .215 - NOM_COUP.m, NOM_COUP.l, NOM_COUP.h);
+  g.globalAlpha = 1;
+}
+
+let scoreAffiche = 0, comboAge = 9, coffrePop = 0;
+function hud(st, dt) {
+  // titre
+  if (BANDEAU) g.drawImage(BANDEAU, 0, 0, BANDEAU.l, BANDEAU.h);
+  // score (il défile vers sa valeur)
+  scoreAffiche += (score - scoreAffiche) * Math.min(1, dt * 12);
+  if (Math.abs(score - scoreAffiche) < 1) scoreAffiche = score;
+  ecrireNombre(CHIF.score, String(Math.round(scoreAffiche)), W - H * .022, H * .084);
+  // chaîne : « 196 CHAIN »
+  comboAge += dt;
+  if (combo >= 1) {
+    const xr = W / 2 + H * .19, yb = H * .118, z = 1 + .16 * Math.max(0, 1 - comboAge * 9);
+    ecrireNombre(CHIF.chaine, String(combo), xr, yb, z);
+    const m = TXT.CHAIN;
+    g.drawImage(m, xr - H * .008 - m.marge, yb - m.base, m.l, m.h);
+  }
+  // barre TIME
+  if (TEMPS) {
+    g.drawImage(TEMPS, 0, H - TEMPS.h, W, TEMPS.h);
+    const prog = Math.max(0, Math.min(1, st / niveau.fin)), xm = TEMPS.x0 + (TEMPS.x1 - TEMPS.x0) * prog, e = TEMPS.e;
+    g.fillStyle = TEMPS.rempl; g.fillRect(TEMPS.x0, TEMPS.y, xm - TEMPS.x0, e);
+    g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(xm, TEMPS.y - e * .45); g.lineTo(xm + e * .5, TEMPS.y + e / 2); g.lineTo(xm, TEMPS.y + e * 1.45); g.lineTo(xm - e * .5, TEMPS.y + e / 2); g.fill();
+  }
+  // panneau du capitaine
+  if (PANNEAU) {
+    const P = PANNEAU;
+    g.drawImage(P.img, P.x, P.y, P.l, P.h);
+    const [bx, by, bl, bh] = P.b, v = Math.max(0, hp / 100);
+    if (v > 0) {
+      g.fillStyle = hp > 30 ? P.pv : P.pvBas; rr(g, bx, by, Math.max(bh, bl * v), bh, bh / 2); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.28)'; rr(g, bx + bh * .3, by + bh * .14, Math.max(bh * .4, bl * v - bh * .6), bh * .3, bh * .15); g.fill();
+    }
+    const [jx, jy, jl, jh] = P.j, ratio = Math.min(1, jauge / JAUGE_MAX);
+    if (ratio > 0) {
+      const b = jx + jl * ratio;
+      g.fillStyle = '#5cbcff'; g.beginPath(); g.moveTo(jx, jy); g.lineTo(b + jh * .6, jy); g.lineTo(b, jy + jh); g.lineTo(jx, jy + jh); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(jx, jy + 1, Math.max(0, jl * ratio), jh * .3);
+    }
+    const [cx, cy, cr] = P.cristal;
+    if (ratio > .85 || coup) {
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = .5 + .3 * Math.sin(performance.now() / 90);
+      g.drawImage(SPR.lueurBleu, cx - cr * 2, cy - cr * 2, cr * 4, cr * 4);
+      g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    }
+    coffrePop = Math.max(0, coffrePop - dt * 4);
+    ecrireNombre(CHIF.petit, String(coffres), P.nombre[0], P.nombre[1], 1 + coffrePop * .45, 0);
+  }
+  dessinerNomCoup();
 }
 
 /* ============================================================
@@ -1006,7 +1483,7 @@ function hud(st, dt) {
    ============================================================ */
 const EQUIPE = ['heros-vert', 'princesse'];
 let poupees = [], poupeesEchelle = 0;
-function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) poupeesEchelle = 0; }); }
+function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) { poupeesEchelle = 0; preparerCapitaine(true); } }); }
 function dessinerEquipe(st, horloge) {
   if (!window.Poupee) return;
   const taille = H * .27, ech = taille * DPR / 100;
@@ -1081,7 +1558,7 @@ function terminer(gagne) {
   const rang = !gagne ? 'D' : acc >= .95 ? 'S' : acc >= .85 ? 'A' : acc >= .7 ? 'B' : acc >= .5 ? 'C' : 'D';
   $('finTitre').textContent = gagne ? (comptes.MISS === 0 ? 'Full combo !' : 'Bravo !') : 'Raté…';
   $('rang').textContent = rang; $('rScore').textContent = score;
-  $('rCrit').textContent = comptes.CRITICAL; $('rGreat').textContent = comptes.GREAT; $('rGood').textContent = comptes.GOOD; $('rMiss').textContent = comptes.MISS; $('rCombo').textContent = comboMax;
+  $('rCrit').textContent = comptes.CRITICAL; $('rGreat').textContent = comptes.GREAT; $('rGood').textContent = comptes.GOOD; $('rMiss').textContent = comptes.MISS; $('rCombo').textContent = comboMax; $('rCoffres').textContent = `${coffres} / ${coffresMax}`;
   setTimeout(() => afficher('fin'), gagne ? 600 : 300);
 }
 $('menu').onclick = () => { etat = 'menu'; afficher('accueil'); };
@@ -1244,6 +1721,7 @@ $('decalage').value = reglages.decalage; $('decalageVal').textContent = reglages
 $('decalage').oninput = e => { reglages.decalage = +e.target.value; $('decalageVal').textContent = reglages.decalage; sauver(); };
 
 miseEnPage();
+chargerPolices().then(() => miseEnPage());   // les textes du HUD sont redessinés avec les bonnes polices
 demarrer();
 requestAnimationFrame(boucle);
 </script>

@@ -7,7 +7,7 @@
 Poupee.paquets = ['images/persos.bin?v=2'];
 
 Poupee.fiche({
-  id: 'heros-vert', nom: 'Héros vert',
+  id: 'heros-vert', nom: 'Héros vert', coup: 'Attaque tourbillon',
   peau: '#f9d5b5', yeux: '#1d6b5d', oreilles: 'pointues',
   cheveux: {modele: 'raie', couleur: '#e2bf66'},
   coiffe: {modele: 'bonnet', couleur: '#3f9b3f'},
@@ -22,7 +22,7 @@ Poupee.fiche({
 });
 
 Poupee.fiche({
-  id: 'princesse', nom: 'Princesse',
+  id: 'princesse', nom: 'Princesse', coup: 'Lumière sacrée',
   peau: '#f9d5b5', yeux: '#3a66b8', oreilles: 'pointues', oreilleLoin: true,
   cheveux: {modele: 'longs', couleur: '#e1ae56', derriere: '#c39249'},
   coiffe: {modele: 'diademe', couleur: '#e8bc45', pierre: '#d8323f'},
