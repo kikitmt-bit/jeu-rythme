@@ -56,10 +56,13 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
   en haut au centre « 196 CHAIN » (chiffres irisés penchés) ; en haut à droite le score (chiffres chromés, il défile) ;
   en bas la barre TIME ; en bas à droite le panneau du capitaine (= `EQUIPE[0]`, sa tête dans un rond, PV, jauge du coup spécial, coffres).
   Effet Critical = cercle magique **de la couleur de la note** (rouge, vert, doré) avec croches qui tournent + petits triangles, texte à droite de la cible.
-  **Coffres** : quelques notes rouges portent un coffre (1 pour ~45 notes) ; Critical/Great = attrapé (il vole vers le compteur), sinon il tombe. Total sur l'écran de fin.
-  **Coup spécial** : la jauge se remplit (Critical 1, Great 0,6, Good 0,3 ; pleine à notes/5) → triangle bleu avec le gros plan du capitaine + bandeau bleu du nom du coup (`coup:` dans la fiche du perso). Pas d'effet sur le score pour l'instant.
+  **Coffres sur les notes** et **coup spécial** (triangle avec le gros plan du capitaine + nom du coup, `coup:` dans la fiche) : codés le 13/11 puis **mis de côté par Kiki le 14/11** (`COFFRES_SUR_NOTES = false`, `COUP_SPECIAL = false` dans index.html, code gardé). Les coffres viendront d'un autre système ; le compteur du panneau reste à 0. La jauge se remplit (Critical 1, Great 0,6, Good 0,3) et reste pleine.
   Code : section « Look façon Final Bar Line » (sprites, `stylise` = textes stylés pré-dessinés) et section « HUD » (`preparerHud`, `hud`, `dessinerCoup`) de index.html. `TETE` = position de la tête dans le repère des poupées (portrait et gros plan).
-- Fluidité : 60 i/s visés. Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
+- Fluidité : 60 i/s visés, **indispensable** (Kiki). Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
+  Phase de test : compteur **toujours affiché** sous le titre (`FPS = true`) : i/s · pire écart entre deux images · temps de dessin moyen · résolution ; il passe en rouge sous 58 i/s ou au-delà de 25 ms.
+  Règles apprises le 14/11 (la 1re version du HUD saccadait sur le Pixel) : rien de lourd ne se prépare pendant la partie (la baisse de résolution `changerQualite` ne redessine rien) ;
+  tout ce qui ne bouge pas du HUD est peint dans le fond (`peindreFond`) ; les images des notes, cibles et effets sont faites à la taille exacte d'affichage (`preparerSprites`) ;
+  peu de particules. Mesurer avant/après : `outils/perf/mesure.js` (coût d'une image, rendu logiciel) en comparant à l'ancienne version (`git worktree add`), objectif ≤ l'ancienne.
 
 ## Créer un personnage (process du 12/11)
 Kiki envoie 2-3 croquis ou images + une description. Claude :
