@@ -180,29 +180,70 @@ boucliers.image = (o, fiche) => {
 /* ============================================================
    Pièces de la princesse (13/11)
    ============================================================ */
-// cheveux longs (d'après les images de Kiki, 13/11) : trois parties
-//  1. le dessus : plaqué sur le crâne (peu de volume), raie au milieu (décalée à gauche, vue de trois quarts) qui dégage le front ;
-//  2. deux mèches fines qui partent des tempes, passent DEVANT les oreilles et tombent jusqu'aux épaules ;
-//     le dessus et les deux mèches sont UNE seule forme (pas de trait de séparation) ;
-//  3. les cheveux longs de derrière, plus sombres (dans l'ombre), qu'on aperçoit des deux côtés : à gauche derrière le visage
-//     et sous la mèche, à droite derrière l'oreille et l'épaule ; ils tombent jusqu'au milieu du dos.
-// Aucun trait : le volume vient seulement des ombres.
+// Une mèche : une forme fine et ondulée qui suit une ligne (points de passage, courbe douce) et s'affine jusqu'à la pointe.
+// w = largeur à la racine. Les mèches posées les unes sur les autres montrent les mèches (voulu pour les cheveux, 14/11).
+function meche(pts, w, forme = 1.4, ronde = false) {   // ronde = racine arrondie (visible, pas cachée sous une autre mèche)
+  const N = 40, P2 = [], cr = (a, b, c, d, t) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
+  for (let k = 0; k <= N; k++) {
+    const u = k / N * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(u)), t = u - i;
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || pts[i + 1];
+    P2.push([cr(p0[0], p1[0], p2[0], p3[0], t), cr(p0[1], p1[1], p2[1], p3[1], t)]);
+  }
+  const g = [], d = [];
+  for (let k = 0; k <= N; k++) {
+    const a = P2[Math.max(0, k - 1)], b = P2[Math.min(N, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const nx = -(b[1] - a[1]) / l, ny = (b[0] - a[0]) / l, t = k / N;
+    const r = w / 2 * (1 - Math.pow(t, forme)) * (ronde ? Math.sqrt(Math.min(1, t / .14)) : t < .08 ? .75 + t / .08 * .25 : 1);
+    g.push((P2[k][0] + nx * r).toFixed(2) + ',' + (P2[k][1] + ny * r).toFixed(2));
+    d.unshift((P2[k][0] - nx * r).toFixed(2) + ',' + (P2[k][1] - ny * r).toFixed(2));
+  }
+  return 'M ' + g.join(' L ') + ' L ' + d.join(' L ') + ' Z';
+}
+
+// cheveux longs « vivants » (refaits le 14/11 d'après une poupée Theatrhythm envoyée par Kiki) :
+//  - le dessus : un peu de volume, raie au milieu (décalée à gauche, vue de trois quarts), une pointe qui part vers l'extérieur à la tempe gauche ;
+//  - de petites mèches fines qui retombent sur le front ;
+//  - de chaque côté une mèche ondulée qui passe DEVANT l'oreille (l'oreille d'elfe reste bien visible) et part vers l'extérieur au bout ;
+//  - derrière, plus sombres : les cheveux longs qui tombent dans le dos en plusieurs mèches ondulées qui s'écartent vers l'extérieur.
+// Le volume vient des ombres ; ce sont les mèches posées les unes sur les autres qui dessinent les cheveux (pas de traits).
 coiffures.longs = (o, fiche) => {
-  const c = o.couleur, peau = fiche.peau || PEAU;
-  const devant = 'M -4,-79.6 C -9,-77 -15,-74 -19,-70 C -20.4,-66 -20.6,-58 -20.8,-50 C -21,-44 -21,-38 -21.4,-34.6 '
-    + 'C -21.8,-32.6 -22.8,-31.6 -24,-31.8 C -25.6,-32.6 -26.2,-36 -26.4,-41 C -26.6,-50 -26.6,-58 -26.2,-65 '
-    + 'C -25.8,-78 -16,-88.6 -4.6,-88.6 C 9,-88.8 23.6,-80.6 23.4,-70 C 23.2,-67.2 21.8,-65.4 21.4,-63.6 '
-    + 'C 21.2,-58 21.4,-50 21.6,-44 C 21.8,-39 21.4,-35 20.2,-32.6 C 19.4,-31.4 17.8,-31.2 16.8,-32.2 '
-    + 'C 15.6,-34 15.2,-40 15,-46 C 14.8,-54 14.4,-62 14.2,-66 C 12,-71 8,-74.6 1.6,-77 C -.4,-77.8 -2.4,-78.6 -4,-79.6 Z';
-  const derriere = 'M -6,-85.6 C 10,-86.6 23,-80 24.4,-68 C 25.2,-58 25.4,-48 25.2,-40 C 25,-33 23.8,-28 21.6,-24.6 '
-    + 'C 20,-27 17.4,-29.6 13.6,-31.6 L 8,-42 L -13,-41 C -16,-37 -19.6,-32 -21.4,-29 '
-    + 'C -23,-26.8 -24.6,-25.6 -26.2,-25.8 C -28,-29 -28.8,-36 -28.8,-44 C -28.8,-52 -28.4,-58 -27.4,-64 '
-    + 'C -26,-76 -18,-85 -6,-85.6 Z';
+  const c = o.couleur, fd = o.derriere || P.fonce(c, .86), peau = fiche.peau || PEAU;
+  const dessus = 'M -4,-79.4 C -9,-77.4 -15.5,-75 -20,-71.4 C -23,-69.2 -26.4,-67.6 -31,-66.6 C -29,-69.4 -28.4,-72 -28.2,-75 '
+    + 'C -27.2,-85 -17,-92 -6.4,-91.4 Q -4.8,-91.2 -3.6,-90.2 Q -2.2,-91.6 0,-91.8 C 12,-92.2 24,-85 25,-73 C 25.2,-70 24.4,-68 23,-66.6 '
+    + 'C 20,-68 16.6,-69.4 14,-70.2 C 8,-73 2,-76 -4,-79.4 Z';
+  const mechesDevant = [
+    meche([[-21.4, -78], [-24, -66], [-21.8, -56], [-24, -47], [-26.6, -41], [-30, -39]], 6.6),     // côté gauche
+    meche([[15.4, -77], [18.4, -65], [16.2, -55], [18.8, -46.4], [21.4, -40.6], [25, -39.4]], 7.2),       // côté droit, devant l'oreille
+  ];
+  const mechesCote = [meche([[-23, -71], [-26.4, -63], [-27, -56], [-30, -50.6], [-33, -49.8]], 5.4)];   // petite mèche qui s'envole à la joue gauche
+  const lobes = [                                                                                          // les deux grosses mèches du dessus, de la raie vers les tempes
+    meche([[-3.4, -87], [-6, -89.2], [-13, -89], [-21, -84.6], [-26.4, -77.4], [-28.6, -71], [-32.4, -67.4]], 9.4, 1.3, true),
+    meche([[-3.6, -87], [-1, -89.6], [7, -90], [17, -86], [23.2, -78.2], [25.4, -71.4], [29, -68.6]], 9.8, 1.3, true),
+  ];
+  const fines = [                                                                                          // sur le front
+    meche([[-8, -83], [-9.4, -77.4], [-8.6, -73.2]], 2.2, 1.1),
+    meche([[-.6, -82], [.4, -77], [-.6, -73.4]], 2, 1.1),
+    meche([[-13.6, -80.4], [-15.6, -75.4], [-15, -71.8]], 2, 1.1),
+  ];
+  const masse = 'M -6,-90 C 12,-91 26,-84 27.4,-70 C 28.2,-60 27.6,-50 26,-42 L 12,-34 L 8,-44 L -14,-44 L -24,-40 '
+    + 'C -28,-46 -29.4,-56 -28.8,-66 C -28,-80 -19,-89.6 -6,-90 Z';
+  const mechesDerriere = [
+    meche([[24, -64], [27.6, -52], [26.6, -42], [28.6, -33], [31.6, -27.2], [33.6, -26.6]], 9),
+    meche([[-26.4, -60], [-29.4, -50], [-28.6, -41], [-30, -33.6], [-32.4, -30]], 7),
+    meche([[18, -52], [21.4, -41], [20.2, -32], [22, -25], [24.6, -21]], 8),
+    meche([[-18, -50], [-20, -41], [-19.4, -33], [-20.8, -28]], 6),
+  ];
   return [
-    {os: 'tete', z: Z.cheveuxArr, dessin(p) { p.forme(derriere, o.derriere || P.fonce(c, .86), {taille: 'g'}); }},
+    {os: 'tete', z: Z.cheveuxArr, dessin(p) {
+      p.forme(masse, fd, {taille: 'g'});
+      for (const m of mechesDerriere) p.forme(m, fd, {taille: 'm', force: 1.2});
+    }},
     {os: 'tete', z: Z.cheveux, dessin(p) {
-      p.portee(devant, P.TETE, peau, {dy: 1.3, flou: 2.4, force: .4});
-      p.forme(devant, c, {taille: 'g', force: .75});
+      for (const m of [dessus, ...mechesCote, ...mechesDevant]) p.portee(m, P.TETE, peau, {dy: 1.3, flou: 2.4, force: .4});
+      for (const m of [...mechesCote, ...mechesDevant]) p.forme(m, c, {taille: 'm', force: 1.2});   // elles sortent de sous le dessus
+      p.forme(dessus, c, {taille: 'g', force: .8});
+      for (const m of lobes) p.forme(m, c, {taille: 'm', force: 1.1});
+      for (const m of fines) p.forme(m, c, {taille: 'p'});
     }},
   ];
 };
