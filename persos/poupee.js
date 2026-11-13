@@ -37,7 +37,7 @@ P.OS = OS;
 
 /* Ordre d'empilement des couches (du fond vers le devant) */
 const Z = {queue: 5, cheveuxArr: 8, brasD: 20, jambeD: 30, jambeG: 40, cou: 45, torse: 50,
-           brasG: 60, coiffeArr: 78, tete: 80, visage: 82, oreille: 84, cheveux: 86, coiffe: 90, arme: 92, mainD: 93, bouclier: 95};   // l'arme est au premier plan, la main qui la tient par-dessus
+           brasG: 60, coiffeArr: 78, oreilleLoin: 79, tete: 80, visage: 82, oreille: 84, cheveux: 86, coiffe: 90, arme: 92, mainD: 93, bouclier: 95};   // l'arme est au premier plan, la main qui la tient par-dessus
 P.Z = Z;
 
 /* Tête : mêmes mesures pour tout le monde */
@@ -248,6 +248,11 @@ function couchesDuCorps(f) {
     // oreille pointue : courte (elle n'atteint pas le bord de la coiffe), bord du haut presque horizontal, pointe à peine relevée et légèrement arrondie (pas piquante)
     p.forme('M 19,-63.6 Q 26,-64.5 30.4,-64.8 Q 32.7,-64.7 32,-62.7 Q 28.6,-56.4 18.8,-53.6 Z', peau, {taille: 'p', force: 1.4});
     p.forme('M 22,-62 Q 26,-62.6 28.8,-62.7 Q 26.6,-58 22,-56.4 Z', ombreDe(peau, .26), {taille: 0});
+  }});
+  // l'oreille du côté éloigné (option `oreilleLoin`) : la même, en miroir, un peu plus petite (vue de trois quarts) ;
+  // elle passe derrière la tête, on n'en voit que le bout
+  if (f.oreilles === 'pointues' && f.oreilleLoin) c.push({os: 'tete', z: Z.oreilleLoin, dessin(p) {
+    p.forme('M -20.5,-63.1 Q -26.4,-64.1 -30,-64.4 Q -31.9,-64.3 -31.3,-62.4 Q -28.3,-56.7 -20.4,-54.1 Z', peau, {taille: 'p', force: 1.4});
   }});
   return c;
 }

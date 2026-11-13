@@ -182,7 +182,7 @@ boucliers.image = (o, fiche) => {
    ============================================================ */
 // Une mèche : une forme fine et ondulée qui suit une ligne (points de passage, courbe douce) et s'affine jusqu'à la pointe.
 // w = largeur à la racine. Les mèches posées les unes sur les autres montrent les mèches (voulu pour les cheveux, 14/11).
-function meche(pts, w, forme = 1.4, ronde = false) {   // ronde = racine arrondie (visible, pas cachée sous une autre mèche)
+function mecheBords(pts, w, forme = 1.4, ronde = false) {   // ronde = racine arrondie (visible, pas cachée sous une autre mèche)
   const N = 40, P2 = [], cr = (a, b, c, d, t) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
   for (let k = 0; k <= N; k++) {
     const u = k / N * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(u)), t = u - i;
@@ -197,34 +197,33 @@ function meche(pts, w, forme = 1.4, ronde = false) {   // ronde = racine arrondi
     g.push((P2[k][0] + nx * r).toFixed(2) + ',' + (P2[k][1] + ny * r).toFixed(2));
     d.unshift((P2[k][0] - nx * r).toFixed(2) + ',' + (P2[k][1] - ny * r).toFixed(2));
   }
-  return 'M ' + g.join(' L ') + ' L ' + d.join(' L ') + ' Z';
+  return [g, d];   // g : un bord, de la racine à la pointe ; d : l'autre bord, de la pointe à la racine
 }
+const meche = (...a) => { const [g, d] = mecheBords(...a); return 'M ' + g.join(' L ') + ' L ' + d.join(' L ') + ' Z'; };
 
 // cheveux longs « vivants » (refaits le 14/11 d'après une poupée Theatrhythm envoyée par Kiki) :
-//  - le dessus : un peu de volume, raie au milieu (décalée à gauche, vue de trois quarts), une pointe qui part vers l'extérieur à la tempe gauche ;
-//  - de petites mèches fines qui retombent sur le front ;
-//  - de chaque côté une mèche ondulée qui passe DEVANT l'oreille (l'oreille d'elfe reste bien visible) et part vers l'extérieur au bout ;
+//  - le dessus : raie au milieu (décalée à gauche, vue de trois quarts) et deux grosses mèches qui s'envolent aux tempes,
+//    fondues dans le dessus (une seule forme, juste une ombre très douce sous chacune) ; rien sur le front (Kiki, 13/11) ;
+//  - de chaque côté une mèche ondulée qui passe DEVANT l'oreille (les deux oreilles d'elfe restent visibles) et part vers l'extérieur au bout ;
 //  - derrière, plus sombres : les cheveux longs qui tombent dans le dos en plusieurs mèches ondulées qui s'écartent vers l'extérieur.
 // Le volume vient des ombres ; ce sont les mèches posées les unes sur les autres qui dessinent les cheveux (pas de traits).
 coiffures.longs = (o, fiche) => {
   const c = o.couleur, fd = o.derriere || P.fonce(c, .86), peau = fiche.peau || PEAU;
-  const dessus = 'M -4,-79.4 C -9,-77.4 -15.5,-75 -20,-71.4 C -23,-69.2 -26.4,-67.6 -31,-66.6 C -29,-69.4 -28.4,-72 -28.2,-75 '
-    + 'C -27.2,-85 -17,-92 -6.4,-91.4 Q -4.8,-91.2 -3.6,-90.2 Q -2.2,-91.6 0,-91.8 C 12,-92.2 24,-85 25,-73 C 25.2,-70 24.4,-68 23,-66.6 '
-    + 'C 20,-68 16.6,-69.4 14,-70.2 C 8,-73 2,-76 -4,-79.4 Z';
+  // Le dessus et ses deux grosses mèches (de la raie vers les tempes, qui s'envolent au bout) ne font qu'UNE forme :
+  // aucun trait entre elles. Seule une ombre très douce sous chaque grosse mèche montre leur volume.
+  const dessus = 'M -4,-79.4 C -9,-77.4 -15.5,-75 -20,-71.4 C -23.4,-69.4 -27.6,-68.2 -32.4,-67.4 C -30.4,-68.8 -29.4,-70.4 -29.2,-72.6 '
+    + 'C -28.8,-80 -24,-89 -12.1,-93 C -9,-93.8 -6,-93.4 -3.8,-91.8 C -2,-93.6 1,-94.4 4,-94.2 C 14,-93.4 23.4,-86 25.8,-76 '
+    + 'C 26.2,-73.6 26.6,-71 29,-68.6 C 26.8,-68.4 24.6,-67.6 23,-66.6 C 20,-68 16.6,-69.4 14,-70.2 C 8,-73 2,-76 -4,-79.4 Z';
+  const [Lg, Ld] = mecheBords([[-3.4, -87], [-6, -89.2], [-13, -89], [-21, -84.6], [-26.4, -77.4], [-28.6, -71], [-32.4, -67.4]], 9.4, 1.3, true);
+  const [Rg, Rd] = mecheBords([[-3.6, -87], [-1, -89.6], [7, -90], [17, -86], [23.2, -78.2], [25.4, -71.4], [29, -68.6]], 9.8, 1.3, true);
+  const lobes = 'M ' + Lg.join(' L ') + ' L ' + Ld.join(' L ') + ' Z M ' + Rg.join(' L ') + ' L ' + Rd.join(' L ') + ' Z';
+  const sousLobes = 'M ' + Ld.join(' L ') + ' L ' + Rg.join(' L ')                 // la bande entre les grosses mèches et le front
+    + ' L 23,-66.6 C 20,-68 16.6,-69.4 14,-70.2 C 8,-73 2,-76 -4,-79.4 C -9,-77.4 -15.5,-75 -20,-71.4 C -23.4,-69.4 -27.6,-68.2 -32.4,-67.4 Z';
   const mechesDevant = [
     meche([[-21.4, -78], [-24, -66], [-21.8, -56], [-24, -47], [-26.6, -41], [-30, -39]], 6.6),     // côté gauche
     meche([[15.4, -77], [18.4, -65], [16.2, -55], [18.8, -46.4], [21.4, -40.6], [25, -39.4]], 7.2),       // côté droit, devant l'oreille
   ];
-  const mechesCote = [meche([[-23, -71], [-26.4, -63], [-27, -56], [-30, -50.6], [-33, -49.8]], 5.4)];   // petite mèche qui s'envole à la joue gauche
-  const lobes = [                                                                                          // les deux grosses mèches du dessus, de la raie vers les tempes
-    meche([[-3.4, -87], [-6, -89.2], [-13, -89], [-21, -84.6], [-26.4, -77.4], [-28.6, -71], [-32.4, -67.4]], 9.4, 1.3, true),
-    meche([[-3.6, -87], [-1, -89.6], [7, -90], [17, -86], [23.2, -78.2], [25.4, -71.4], [29, -68.6]], 9.8, 1.3, true),
-  ];
-  const fines = [                                                                                          // sur le front
-    meche([[-8, -83], [-9.4, -77.4], [-8.6, -73.2]], 2.2, 1.1),
-    meche([[-.6, -82], [.4, -77], [-.6, -73.4]], 2, 1.1),
-    meche([[-13.6, -80.4], [-15.6, -75.4], [-15, -71.8]], 2, 1.1),
-  ];
+  const mechesCote = [meche([[-23.4, -60], [-26.6, -55], [-29.6, -50.8], [-32.6, -50]], 5)];   // petite mèche qui s'envole à la joue gauche, sous l'oreille
   const masse = 'M -6,-90 C 12,-91 26,-84 27.4,-70 C 28.2,-60 27.6,-50 26,-42 L 12,-34 L 8,-44 L -14,-44 L -24,-40 '
     + 'C -28,-46 -29.4,-56 -28.8,-66 C -28,-80 -19,-89.6 -6,-90 Z';
   const mechesDerriere = [
@@ -242,8 +241,7 @@ coiffures.longs = (o, fiche) => {
       for (const m of [dessus, ...mechesCote, ...mechesDevant]) p.portee(m, P.TETE, peau, {dy: 1.3, flou: 2.4, force: .4});
       for (const m of [...mechesCote, ...mechesDevant]) p.forme(m, c, {taille: 'm', force: 1.2});   // elles sortent de sous le dessus
       p.forme(dessus, c, {taille: 'g', force: .8});
-      for (const m of lobes) p.forme(m, c, {taille: 'm', force: 1.1});
-      for (const m of fines) p.forme(m, c, {taille: 'p'});
+      p.portee(lobes, sousLobes, c, {dy: .8, flou: 3.4, force: .15});
     }},
   ];
 };

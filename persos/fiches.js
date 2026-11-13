@@ -23,8 +23,8 @@ Poupee.fiche({
 
 Poupee.fiche({
   id: 'princesse', nom: 'Princesse',
-  peau: '#f9d5b5', yeux: '#3a66b8', oreilles: 'pointues',
-  cheveux: {modele: 'longs', couleur: '#dc9e4c', derriere: '#bd8442'},
+  peau: '#f9d5b5', yeux: '#3a66b8', oreilles: 'pointues', oreilleLoin: true,
+  cheveux: {modele: 'longs', couleur: '#e1ae56', derriere: '#c39249'},
   coiffe: {modele: 'diademe', couleur: '#e8bc45', pierre: '#d8323f'},
   tenue: {modele: 'robe', haut: '#d34b92', jupe: '#f3eaf6', or: '#e8bc45', tablier: '#6a3d9e', embleme: 'triforce.png', epaulieres: '#e8bc45'},
   // longs gants blancs qui couvrent toute la main (main = couleur du gant) ; entre la manche et le gant, la peau
