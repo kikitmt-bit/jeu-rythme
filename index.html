@@ -616,10 +616,28 @@ function cristal() {
   x.fillStyle = 'rgba(160,230,255,.9)'; hex(11); x.fill();
   return c;
 }
+/* Ombre au sol d'un perso, anneau qui s'élargit, petit losange blanc (barre TIME) */
+function ombreSol() {
+  const [c, x] = toile(128, 32); x.translate(64, 16); x.scale(4, 1);
+  const gr = x.createRadialGradient(0, 0, 0, 0, 0, 16); gr.addColorStop(0, 'rgba(0,0,0,.42)'); gr.addColorStop(.7, 'rgba(0,0,0,.28)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = gr; x.beginPath(); x.arc(0, 0, 16, 0, 7); x.fill();
+  return c;
+}
+function anneauSprite(col, k = 1) {
+  const [c, x] = toile(Math.ceil(128 * k)); x.scale(k, k);
+  x.strokeStyle = col; x.lineWidth = 5; x.beginPath(); x.arc(64, 64, 58, 0, 7); x.stroke();
+  return c;
+}
+function losange(k = 1) {
+  const [c, x] = toile(Math.ceil(16 * k), Math.ceil(32 * k)); x.scale(k, k);
+  x.fillStyle = '#fff'; x.beginPath(); x.moveTo(8, 0); x.lineTo(16, 16); x.lineTo(8, 32); x.lineTo(0, 16); x.fill();
+  return c;
+}
 const TRI_COULEURS = ['#6fe8ff', '#ffe65a', '#8dff7a', '#ff8ac8', '#ffffff'];
 const SPR = {
   tap: bille('tap'), hold: bille('hold'), swipe: bille('swipe'), bout: boutTenue(),
-  fleche: fleche(), cible: cible(), coffre: coffre(), cristal: cristal(),
+  fleche: fleche(), cible: cible(), coffre: coffre(), cristal: cristal(), ombre: ombreSol(), losange: losange(),
+  anneau: {tap: anneauSprite(TEINTES.tap[0]), hold: anneauSprite(TEINTES.hold[0]), swipe: anneauSprite(TEINTES.swipe[0])},
   lueurOr: lueur('rgba(255,220,120,.8)'), lueurVert: lueur('rgba(120,255,150,.7)'), lueurBleu: lueur('rgba(130,220,255,.6)'),
   lueur: {tap: lueur('rgba(255,90,90,.8)'), hold: lueur('rgba(110,255,130,.75)'), swipe: lueur('rgba(255,215,90,.8)')},
   cercle: {tap: cercleMagique('tap'), hold: cercleMagique('hold'), swipe: cercleMagique('swipe')},
@@ -643,7 +661,13 @@ function preparerSprites() {
   const px = R * DPR, kn = RN * 2.5 * DPR / 160;
   Object.assign(SPR, {tap: bille('tap', kn), hold: bille('hold', kn), swipe: bille('swipe', kn), bout: boutTenue(kn),
     fleche: fleche(RN * 4 * DPR / 256), cible: cible(px * 2.7 / 256)});
-  for (const s of ['tap', 'hold', 'swipe']) { SPR.cercle[s] = cercleMagique(s, px * 4.4 / 512); SPR.notesCercle[s] = cercleNotes(s, px * 4.2 / 512); }
+  // cercle magique et couronne de croches réunis en une seule image (une seule à peindre par effet)
+  for (const s of ['tap', 'hold', 'swipe']) {
+    const c = cercleMagique(s, px * 4.4 / 512), n = cercleNotes(s, px * 4.4 / 512);
+    c.getContext('2d').drawImage(n, 0, 0, c.width, c.height);
+    SPR.cercle[s] = c; SPR.anneau[s] = anneauSprite(TEINTES[s][0], px * 1.8 / 128);
+  }
+  SPR.losange = losange(Math.max(4, H * .009) * 1.9 * DPR / 32);
   SPR.tri = TRI_COULEURS.map(c => triangle(c, px * .8 / 48));
   SPR.points = TRI_COULEURS.map(c => lueur(c, Math.max(.12, px * .5 / 128)));
   tournerFleches();
@@ -826,7 +850,7 @@ function miseEnPage() {
   RN = R * .74;   // rayon d'une note
   preparerHud();
   peindreFond();
-  lucioles = Array.from({length: 28}, () => ({x: Math.random() * W, y: Math.random() * H * .8, p: Math.random() * 6, v: .2 + Math.random() * .5, s: 2 + Math.random() * 3}));
+  lucioles = Array.from({length: 14}, () => ({x: Math.random() * W, y: Math.random() * H * .8, p: Math.random() * 6, v: .2 + Math.random() * .5, s: 2 + Math.random() * 3}));
 }
 // Baisse de résolution en pleine partie : on change seulement la taille de la toile. Rien n'est redessiné
 // (décor, textes et images gardent leur résolution), sinon le jeu gèlerait un instant au milieu du morceau.
@@ -924,14 +948,14 @@ function eclat(j, n) {
   const crit = j === 'CRITICAL', great = j === 'GREAT';
   effets.push({type: 'flash', x, y, age: 0, vie: .25, spr: SPR.lueur[sorte], taille: R * (crit ? 3.6 : 2.8)});
   if (crit || great) effets.push({type: 'cercle', x, y, age: 0, vie: crit ? .6 : .45, sorte, taille: R * (crit ? 4.4 : 3.3), rot: Math.random() * 6});
-  effets.push({type: 'anneau', x, y, age: 0, vie: .3, r0: R, r1: R * 1.7, col: TEINTES[sorte][0], w: 4});
-  const nt = crit ? 8 : great ? 4 : 1;
+  if (!crit && !great) effets.push({type: 'anneau', x, y, age: 0, vie: .3, sorte});
+  const nt = crit ? 5 : great ? 3 : 0;
   for (let i = 0; i < nt; i++) {
     const a = Math.random() * Math.PI * 2, r0 = R * (1 + Math.random() * .7), v = R * (2.5 + Math.random() * 3.5);
     effets.push({type: 'tri', x: x + Math.cos(a) * r0, y: y + Math.sin(a) * r0, vx: Math.cos(a) * v, vy: Math.sin(a) * v, age: 0, vie: .5 + Math.random() * .35,
       s: R * (.24 + Math.random() * .16), rot: Math.random() * 6, vr: (Math.random() - .5) * 10, k: Math.floor(Math.random() * SPR.tri.length)});
   }
-  for (let i = 0; i < (crit ? 5 : 2); i++) {
+  for (let i = 0; i < (crit ? 3 : great ? 1 : 0); i++) {
     const a = Math.random() * Math.PI * 2, v = R * (1.5 + Math.random() * 4);
     effets.push({type: 'point', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, age: 0, vie: .4 + Math.random() * .3, s: R * (.12 + Math.random() * .12), k: Math.floor(Math.random() * SPR.points.length)});
   }
@@ -1018,8 +1042,12 @@ addEventListener('keyup', e => { if (etat === 'jeu' && TOUCHES.has(e.code)) lach
    Boucle de jeu
    ============================================================ */
 let dernier = performance.now();
+/* Écrans 90/120 Hz (le Pixel 7 Pro monte à 120) : une image toutes les 8 ms. Si le téléphone ne tient pas ce rythme
+   parfaitement, le jeu se cale sur 60 images/s bien régulières (une image sur deux), plus fluide à l'œil qu'un 120 qui hoquette. */
+let cale60 = false;
 function boucle(now) {
   requestAnimationFrame(boucle);
+  if (cale60 && now - dernier < 12) return;
   const brut = now - dernier, dt = Math.min(.05, brut / 1000); dernier = now;
   if (etat === 'jeu') { programmer(); synchroniser(); mettreAJour(now / 1000 + ecartHorloge, dt); surveiller(brut); }
   const t1 = performance.now();
@@ -1027,13 +1055,18 @@ function boucle(now) {
   if (FPS) compteur(brut, performance.now() - t1);
 }
 /* Surveillance de la fluidité pendant la partie */
-let mesures = 0, lentes = 0, calme = 0;
+let mesures = 0, lentes = 0, rapides = 0, rates120 = 0, calme = 0;
 function surveiller(ms) {
   if (tempsCourant < (niveau.debut || 0) + 1 || (calme -= ms) > 0) return;
-  mesures++; if (ms > 24) lentes++;
+  mesures++;
+  if (!cale60) { if (ms < 10.5) rapides++; else if (ms > 12.5) rates120++; }
+  if (ms > 24) lentes++;
   if (mesures < 150) return;
-  if (lentes > 12 && qualite < QUALITES.length - 1 && DPR > 1) { qualite++; changerQualite(); calme = 3000; }
-  mesures = lentes = 0;
+  // écran rapide (la plupart des images à ~8 ms) mais quelques images ratées : on se cale sur 60
+  if (!cale60 && rapides > 60 && rates120 > 3) { cale60 = true; calme = 2000; }
+  // à 60 i/s et encore des images ratées : on baisse un peu la résolution
+  else if (lentes > 6 && qualite < QUALITES.length - 1 && DPR > 1) { qualite++; changerQualite(); calme = 3000; }
+  mesures = lentes = rapides = rates120 = 0;
 }
 // Compteur d'images par seconde, affiché en permanence pendant la phase de test (sous le titre) :
 // images/s · pire écart entre deux images (ms) · temps de dessin moyen d'une image (ms) · résolution
@@ -1043,7 +1076,7 @@ function compteur(ms, dessin) {
   fpsN++; fpsT += ms; fpsDessin += dessin; if (ms > fpsPire) fpsPire = ms;
   if (fpsT >= 500) {
     const ips = Math.round(fpsN * 1000 / fpsT);
-    fpsTxt = `${ips} i/s · pire ${Math.round(fpsPire)} ms · dessin ${(fpsDessin / fpsN).toFixed(1)} ms · ×${DPR}`;
+    fpsTxt = `${ips} i/s${cale60 ? ' (calé à 60)' : ''} · pire ${Math.round(fpsPire)} ms · dessin ${(fpsDessin / fpsN).toFixed(1)} ms · ×${DPR}`;
     fpsAlerte = ips < 58 || fpsPire > 25;
     fpsN = fpsT = fpsDessin = fpsPire = 0;
   }
@@ -1172,7 +1205,6 @@ function dessiner(st, dt, horloge) {
       const s = e.taille * (.55 + .45 * doux(u * 1.6));
       g.globalAlpha = u < .65 ? 1 : (1 - u) / .35;
       dessinTourne(SPR.cercle[e.sorte], e.x, e.y, s, s, e.rot + u * .9);
-      dessinTourne(SPR.notesCercle[e.sorte], e.x, e.y, s * .95, s * .95, e.rot - u * 1.6);
     }
     else if (e.type === 'tri') {
       const fr = Math.pow(.06, dt); e.vx *= fr; e.vy *= fr; e.x += e.vx * dt; e.y += e.vy * dt; e.rot += e.vr * dt;
@@ -1193,7 +1225,7 @@ function dessiner(st, dt, horloge) {
       g.globalCompositeOperation = 'lighter';
     }
     else if (e.type === 'flash') { g.globalAlpha = 1 - u; const s = e.taille * (.7 + u * .5); g.drawImage(e.spr, e.x - s / 2, e.y - s / 2, s, s); }
-    else if (e.type === 'anneau') { g.globalAlpha = 1 - u; g.strokeStyle = e.col; g.lineWidth = e.w * (1 - u) + .5; g.beginPath(); g.arc(e.x, e.y, e.r0 + (e.r1 - e.r0) * (1 - Math.pow(1 - u, 3)), 0, 7); g.stroke(); }
+    else if (e.type === 'anneau') { g.globalAlpha = 1 - u; const s = R * (1 + .8 * doux(u)) * 2.2; g.drawImage(SPR.anneau[e.sorte], e.x - s / 2, e.y - s / 2, s, s); }
     else {
       const fr = Math.pow(.15, dt); e.vx *= fr; e.vy *= fr; e.x += e.vx * dt; e.y += e.vy * dt;
       g.globalAlpha = 1 - u * u;
@@ -1393,7 +1425,18 @@ function preparerPanneau() {
   const ox = W - u * .42, oy = H - u * .2;
   const pv = g.createLinearGradient(ox + bx0, 0, ox + bx1, 0); pv.addColorStop(0, '#22e2b4'); pv.addColorStop(1, '#2f8cff');
   const pvBas = g.createLinearGradient(ox + bx0, 0, ox + bx1, 0); pvBas.addColorStop(0, '#ffb43a'); pvBas.addColorStop(1, '#ff4a3a');
-  PANNEAU = {img: c, x: ox, y: oy, l: u * .42, h: u * .2, pv, pvBas,
+  // barres pleines pré-dessinées : à chaque image, on n'en recopie que la partie remplie
+  const barre = (l, h, peindre) => { const [b, y] = toile(Math.ceil(l * DPR), Math.ceil(h * DPR)); y.scale(DPR, DPR); peindre(y, l, h); return b; };
+  const pvImg = cols => barre(bx1 - bx0, bh, (y, l, h) => {
+    const d = y.createLinearGradient(0, 0, l, 0); d.addColorStop(0, cols[0]); d.addColorStop(1, cols[1]);
+    y.fillStyle = d; rr(y, 0, 0, l, h, h / 2); y.fill();
+    y.fillStyle = 'rgba(255,255,255,.28)'; rr(y, h * .3, h * .14, l - h * .6, h * .3, h * .15); y.fill();
+  });
+  const jgImg = barre(jx1 - jx0 + jh, jh, (y, l, h) => {
+    y.fillStyle = '#5cbcff'; y.beginPath(); y.moveTo(0, 0); y.lineTo(l, 0); y.lineTo(l - h * .6, h); y.lineTo(0, h); y.closePath(); y.fill();
+    y.fillStyle = 'rgba(255,255,255,.35)'; y.fillRect(0, 1, l - h * .6, h * .3);
+  });
+  PANNEAU = {img: c, x: ox, y: oy, l: u * .42, h: u * .2, pv, pvBas, pvImg: pvImg(['#22e2b4', '#2f8cff']), pvBasImg: pvImg(['#ffb43a', '#ff4a3a']), jgImg,
     b: [ox + bx0, oy + by, bx1 - bx0, bh], j: [ox + jx0, oy + jy, jx1 - jx0, jh],
     coffre: [ox + X(.205 * u) + cl / 2, oy + Y(.094 * u) - ch * .05], nombre: [ox + X(.155 * u), oy + Y(.08 * u)],
     cristal: [ox + X(.345 * u), oy + Y(.112 * u), cr]};
@@ -1489,21 +1532,20 @@ function hud(st, dt) {
   if (TEMPS) {
     const prog = Math.max(0, Math.min(1, st / niveau.fin)), xm = TEMPS.x0 + (TEMPS.x1 - TEMPS.x0) * prog, e = TEMPS.e;
     g.fillStyle = TEMPS.rempl; g.fillRect(TEMPS.x0, TEMPS.y, xm - TEMPS.x0, e);
-    g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(xm, TEMPS.y - e * .45); g.lineTo(xm + e * .5, TEMPS.y + e / 2); g.lineTo(xm, TEMPS.y + e * 1.45); g.lineTo(xm - e * .5, TEMPS.y + e / 2); g.fill();
+    g.drawImage(SPR.losange, xm - e * .5, TEMPS.y - e * .45, e, e * 1.9);
   }
   // panneau du capitaine
   if (PANNEAU) {
     const P = PANNEAU;
     const [bx, by, bl, bh] = P.b, v = Math.max(0, hp / 100);
     if (v > 0) {
-      g.fillStyle = hp > 30 ? P.pv : P.pvBas; rr(g, bx, by, Math.max(bh, bl * v), bh, bh / 2); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.28)'; rr(g, bx + bh * .3, by + bh * .14, Math.max(bh * .4, bl * v - bh * .6), bh * .3, bh * .15); g.fill();
+      const img = hp > 30 ? P.pvImg : P.pvBasImg, w = Math.max(bh, bl * v);
+      g.drawImage(img, 0, 0, img.width * w / bl, img.height, bx, by, w, bh);
     }
     const [jx, jy, jl, jh] = P.j, ratio = Math.min(1, jauge / JAUGE_MAX);
     if (ratio > 0) {
-      const b = jx + jl * ratio;
-      g.fillStyle = '#5cbcff'; g.beginPath(); g.moveTo(jx, jy); g.lineTo(b + jh * .6, jy); g.lineTo(b, jy + jh); g.lineTo(jx, jy + jh); g.closePath(); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(jx, jy + 1, Math.max(0, jl * ratio), jh * .3);
+      const img = P.jgImg, w = jl * ratio + jh * .6;
+      g.drawImage(img, 0, 0, img.width * w / (jl + jh), img.height, jx, jy, w, jh);
     }
     const [cx, cy, cr] = P.cristal;
     if (ratio > .85 || coup) {
@@ -1524,22 +1566,43 @@ function hud(st, dt) {
    ============================================================ */
 const EQUIPE = ['heros-vert', 'princesse'];
 let poupees = [], poupeesEchelle = 0;
-function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) { poupeesEchelle = 0; preparerCapitaine(true); peindreFond(); } }); }
+function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) { equipeAPrepar = true; if (etat !== 'jeu') preparerEquipe(true); preparerCapitaine(true); peindreFond(); } }); }
+/* Pour la fluidité, la marche de chaque perso est pré-dessinée en IMAGES_MARCHE images au début de la partie :
+   pendant le morceau, un perso = une seule image à recopier (au lieu de ~22 pièces à placer une par une).
+   Indispensable pour avoir 4 persos et des monstres à l'écran sans ralentir. */
+const IMAGES_MARCHE = 24, CADRE_POUPEE = [-75, -112, 75, 12];
+let equipeAPrepar = false;
+function preparerEquipe(force) {
+  if (!window.Poupee) return;
+  const taille = H * .27, dpr = Math.min(window.devicePixelRatio || 1, QUALITES[0]), ech = taille * dpr / 100;
+  if (!force && Math.abs(ech - poupeesEchelle) <= poupeesEchelle * .01) return;
+  poupeesEchelle = ech;
+  const k = taille / 100, [x0, y0, x1, y1] = CADRE_POUPEE, L = (x1 - x0) * k, Hc = (y1 - y0) * k;
+  poupees = EQUIPE.map(id => {
+    const p = Poupee.fabrique(id, {echelle: ech});
+    p.marche = [];
+    for (let i = 0; i < IMAGES_MARCHE; i++) {
+      const [c, x] = toile(Math.ceil(L * dpr), Math.ceil(Hc * dpr)); x.scale(dpr, dpr);
+      Poupee.dessine(x, p, -x0 * k, -y0 * k, Poupee.animations.marche.pose(i / IMAGES_MARCHE, 0), {taille});
+      p.marche.push(c);
+    }
+    Object.assign(p, {mx: -x0 * k, my: -y0 * k, ml: L, mh: Hc});
+    return p;
+  });
+  equipeAPrepar = false;
+}
 function dessinerEquipe(st, horloge) {
   if (!window.Poupee) return;
-  const taille = H * .27, ech = taille * DPR / 100;
-  if (Math.abs(ech - poupeesEchelle) > poupeesEchelle * .01) {      // (re)peint les morceaux à la bonne taille
-    poupeesEchelle = ech; poupees = EQUIPE.map(id => Poupee.fabrique(id, {echelle: ech}));
-  }
-  const sol = H * .965, enRoute = etat === 'jeu' && st > niveau.avance;
+  if (!poupees.length || (equipeAPrepar && etat !== 'jeu')) preparerEquipe(true);
+  const taille = H * .27, sol = H * .965, enRoute = etat === 'jeu' && st > niveau.avance;
   // un pas par temps de la musique
-  const pose = enRoute ? Poupee.animations.marche.pose(((st - niveau.debut) / niveau.temps / 2 % 1 + 1) % 1, horloge)
-                       : Poupee.poseA('attente', horloge);
-  poupees.forEach((p, i) => {
-    const x = W * .6 + i * taille * .75;
-    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(x, sol, taille * .2, taille * .035, 0, 0, 7); g.fill();
-    Poupee.dessine(g, p, x, sol, pose, {taille});
-  });
+  const u = ((st - niveau.debut) / niveau.temps / 2 % 1 + 1) % 1, pose = enRoute ? null : Poupee.poseA('attente', horloge);
+  for (let i = 0; i < poupees.length; i++) {
+    const p = poupees[i], x = W * .6 + i * taille * .75;
+    g.drawImage(SPR.ombre, x - taille * .22, sol - taille * .045, taille * .44, taille * .09);   // ombre au sol
+    if (enRoute) g.drawImage(p.marche[Math.floor(u * IMAGES_MARCHE) % IMAGES_MARCHE], x - p.mx, sol - p.my, p.ml, p.mh);
+    else Poupee.dessine(g, p, x, sol, pose, {taille});
+  }
 }
 
 /* ============================================================
@@ -1549,7 +1612,7 @@ const $ = id => document.getElementById(id);
 function afficher(id) { for (const e of ['accueil', 'mdp', 'pause', 'fin']) $(e).classList.toggle('cache', e !== id); $('bpause').classList.toggle('cache', id !== null); }
 
 function lancer() {
-  nouvellePartie();
+  nouvellePartie(); preparerEquipe();
   if (!AUTO) {
     initAudio(); actx.resume(); arreterSource(); nouveauBus();
     t0 = actx.currentTime + .15; oublierHorloge();

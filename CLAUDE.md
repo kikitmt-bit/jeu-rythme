@@ -62,7 +62,12 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
   Phase de test : compteur **toujours affiché** sous le titre (`FPS = true`) : i/s · pire écart entre deux images · temps de dessin moyen · résolution ; il passe en rouge sous 58 i/s ou au-delà de 25 ms.
   Règles apprises le 14/11 (la 1re version du HUD saccadait sur le Pixel) : rien de lourd ne se prépare pendant la partie (la baisse de résolution `changerQualite` ne redessine rien) ;
   tout ce qui ne bouge pas du HUD est peint dans le fond (`peindreFond`) ; les images des notes, cibles et effets sont faites à la taille exacte d'affichage (`preparerSprites`) ;
-  peu de particules. Mesurer avant/après : `outils/perf/mesure.js` (coût d'une image, rendu logiciel) en comparant à l'ancienne version (`git worktree add`), objectif ≤ l'ancienne.
+  peu de particules (Critical = 1 cercle avec ses croches en une seule image + 5 triangles + 3 points).
+  **Personnages** (14/11) : la marche de chaque perso est pré-dessinée en 24 images au lancement (`preparerEquipe`) → 1 seule image par perso et par image du jeu (avant : ~22 pièces chacun). Obligatoire pour 4 persos + monstres : faire pareil pour les monstres et les futures animations.
+  **Pendant la partie, aucun tracé** (chemins, arcs, cercles, coins arrondis) : seulement des images pré-dessinées et des rectangles (barres = image pleine recadrée).
+  **Écrans 120 Hz** (Pixel 7 Pro) : budget 8 ms par image. Si le téléphone rate des images à 120, le jeu se cale sur 60 bien réguliers (`cale60`, affiché « calé à 60 » sur le compteur), puis seulement ensuite baisse la résolution.
+  Coût mesuré (mesure.js) : 6,5 ms avant le HUD, 7,4 avec le 1er HUD, 3,7 ms après tout ça.
+  Mesurer avant/après : `outils/perf/mesure.js` (coût d'une image, rendu logiciel) en comparant à l'ancienne version (`git worktree add`), objectif ≤ l'ancienne.
 
 ## Créer un personnage (process du 12/11)
 Kiki envoie 2-3 croquis ou images + une description. Claude :
@@ -113,6 +118,6 @@ Ne pas mapper seulement la mélodie (« on ne sent pas la musique », comme Guit
 ## Tester sans écran
 - `python3 -m http.server 8765` à la racine (avec une copie chiffrée d'essai si besoin : `cp -r` du dépôt dans /tmp, `init` avec un mot de passe bidon).
 - `?auto` dans l'adresse : le jeu joue tout seul (pas de son) ; `?auto&niveau=gff` pour un niveau en ligne.
-- `?fps` dans l'adresse : compteur d'images par seconde (et résolution) en bas à gauche.
+- Compteur d'images par seconde affiché en permanence pendant la phase de test (sous le titre).
 - Playwright + `/usr/bin/google-chrome` : simuler de vrais doigts avec des `PointerEvent` dont les `pointerId` sont des **entiers distincts**.
 - Objectif : partie complète simulée = 100 % Critical, aucune erreur dans la console.
