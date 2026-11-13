@@ -154,13 +154,14 @@ function pinceau(ctx, S, volume) {
 /* ---------- Le mannequin : le corps commun ---------- */
 function couchesDuCorps(f) {
   const peau = f.peau || '#f9d5b5', yeux = f.yeux || '#2a4a6b';
-  const b = Object.assign({manche: '#cccccc', dessous: null, gant: null}, f.bras);
+  const b = Object.assign({manche: '#cccccc', dessous: null, gant: null, main: null}, f.bras);
   const j = Object.assign({collant: '#eeeeee', botte: '#7a4a2c'}, f.jambes);
   const c = [];
+  const surPeau = c => c === peau ? {force: .55} : {};   // peau nue : ombres légères (comme le visage)
   const bras = (os1, os2, z) => {
     const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
     c.push({os: os1, z, dessin(p) {
-      p.forme(P.capsule(ex, ey, cx, cy, 3, b.gant ? 2.2 : 2.7), b.dessous || peau);
+      p.forme(P.capsule(ex, ey, cx, cy, 3, b.gant ? 2.2 : 2.7), b.dessous || peau, surPeau(b.dessous || peau));
       // manche courte, un peu évasée, qui se termine par un bord droit
       const l = Math.hypot(cx - ex, cy - ey), vx = (cx - ex) / l, vy = (cy - ey) / l, fin = l * .7;
       const pt = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);
@@ -170,7 +171,7 @@ function couchesDuCorps(f) {
     // avant-bras : le vêtement de dessous (il s'arrête sous le début du gant)
     const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n, sg = n * .25;
     c.push({os: os2, z: z + 1, dessin(p) {
-      if (!b.gant) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau); return; }
+      if (!b.gant) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau, surPeau(b.dessous || peau)); return; }
       // entre la manche et le gant, le bras est un morceau aux bords bien DROITS (pas de creux au coude) :
       // il part du bord de la manche et file tout droit jusque sous le début du gant
       // Il est toujours PLUS FIN que le gant (environ 1 unité de marge de chaque côté) : c'est lui qui sort du gant.
@@ -178,14 +179,16 @@ function couchesDuCorps(f) {
       const A = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);          // le long du haut du bras
       const B = (a, t) => (cx - ux * a + uy * t).toFixed(2) + ',' + (cy - uy * a - ux * t).toFixed(2);          // le long de l'avant-bras
       p.dans(`M ${A(fin, -9)} L ${A(fin, 9)} L ${A(fin + 14, 9)} L ${A(fin + 14, -9)} Z`,                       // seulement après le bord de la manche
-             () => p.forme(`M ${A(fin - 2, 3)} L ${B(sg + 1.4, 2.25)} L ${B(sg + 1.4, -2.25)} L ${A(fin - 2, -3)} Z`, b.dessous || peau));
+             () => p.forme(`M ${A(fin - 2, 3)} L ${B(sg + 1.4, 2.25)} L ${B(sg + 1.4, -2.25)} L ${A(fin - 2, -3)} Z`, b.dessous || peau, surPeau(b.dessous || peau)));
     }});
     // La main et le gant sont une couche à part : la main qui tient l'arme passe devant l'arme.
     // La main est une BOULE. Le gant est UNE seule forme, sans trait entre ses parties : il couvre la moitié de la
     // boule, se resserre au poignet (bien plus fin), puis s'évase vers le coude. Ses deux bords (côté doigts et
     // côté coude) sont de légers arcs, comme le bord d'un tube vu de trois quarts.
     c.push({os: os2, z: os1 === 'brasD1' ? Z.mainD : z + 1, dessin(p) {
-      p.forme(P.ell(mx, my, 3.1, 3), peau);                                                         // la main
+      // la main (b.main = sa couleur ; si c'est celle du gant, le gant couvre toute la main : gants de princesse…)
+      const ganteeEntiere = b.gant && b.main === b.gant;
+      p.forme(P.ell(mx, my, 3.1, 3), b.main || peau);
       if (b.gant) {
         const RB = 3.12, s0 = sg - .7, sw = n - 2.45, rw = Math.sqrt(RB * RB - (sw - n) * (sw - n)), r0 = 3.4;
         // rayon du gant le long du bras (s = distance depuis le coude) : évasé, poignet fin, puis la boule
@@ -201,7 +204,7 @@ function couchesDuCorps(f) {
         for (let i = 60; i >= 0; i--) d += ' L ' + pt(i, -1);
         const R = 7, gx = cx - ux * sg, gy = cy - uy * sg;                                           // début du gant sur l'avant-bras
         const zone = new Path2D(); zone.arc(gx - ux * R, gy - uy * R, R, 0, 7);                      // au-delà de l'arc côté coude…
-        zone.moveTo(mx - ux * R + R, my - uy * R); zone.arc(mx - ux * R, my - uy * R, R, 0, 2 * Math.PI, true);   // …et avant l'arc côté doigts
+        if (!ganteeEntiere) { zone.moveTo(mx - ux * R + R, my - uy * R); zone.arc(mx - ux * R, my - uy * R, R, 0, 2 * Math.PI, true); }   // …et avant l'arc côté doigts
         p.dans(zone, () => p.forme(d + ' Z', b.gant));
       }
     }});

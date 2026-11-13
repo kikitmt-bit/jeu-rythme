@@ -176,4 +176,102 @@ boucliers.image = (o, fiche) => {
     p.repere(mx + (o.dx === undefined ? 5 : o.dx), my + (o.dy || 0), o.angle === undefined ? 6 : o.angle, () => p.image(o.image, 0, 0, o.hauteur || 44));
   }}];
 };
+
+/* ============================================================
+   Pièces de la princesse (13/11)
+   ============================================================ */
+// cheveux longs : raie au milieu (décalée à gauche, vue de trois quarts) qui dégage le front, deux longues mèches
+// qui encadrent le visage et tombent jusqu'à la poitrine, et la masse de derrière qui descend jusqu'à la taille.
+// Aucun trait : le volume vient seulement des ombres ; les cheveux de derrière sont un peu plus sombres (ils sont dans l'ombre).
+coiffures.longs = (o, fiche) => {
+  const c = o.couleur, peau = fiche.peau || PEAU;
+  const gauche = 'M -5,-80 C -5.4,-84 -5,-87 -4,-89.6 C -18.5,-91 -28.6,-80.5 -28.6,-65 C -29.4,-54 -28.8,-42 -27.6,-35 C -27,-31.6 -25.6,-29.6 -23.8,-29.4 C -22.6,-32.6 -22.2,-37 -22.2,-42 C -22.2,-48 -21.6,-56 -20.6,-61.4 C -20,-63.6 -19.8,-65 -19.4,-66 C -15,-70.4 -9,-74 -5,-80 Z';
+  const droite = 'M -5,-80 C -1,-74 5,-69.4 12.2,-66 C 12.6,-56 13.4,-45 15,-37 C 15.8,-33 17,-30.6 18.6,-29.6 C 21.2,-31 23.4,-34 24.6,-38.6 C 26,-45 26.2,-54 25,-62 L 24.6,-72 C 18.5,-83.5 8,-89.6 -4,-89.6 C -5,-87 -5.4,-84 -5,-80 Z';
+  const arriere = 'M -4,-86 C 10,-86 22,-80 24.6,-70 C 27.6,-60 28.8,-48 28.6,-38 C 28.4,-30 26.8,-25 24,-22 C 20.6,-24.4 16,-26 10,-28 L 0,-44 C -10,-46 -18,-48 -22,-54 C -25,-60 -26,-66 -26,-68 C -26,-78 -17,-86 -4,-86 Z';
+  return [
+    {os: 'tete', z: Z.cheveuxArr, dessin(p) { p.forme(arriere, P.fonce(c, .92), {taille: 'g'}); }},
+    {os: 'tete', z: Z.cheveux, dessin(p) {
+      p.portee(gauche, P.TETE, peau, {dy: 1.4, dx: .5, flou: 2.6, force: .42});
+      p.portee(droite, P.TETE, peau, {dy: 1.4, dx: -.4, flou: 2.6, force: .42});
+      p.forme(droite, c, {taille: 'g'});
+      p.forme(gauche, c, {taille: 'g'});
+    }},
+  ];
+};
+
+// diadème : un bandeau doré qui passe sur le front et disparaît sous les cheveux de chaque côté,
+// avec un bijou en goutte au milieu (au niveau de la raie)
+coiffes.diademe = o => {
+  const or = o.couleur || '#e8bc45';
+  return [
+    {os: 'tete', z: Z.oreille + 1, dessin(p) {        // sous les cheveux, sur le front
+      p.forme('M -27,-68 Q -5,-74.4 25,-68.2 L 25,-65.6 Q -5,-71.8 -27,-65.4 Z', or, {taille: 'p'});
+    }},
+    {os: 'tete', z: Z.coiffe, dessin(p) {
+      p.forme('M -4.6,-76.4 C -2.4,-75 -1.6,-72.6 -2,-70.8 C -2.5,-69 -3.6,-67.9 -4.6,-67.3 C -5.6,-67.9 -6.7,-69 -7.2,-70.8 C -7.6,-72.6 -6.8,-75 -4.6,-76.4 Z', or, {taille: 'p', force: 1.2});
+      p.forme(P.ell(-4.6, -71.4, 1.35, 1.9), o.pierre || '#d8323f', {taille: 'p'});
+    }},
+  ];
+};
+
+// robe longue de princesse : corsage, jupe jusqu'au sol, ceinture dorée à médaillon rond, tablier pointu à bord doré
+// qui pend devant la jupe, deux gouttes dorées de chaque côté, épaulières dorées.
+// Comme la tunique : le col remonte autour du cou (on ne voit pas le cou) ; l'ouverture est décalée à gauche (trois quarts).
+tenues.robe = o => {
+  const haut = o.haut, jupe = o.jupe, or = o.or || '#e8bc45', dessous = o.dessous || jupe;
+  const corsage = 'M -8.8,-43.6 C -8.6,-46.4 -8,-48.6 -6.6,-49.5 L 1.8,-50.2 C 4.2,-49.8 6,-48.8 7,-47.4 C 7.8,-46.2 8.4,-44.8 8.8,-43.4 C 10.6,-42 11.2,-40 11.3,-38.5 L 10.6,-27.5 Q 0,-25.5 -10.6,-27.5 L -11.3,-38.5 C -11.2,-40 -10.6,-42 -8.8,-43.6 Z';
+  const robe = 'M -10.4,-29.5 Q 0,-28 10.4,-29.5 C 12.5,-21 16,-10 18.2,-2.2 Q 0,2 -18.2,-2.2 C -16,-10 -12.5,-21 -10.4,-29.5 Z';
+  const col = 'M -6.6,-49.5 L 1.6,-50.1 C 1,-46.6 -1,-44.2 -3.4,-43.6 C -5.2,-44.6 -6.2,-46.8 -6.6,-49.5 Z';
+  const xc = -2.6;                                    // milieu du corps, décalé à gauche (trois quarts)
+  const couches = [{os: 'torse', z: Z.torse, dessin(p) {
+    p.forme(robe, jupe, {taille: 'g', force: .55});
+    p.forme(corsage, haut, {taille: 'g', force: .9});
+    p.portee(P.ell(-1, -53, 14, 9.5), corsage, haut, {dy: 1.2, flou: 3, force: .55});   // l'ombre de la tête
+    p.forme(col, dessous, {taille: 0});
+    p.portee(P.ell(-1, -53, 13, 7.6), col, dessous, {dy: 1, flou: 1.4, force: .4});
+    // la ceinture va pile jusqu'au bord du vêtement
+    const vetement = new Path2D(corsage); vetement.addPath(new Path2D(robe));
+    p.dans(vetement, () => p.forme('M -13,-30.2 Q 0,-28 13,-30.2 L 13,-26.8 Q 0,-24.6 -13,-26.8 Z', or, {taille: 'p'}));
+    // le tablier : un cadre doré (le bord) et le tissu dedans, terminé en pointe
+    if (o.tablier) {
+      p.forme(`M ${xc - 4.6},-27 L ${xc + 4.6},-27 L ${xc + 5.2},-8.6 L ${xc},-3.8 L ${xc - 5.2},-8.6 Z`, or, {taille: 'p'});
+      p.forme(`M ${xc - 3.7},-26.2 L ${xc + 3.7},-26.2 L ${xc + 4.2},-9 L ${xc},-5.2 L ${xc - 4.2},-9 Z`, o.tablier, {taille: 'm'});
+      p.forme(`M ${xc},-22.6 L ${xc + 2},-19.6 L ${xc},-16.6 L ${xc - 2},-19.6 Z`, or, {taille: 'p'});
+    }
+    // deux gouttes dorées qui pendent de la ceinture, de chaque côté du tablier
+    for (const x of [xc - 6.6, xc + 6.6])
+      p.forme(`M ${x},-26.8 C ${x + 1.3},-25.2 ${x + 1.5},-23.2 ${x},-21.8 C ${x - 1.5},-23.2 ${x - 1.3},-25.2 ${x},-26.8 Z`, or, {taille: 'p'});
+    // le médaillon rond de la ceinture (un simple cadre, comme les boucles)
+    p.forme(P.ell(xc, -28.2, 3.1, 2.8), or, {taille: 'p', force: 1.2});
+    p.forme(P.ell(xc, -28.2, 1.7, 1.5), P.fonce(or, .84), {taille: 0});
+  }}];
+  // épaulières dorées : une coque arrondie sur le haut de chaque bras, avec un second étage plus petit dessous
+  if (o.epaulieres) for (const [os1, os2, z] of [['brasG1', 'brasG2', Z.brasG + .6], ['brasD1', 'brasD2', Z.brasD + .6]]) {
+    const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, a = Math.atan2(cy - ey, cx - ex) * 180 / Math.PI - 90;
+    couches.push({os: os1, z, dessin(p) {
+      p.repere(ex, ey, a, () => {
+        p.forme('M -4.9,2.6 Q 0,4.6 4.9,2.6 L 4.4,5.6 Q 0,7.4 -4.4,5.6 Z', P.fonce(o.epaulieres, .9), {taille: 'p'});
+        p.forme('M -5.6,3.2 C -6.2,-1.6 -3.6,-4.8 0,-5 C 3.6,-4.8 6.2,-1.6 5.6,3.2 Q 0,5 -5.6,3.2 Z', o.epaulieres, {taille: 'm', force: 1.2});
+      });
+    }});
+  }
+  return couches;
+};
+
+// rapière : lame fine, garde dorée (quillons à boules et anneau de garde), pierre au centre ; la main tient le milieu du manche
+armes.rapiere = o => {
+  const [mx, my] = OS.arme.p, lame = o.lame || '#e4eaf1', garde = o.garde || '#e8bc45', L = o.longueur || 46;
+  return [{os: 'arme', z: Z.arme, dessin(p) {
+    p.repere(mx, my, o.angle === undefined ? -24 : o.angle, () => {
+      p.forme(`M -.8,-5 L -.8,${-L + 3} L 0,${-L} L .8,${-L + 3} L .8,-5 Z`, lame, {taille: 'p', force: .7});
+      p.forme(`M 0,-5 L 0,${-L} L .8,${-L + 3} L .8,-5 Z`, P.fonce(lame, .86), {taille: 0});
+      p.forme('M -1.1,-3.8 L 1.1,-3.8 L 1,5.2 L -1,5.2 Z', o.poignee || '#8a3b5c', {taille: 'p'});
+      p.forme('M 1.4,-4.4 C 4.8,-3.2 5.2,3 2,6.4 L 1.2,5.6 C 3.8,2.6 3.6,-2.4 1,-3.4 Z', garde, {taille: 'p'});   // anneau de garde
+      p.forme('M -5.8,-5.7 Q 0,-4.5 5.8,-5.7 Q 6.5,-4.8 5.8,-3.9 Q 0,-2.9 -5.8,-3.9 Q -6.5,-4.8 -5.8,-5.7 Z', garde, {taille: 'p'});
+      p.forme(P.ell(-6.2, -4.8, 1.1, 1.1), garde, {taille: 'p'}); p.forme(P.ell(6.2, -4.8, 1.1, 1.1), garde, {taille: 'p'});
+      p.forme(P.ell(0, -4.8, 1.05, 1.05), o.pierre || '#4f8fe0', {taille: 'p'});
+      p.forme(P.ell(0, 6.3, 1.6, 1.7), garde, {taille: 'p'});
+    });
+  }}];
+};
 })();
