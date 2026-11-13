@@ -180,21 +180,29 @@ boucliers.image = (o, fiche) => {
 /* ============================================================
    Pièces de la princesse (13/11)
    ============================================================ */
-// cheveux longs : raie au milieu (décalée à gauche, vue de trois quarts) qui dégage le front, deux longues mèches
-// qui encadrent le visage et tombent jusqu'à la poitrine, et la masse de derrière qui descend jusqu'à la taille.
-// Aucun trait : le volume vient seulement des ombres ; les cheveux de derrière sont un peu plus sombres (ils sont dans l'ombre).
+// cheveux longs (d'après les images de Kiki, 13/11) : trois parties
+//  1. le dessus : plaqué sur le crâne (peu de volume), raie au milieu (décalée à gauche, vue de trois quarts) qui dégage le front ;
+//  2. deux mèches fines qui partent des tempes, passent DEVANT les oreilles et tombent jusqu'aux épaules ;
+//     le dessus et les deux mèches sont UNE seule forme (pas de trait de séparation) ;
+//  3. les cheveux longs de derrière, plus sombres (dans l'ombre), qu'on aperçoit des deux côtés : à gauche derrière le visage
+//     et sous la mèche, à droite derrière l'oreille et l'épaule ; ils tombent jusqu'au milieu du dos.
+// Aucun trait : le volume vient seulement des ombres.
 coiffures.longs = (o, fiche) => {
   const c = o.couleur, peau = fiche.peau || PEAU;
-  const gauche = 'M -5,-80 C -5.4,-84 -5,-87 -4,-89.6 C -18.5,-91 -28.6,-80.5 -28.6,-65 C -29.4,-54 -28.8,-42 -27.6,-35 C -27,-31.6 -25.6,-29.6 -23.8,-29.4 C -22.6,-32.6 -22.2,-37 -22.2,-42 C -22.2,-48 -21.6,-56 -20.6,-61.4 C -20,-63.6 -19.8,-65 -19.4,-66 C -15,-70.4 -9,-74 -5,-80 Z';
-  const droite = 'M -5,-80 C -1,-74 5,-69.4 12.2,-66 C 12.6,-56 13.4,-45 15,-37 C 15.8,-33 17,-30.6 18.6,-29.6 C 21.2,-31 23.4,-34 24.6,-38.6 C 26,-45 26.2,-54 25,-62 L 24.6,-72 C 18.5,-83.5 8,-89.6 -4,-89.6 C -5,-87 -5.4,-84 -5,-80 Z';
-  const arriere = 'M -4,-86 C 10,-86 22,-80 24.6,-70 C 27.6,-60 28.8,-48 28.6,-38 C 28.4,-30 26.8,-25 24,-22 C 20.6,-24.4 16,-26 10,-28 L 0,-44 C -10,-46 -18,-48 -22,-54 C -25,-60 -26,-66 -26,-68 C -26,-78 -17,-86 -4,-86 Z';
+  const devant = 'M -4,-79.6 C -9,-77 -15,-74 -19,-70 C -20.4,-66 -20.6,-58 -20.8,-50 C -21,-44 -21,-38 -21.4,-34.6 '
+    + 'C -21.8,-32.6 -22.8,-31.6 -24,-31.8 C -25.6,-32.6 -26.2,-36 -26.4,-41 C -26.6,-50 -26.6,-58 -26.2,-65 '
+    + 'C -25.8,-78 -16,-88.6 -4.6,-88.6 C 9,-88.8 23.6,-80.6 23.4,-70 C 23.2,-67.2 21.8,-65.4 21.4,-63.6 '
+    + 'C 21.2,-58 21.4,-50 21.6,-44 C 21.8,-39 21.4,-35 20.2,-32.6 C 19.4,-31.4 17.8,-31.2 16.8,-32.2 '
+    + 'C 15.6,-34 15.2,-40 15,-46 C 14.8,-54 14.4,-62 14.2,-66 C 12,-71 8,-74.6 1.6,-77 C -.4,-77.8 -2.4,-78.6 -4,-79.6 Z';
+  const derriere = 'M -6,-85.6 C 10,-86.6 23,-80 24.4,-68 C 25.2,-58 25.4,-48 25.2,-40 C 25,-33 23.8,-28 21.6,-24.6 '
+    + 'C 20,-27 17.4,-29.6 13.6,-31.6 L 8,-42 L -13,-41 C -16,-37 -19.6,-32 -21.4,-29 '
+    + 'C -23,-26.8 -24.6,-25.6 -26.2,-25.8 C -28,-29 -28.8,-36 -28.8,-44 C -28.8,-52 -28.4,-58 -27.4,-64 '
+    + 'C -26,-76 -18,-85 -6,-85.6 Z';
   return [
-    {os: 'tete', z: Z.cheveuxArr, dessin(p) { p.forme(arriere, P.fonce(c, .92), {taille: 'g'}); }},
+    {os: 'tete', z: Z.cheveuxArr, dessin(p) { p.forme(derriere, o.derriere || P.fonce(c, .86), {taille: 'g'}); }},
     {os: 'tete', z: Z.cheveux, dessin(p) {
-      p.portee(gauche, P.TETE, peau, {dy: 1.4, dx: .5, flou: 2.6, force: .42});
-      p.portee(droite, P.TETE, peau, {dy: 1.4, dx: -.4, flou: 2.6, force: .42});
-      p.forme(droite, c, {taille: 'g'});
-      p.forme(gauche, c, {taille: 'g'});
+      p.portee(devant, P.TETE, peau, {dy: 1.3, flou: 2.4, force: .4});
+      p.forme(devant, c, {taille: 'g', force: .75});
     }},
   ];
 };
@@ -205,7 +213,7 @@ coiffes.diademe = o => {
   const or = o.couleur || '#e8bc45';
   return [
     {os: 'tete', z: Z.oreille + 1, dessin(p) {        // sous les cheveux, sur le front
-      p.forme('M -27,-68 Q -5,-74.4 25,-68.2 L 25,-65.6 Q -5,-71.8 -27,-65.4 Z', or, {taille: 'p'});
+      p.dans(P.TETE, () => p.forme('M -27,-68 Q -5,-74.4 25,-68.2 L 25,-65.6 Q -5,-71.8 -27,-65.4 Z', or, {taille: 'p'}));
     }},
     {os: 'tete', z: Z.coiffe, dessin(p) {
       p.forme('M -4.6,-76.4 C -2.4,-75 -1.6,-72.6 -2,-70.8 C -2.5,-69 -3.6,-67.9 -4.6,-67.3 C -5.6,-67.9 -6.7,-69 -7.2,-70.8 C -7.6,-72.6 -6.8,-75 -4.6,-76.4 Z', or, {taille: 'p', force: 1.2});
@@ -236,7 +244,9 @@ tenues.robe = o => {
     if (o.tablier) {
       p.forme(`M ${xc - 4.6},-27 L ${xc + 4.6},-27 L ${xc + 5.2},-8.6 L ${xc},-3.8 L ${xc - 5.2},-8.6 Z`, or, {taille: 'p'});
       p.forme(`M ${xc - 3.7},-26.2 L ${xc + 3.7},-26.2 L ${xc + 4.2},-9 L ${xc},-5.2 L ${xc - 4.2},-9 Z`, o.tablier, {taille: 'm'});
-      p.forme(`M ${xc},-22.6 L ${xc + 2},-19.6 L ${xc},-16.6 L ${xc - 2},-19.6 Z`, or, {taille: 'p'});
+      // l'emblème : image fournie par Kiki (paquet chiffré) ; sans le mot de passe, un losange doré
+      if (!(o.embleme && p.image(o.embleme, xc, -20.4, 5)))
+        p.forme(`M ${xc},-22.6 L ${xc + 2},-19.6 L ${xc},-16.6 L ${xc - 2},-19.6 Z`, or, {taille: 'p'});
     }
     // deux gouttes dorées qui pendent de la ceinture, de chaque côté du tablier
     for (const x of [xc - 6.6, xc + 6.6])
