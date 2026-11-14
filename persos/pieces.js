@@ -324,95 +324,231 @@ armes.rapiere = o => {
   }}];
 };
 /* ============================================================
-   Pièces du colosse de roc (14/11) : corps massif à gros ventre, dos couvert de rochers, pagne, tatouage en spirale
+   Pièces du colosse de roc (refaites le 14/11 d'après l'image de Kiki, détail par détail)
+   Les « cheveux » et ce qui couvre les épaules et les avant-bras ne sont pas des poils mais une ÉPAISSEUR DE CAILLOUX
+   gris clair : une base sombre (les creux) et des éclats clairs posés dessus.
+   Tatouages clairs (dessins plats) : T sur le front, motif des pectoraux + bande sous les pecs, grand arc et deux spirales
+   sur le ventre, motif sur le haut des bras, rond sur les genoux. Slip blanc, bandages blancs aux chevilles.
    ============================================================ */
-// une spirale pleine (un ruban qui s'enroule et s'affine vers le centre) : le tatouage du ventre
-function spirale(cx, cy, r, tours = 1.6, w = 1.3, ry = .85) {
-  const N = 70, g = [], d = [];
+// Un trait de tatouage : un ruban de largeur constante, aux bouts arrondis, qui passe par des points (courbe douce).
+function ruban(pts, w) {
+  const N = Math.max(24, pts.length * 10), P2 = [], cr = (a, b, c, d, t) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
   for (let k = 0; k <= N; k++) {
-    const t = k / N, a = -Math.PI / 2 - t * tours * 2 * Math.PI, rr = r * (1 - t * .86), l = w / 2 * (1 - t * .55);
-    g.push((cx + Math.cos(a) * (rr + l)).toFixed(2) + ',' + (cy + Math.sin(a) * (rr + l) * ry).toFixed(2));
-    d.unshift((cx + Math.cos(a) * (rr - l)).toFixed(2) + ',' + (cy + Math.sin(a) * (rr - l) * ry).toFixed(2));
+    const u = k / N * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(u)), t = u - i;
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || pts[i + 1];
+    P2.push([cr(p0[0], p1[0], p2[0], p3[0], t), cr(p0[1], p1[1], p2[1], p3[1], t)]);
+  }
+  let long = 0; const cum = [0];
+  for (let k = 1; k <= N; k++) cum.push(long += Math.hypot(P2[k][0] - P2[k - 1][0], P2[k][1] - P2[k - 1][1]));
+  const g = [], d = [], r0 = w / 2;
+  for (let k = 0; k <= N; k++) {
+    const a = P2[Math.max(0, k - 1)], b = P2[Math.min(N, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const nx = -(b[1] - a[1]) / l, ny = (b[0] - a[0]) / l, e = Math.min(cum[k], long - cum[k]);
+    const r = e < r0 ? r0 * Math.sqrt(Math.max(.02, 1 - Math.pow(1 - e / r0, 2))) : r0;     // bouts arrondis
+    g.push((P2[k][0] + nx * r).toFixed(2) + ',' + (P2[k][1] + ny * r).toFixed(2));
+    d.unshift((P2[k][0] - nx * r).toFixed(2) + ',' + (P2[k][1] - ny * r).toFixed(2));
   }
   return 'M ' + g.join(' L ') + ' L ' + d.join(' L ') + ' Z';
 }
-// un rocher : un caillou arrondi à facettes douces (n sommets, un peu irréguliers, coins adoucis)
-function rocher(cx, cy, r, n = 7, graine = 1, ry = 1) {
-  let s = graine * 9301 + 49297;
-  const hasard = () => (s = (s * 9301 + 49297) % 233280) / 233280;
-  const pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = (i + hasard() * .35) / n * 2 * Math.PI, rr = r * (.86 + hasard() * .2);
-    pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * ry]);
-  }
-  // côtés droits, coins juste adoucis (un caillou, pas une bulle) : on coupe chaque coin à 28 % des côtés
-  const k = .28, lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], f2 = q => q[0].toFixed(2) + ',' + q[1].toFixed(2);
+const miroir = (pts, axe, k = 1) => pts.map(([x, y]) => [axe + (axe - x) * k, y]);
+// un anneau (rond de tatouage)
+function anneau(cx, cy, r, w, ry = 1) {
+  const p = new Path2D(); p.ellipse(cx, cy, r + w / 2, (r + w / 2) * ry, 0, 0, 2 * Math.PI); p.ellipse(cx, cy, r - w / 2, (r - w / 2) * ry, 0, 2 * Math.PI, 0, true); return p;
+}
+// Un éclat de caillou : une forme anguleuse allongée (coins à peine adoucis) qui pointe dans la direction `angle` (degrés).
+function eclat(x, y, l, w, angle, graine = 1) {
+  let s = graine * 7919 + 104729;
+  const h = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const a = angle * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
+  const loc = [[-.15, -.5 - h() * .15], [.45 + h() * .15, -.42], [1, (h() - .5) * .3], [.5 + h() * .1, .45], [-.1, .5 + h() * .1]];
+  const pts = loc.map(([t, n]) => [x + ux * t * l + vx * n * w, y + uy * t * l + vy * n * w]);
+  const k = .22, lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t], f2 = q => q[0].toFixed(2) + ',' + q[1].toFixed(2);
   let d = '';
-  for (let i = 0; i < n; i++) {
-    const z = pts[(i + n - 1) % n], a = pts[i], b = pts[(i + 1) % n], e = lerp(a, z, k), s2 = lerp(a, b, k);
-    d += (i ? 'L ' : 'M ') + f2(e) + ' Q ' + f2(a) + ' ' + f2(s2) + ' ';
+  for (let i = 0; i < pts.length; i++) {
+    const z = pts[(i + pts.length - 1) % pts.length], p = pts[i], q = pts[(i + 1) % pts.length];
+    d += (i ? 'L ' : 'M ') + f2(lerp(p, z, k)) + ' Q ' + f2(p) + ' ' + f2(lerp(p, q, k)) + ' ';
   }
   return d + 'Z';
 }
-// le corps du colosse : épaules hautes et rondes (pas de cou : la tête s'enfonce entre les épaules), gros ventre rond,
-// dos couvert de rochers (vue de trois quarts : le dos est à droite, les rochers dépassent derrière l'épaule et derrière la tête),
-// pagne blanc, tatouage en spirale sur le ventre, petits tatouages sur les pectoraux
-tenues.roc = (o, fiche) => {
-  const peau = fiche.peau, roc = o.roc || '#a8784a', roc2 = o.roc2 || roc, tatouage = o.tatouage || '#ecc58c';
-  const corps = 'M -9,-48.6 C -13,-48 -17,-46.6 -19,-42.6 C -20.6,-39.6 -21.6,-35 -22,-30.4 C -22.4,-24.6 -21,-19.6 -17.4,-15.6 '
-    + 'C -12.6,-11.4 -5,-10.6 1,-10.8 C 9,-11 15.6,-12.8 19.4,-17 C 22.8,-20.8 23.6,-26.6 23.2,-31.6 C 22.8,-36.6 21.6,-40.6 19.4,-43.4 '
-    + 'C 16.8,-46.6 13.6,-48.2 9.6,-48.8 C 3,-49.8 -4,-49.6 -9,-48.6 Z';
-  // les rochers du dos, du haut (derrière la tête) vers le bas ; [x, y, rayon, sommets, aplatissement]
-  // (du fond vers le devant : les plus hauts, derrière la tête, d'abord ; chacun recouvre un peu le précédent)
-  const rocs = [[-15.6, -47.6, 5.4, 6, .85], [-9.4, -53, 6, 5, .85], [2, -59.6, 6.6, 6, .8], [10.8, -60.6, 7.2, 5, .85], [20.2, -56.2, 7.8, 6, .9],
-                [27.4, -47.4, 7.6, 5, 1], [31, -37.4, 7.2, 6, 1], [31, -27, 6.8, 5, 1], [27.6, -17.6, 6.4, 6, .9],
-                [16.6, -52, 6.4, 6, .9], [23.4, -41, 6.4, 5, 1], [24.6, -30, 6, 6, 1]];
-  const couches = [{os: 'torse', z: Z.torse - 1, dessin(p) {       // les rochers passent derrière le corps
-    rocs.forEach(([x, y, r, n, ry], i) => {
-      const d = rocher(x, y, r, n, i + 3, ry);
-      p.forme(d, i % 3 === 1 ? roc2 : roc, {taille: 'm', force: 1.6});
-    });
-    // chaque rocher jette une petite ombre sur ceux qu'il recouvre (seulement sur les rochers, jamais dans le vide)
-    rocs.forEach(([x, y, r, n, ry], i) => { if (i) p.portee(rocher(x, y, r, n, i + 3, ry), rocher(rocs[i - 1][0], rocs[i - 1][1], rocs[i - 1][2], rocs[i - 1][3], i + 2, rocs[i - 1][4]), roc, {dy: 1, dx: .8, flou: 1.2, force: .5}); });
-  }}, {os: 'torse', z: Z.torse, dessin(p) {
-    p.forme(corps, peau, {taille: 'g', force: .9});
-    p.portee(P.ell(-1, -53, 15, 9.5), corps, peau, {dy: 1.4, flou: 3, force: .6});          // l'ombre de la tête
-    // tatouages : une spirale sur le ventre (décalée à gauche, trois quarts), une petite sur chaque pectoral
-    p.forme(spirale(-3.2, -25.4, 6.4, 1.7, 1.5), tatouage, {taille: 'p', force: .6});
-    p.forme(spirale(-11.8, -40.4, 2.6, 1.2, .9, .8), tatouage, {taille: 0});
-    p.forme(spirale(5.4, -41, 3, 1.2, .95, .8), tatouage, {taille: 0});
-    // le pagne : une bande nouée autour des hanches, sous le ventre, et un pan qui pend devant
-    const pagne = 'M -17.6,-15.4 Q 0,-9.8 19.6,-16.6 L 19.4,-10.6 Q 0,-4.6 -16.6,-9.6 Z';
-    p.forme(pagne, o.pagne || '#efe8da', {taille: 'm'});
-    p.forme('M -8.4,-9.2 Q -3,-7.6 2.4,-8.2 L 1.8,-2.8 Q -3,-1.8 -7.6,-3.2 Z', P.fonce(o.pagne || '#efe8da', .93), {taille: 'm'});
-  }}];
-  return couches;
-};
-// petite touffe de cheveux clairs plantée sur le dessus du crâne, et deux favoris courts sur les joues
-coiffures.touffe = (o, fiche) => {
-  const c = o.couleur, peau = fiche.peau || PEAU;
-  const touffe = [
-    meche([[-8.6, -84.6], [-12, -88.4], [-16.4, -89.4]], 4.4, 1.3, true),
-    meche([[-5, -86], [-7, -91.4], [-11.4, -94]], 5.4, 1.3, true),
-    meche([[7.6, -84.6], [11, -88.6], [15, -89.6]], 4.6, 1.3, true),
-    meche([[4, -86], [6.4, -91.4], [10.4, -94.2]], 5.6, 1.3, true),
-    meche([[-1.6, -86.6], [-2.4, -92.6], [-5, -97.4]], 6, 1.3, true),
-    meche([[1.4, -86.6], [2, -92.8], [.8, -98.4]], 6.2, 1.3, true),
+// Une épaisseur de cailloux le long d'une ligne : base sombre (les creux), puis des éclats clairs qui la recouvrent et
+// dépassent vers l'extérieur (du côté `cote` = 1 ou -1 de la ligne). Rend la liste des formes à peindre.
+// Une croûte de cailloux posée le long d'une ligne (côté `cote` = 1 ou -1 = l'extérieur) : une masse de pierre claire dont le
+// bord extérieur est cassé (angles irréguliers), avec quelques facettes plus claires et quelques creux plus sombres dedans.
+function cailloux(pts, epaisseur, cote, graine, o = {}) {
+  let s = graine * 31 + 7;
+  const h = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  // la ligne, lissée
+  const N = Math.max(16, (o.nombre || pts.length * 3) * 2), L = [], cr = (a, b, c, d, t) => .5 * (2 * b + (-a + c) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (-a + 3 * b - 3 * c + d) * t * t * t);
+  for (let k = 0; k <= N; k++) {
+    const u = k / N * (pts.length - 1), i = Math.min(pts.length - 2, Math.floor(u)), t = u - i;
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || pts[i + 1];
+    L.push([cr(p0[0], p1[0], p2[0], p3[0], t), cr(p0[1], p1[1], p2[1], p3[1], t)]);
+  }
+  const nor = k => { const a = L[Math.max(0, k - 1)], b = L[Math.min(N, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[1] - a[1]) / l * cote, -(b[0] - a[0]) / l * cote]; };
+  const fin = k => Math.sin(Math.PI * Math.min(1, Math.max(0, k / N)) ) ** .5;          // plus mince aux deux bouts
+  const dedans = [], dehors = [];
+  for (let k = 0; k <= N; k++) {
+    const [nx, ny] = nor(k), e = epaisseur * (.25 + .75 * fin(k));
+    dedans.unshift([L[k][0] - nx * e * .45, L[k][1] - ny * e * .45]);
+    dehors.push([L[k][0], L[k][1], nx, ny, e]);
+  }
+  // bord cassé : des blocs de largeurs inégales (2 à 4 pas), chacun avec un angle qui ressort plus ou moins
+  for (let k = 0, bloc = 0; k <= N; bloc++) {
+    const lg = 2 + Math.floor(h() * 3), haut = .55 + h() * .45, pic = Math.floor(h() * lg);
+    for (let j = 0; j < lg && k <= N; j++, k++) {
+      const [x, y, nx, ny, e] = dehors[k], r = e * (j === pic ? haut + .15 : haut - .12 - h() * .12);
+      dehors[k] = [x + nx * r, y + ny * r];
+    }
+  }
+  const f2 = q => q[0].toFixed(2) + ',' + q[1].toFixed(2);
+  const base = 'M ' + dehors.map(f2).join(' L ') + ' L ' + dedans.map(f2).join(' L ') + ' Z';
+  // facettes : de petits polygones dans la masse (clairs = faces qui prennent la lumière, sombres = creux)
+  const formes = [];
+  const nf = o.facettes || Math.round(N * .3);
+  for (let i = 0; i < nf; i++) {
+    const k = Math.min(N, Math.floor((i + h()) / nf * N)), [nx, ny] = nor(k), e = epaisseur * (.25 + .75 * fin(k));
+    const c = [L[k][0] + nx * e * (h() * .45 + .05), L[k][1] + ny * e * (h() * .45 + .05)], r = e * (.3 + h() * .22), a0 = h() * 6.3, n = 3 + Math.floor(h() * 2);
+    let d = '';
+    for (let j = 0; j < n; j++) { const a = a0 + j / n * 6.283 + (h() - .5) * .6; d += (j ? 'L ' : 'M ') + f2([c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r * .8]) + ' '; }
+    formes.push({d: d + 'Z', clair: i % 3 !== 1});
+  }
+  return {base, formes};
+}
+const GRIS = ['#d3cbba', '#ece6da', '#8f877a'];
+function peindreCailloux(p, c, clair, sombre) {
+  p.forme(c.base, clair, {taille: 'p', force: 1.8});
+  p.dans(c.base, () => c.formes.forEach(f => p.forme(f.d, f.clair ? GRIS[1] : sombre, {taille: 'p', force: .6})));
+}
+// petite étoile de cristal (tétons)
+function cristal(cx, cy, r, n = 6) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n, rr = i % 2 ? r * .45 : r; d += (i ? 'L ' : 'M ') + (cx + Math.cos(a) * rr).toFixed(2) + ',' + (cy + Math.sin(a) * rr).toFixed(2) + ' '; }
+  return d + 'Z';
+}
+
+// La tête du colosse : en cloche, plus étroite en haut, large à la mâchoire (pas une tête ronde : ce n'est pas un humain).
+P.TETE_COLOSSE = 'M -2,-84.4 C 8.8,-84.6 16.4,-80.2 19.8,-73.2 C 22.8,-67 25,-60 25.8,-54 C 26.6,-48 22.4,-43.4 13.8,-42.4 '
+  + 'C 5.6,-41.4 -8.6,-41.4 -16.4,-42.4 C -25,-43.4 -29.2,-48 -28.4,-54 C -27.6,-60 -25.6,-67 -22.8,-73.2 C -19.6,-80.2 -12.8,-84.4 -2,-84.4 Z';
+
+// Crête de cailloux sur le crâne (du front jusque derrière la tête, où elle rejoint les épaules), sourcils en cailloux froncés,
+// barbichette en caillou pointu sous le menton, et le T tatoué sur le front.
+coiffures.cailloux = (o, fiche) => {
+  const clair = o.couleur || GRIS[0], sombre = o.creux || '#a39a8a', tat = o.tatouage || '#f2d27a', peau = fiche.peau, tete = P.teteDe(fiche);
+  // la crête : posée sur le dessus du crâne (de l'avant vers l'arrière), plus épaisse au sommet ; derrière, elle descend vers la nuque
+  const crete = cailloux([[-14, -79.6], [-8, -84], [0, -85.8], [8.6, -84], [15.4, -79], [20.4, -71], [23.6, -62]], 8, 1, 3, {nombre: 6});
+  const sourcils = [
+    cailloux([[-11, -64.6], [-16.6, -66.8], [-22.8, -67.4]], 3.6, -1, 11, {nombre: 4, facettes: 3}),
+    cailloux([[-.6, -64.6], [5, -67], [11.8, -67.6]], 3.6, 1, 17, {nombre: 4, facettes: 3}),
   ];
-  const favoris = o.favoris ? [
-    meche([[-22.6, -66], [-24.2, -59], [-23.4, -52.6]], 5.2, 1.5, true),
-    meche([[18.2, -66], [20.6, -59], [20.4, -52.4]], 6, 1.5, true),
-  ] : [];
-  // arcade sourcilière lourde (option) : une seule forme couleur peau qui avance au-dessus des yeux ; seule son ombre se voit
-  const arcade = 'M -24.2,-63.2 C -22.6,-69 -17.6,-70.4 -12,-68.6 C -8.6,-67.6 -5.4,-67.4 -2.2,-68.4 C 3.4,-70.4 9.2,-70 11.4,-65.2 '
-    + 'C 9,-66.2 5.4,-66.4 2,-65.4 C -2.6,-64 -6.6,-64 -10.6,-65.4 C -15.6,-67 -20.8,-66.6 -24.2,-63.2 Z';
-  return [{os: 'tete', z: Z.cheveux, dessin(p) {
-    if (o.arcade) p.dans(P.TETE, () => {
-      p.portee(arcade, P.TETE, peau, {dy: 1.5, flou: 2, force: .55});
-      p.forme(arcade, peau, {taille: 'p', force: .7});
+  const barbe = 'M -7.2,-44.6 L -1.4,-44.8 L -3.6,-38.4 Q -4.2,-37.6 -4.8,-38.4 Z';
+  const T = [ruban([[-14.4, -73.4], [-5, -74.4], [4.4, -74]], 2.8), ruban([[-4.9, -73.6], [-5.2, -66], [-5.8, -59.4]], 2.6)];
+  return [
+    {os: 'tete', z: Z.visage - .5, dessin(p) {          // le T tatoué (sous les yeux et les sourcils)
+      p.dans(tete, () => T.forEach(d => p.forme(d, tat, {taille: 0})));
+    }},
+    {os: 'tete', z: Z.cheveux, dessin(p) {
+      p.portee(crete.base, tete, peau, {dy: 1.6, flou: 2.4, force: .5});
+      for (const s of sourcils) p.portee(s.base, tete, peau, {dy: 1.4, flou: 1.8, force: .6});
+      peindreCailloux(p, crete, clair, sombre);
+      for (const s of sourcils) peindreCailloux(p, s, clair, sombre);
+      p.forme(barbe, clair, {taille: 'p', force: 1.4});
+      p.forme('M -4.3,-44.7 L -1.4,-44.8 L -3.6,-38.4 Z', P.fonce(clair, .78), {taille: 0});          // une facette dans l'ombre
+    }},
+  ];
+};
+
+// Le corps du colosse : épaules hautes (la tête s'enfonce entre elles), gros pectoraux, gros ventre rond, slip blanc ;
+// cailloux sur le haut des épaules et du dos, sur le dessus des épaules et sur le dehors des avant-bras ;
+// biceps et épaules bien ronds ; tatouages ; bandages aux chevilles, rond tatoué sur chaque genou.
+tenues.colosse = (o, fiche) => {
+  const peau = fiche.peau, OS = P.osDe(fiche), tat = o.tatouage || '#f2d27a';
+  const clair = o.cailloux || GRIS[0], sombre = o.creux || '#a39a8a', blanc = o.slip || '#ece8df';
+  const corps = 'M -11,-49.6 C -16.6,-49.2 -21.4,-47 -23,-43 C -24,-39.8 -23.4,-36.6 -21.8,-34.4 C -23.8,-30.8 -24,-25.6 -21.2,-22 '
+    + 'C -17,-18 -8.4,-17 .4,-17 C 9.2,-17 17.6,-18.2 21.6,-22 C 24.6,-25.6 24.6,-30.8 22.2,-34.4 C 24,-36.8 24.8,-40 23.6,-43 '
+    + 'C 22,-47.2 16.8,-49.4 11,-49.8 C 4,-50.4 -4,-50.2 -11,-49.6 Z';
+  const ventre = P.ell(-.6, -28.2, 20.8, 11.6);
+  // pectoraux (vue de trois quarts : celui de gauche, côté éloigné, est plus étroit)
+  const pecG = 'M -19.6,-45.4 C -16,-47.8 -9.6,-48 -4.6,-46.4 C -3,-43 -3.4,-38 -5.6,-35.6 C -9.6,-33.4 -15.2,-33.6 -18.8,-35.8 C -21.4,-38.4 -21.4,-42.8 -19.6,-45.4 Z';
+  const pecD = 'M -3,-46.6 C 3,-48.4 12,-48.2 18.4,-45.6 C 21,-42.4 21,-38 18.6,-35.4 C 14,-33 5.6,-33.2 -.8,-35.4 C -3.6,-38 -4.2,-42.8 -3,-46.6 Z';
+  // tatouages
+  const bande = ruban([[-20.6, -37.8], [-15, -34.8], [-8.6, -35], [-4.4, -37.2], [-1.8, -37.4], [2.6, -35], [10.4, -34.2], [17.4, -36.2], [20.6, -39]], 1.5);
+  const glyphe = (cx, k) => [
+    ruban([[cx - 5.6 * k, -37], [cx - 5.4 * k, -41.4], [cx - 2.6 * k, -44.6], [cx + 1.4 * k, -44.8], [cx + 4.4 * k, -42.4], [cx + 5 * k, -38.4]], 1.3),
+    ruban([[cx - 2.8 * k, -37.4], [cx - 2.6 * k, -40.2], [cx - .2 * k, -41.6], [cx + 2.2 * k, -40.4], [cx + 2.4 * k, -38.4]], 1.15),
+    ruban([[cx - .2 * k, -41.4], [cx - .2 * k, -38.6]], 1.1),
+  ];
+  const arc = ruban([[-10.4, -19.6], [-15.6, -22], [-17.8, -26.8], [-15.8, -31.2], [-9, -33.6], [-.6, -34.2], [8, -33.6], [14.6, -31.2], [16.8, -26.8], [14.6, -22], [9.6, -19.6]], 1.6);
+  // les deux spirales face à face : leur queue descend par l'extérieur et revient vers le nombril
+  const spG = [[-6.6, -28.4], [-5.6, -29.2], [-6.6, -30.4], [-8.4, -29.8], [-8.9, -27.8], [-7.6, -26.2], [-5.1, -26.3], [-3.9, -28.4], [-4.6, -31], [-7, -32.2], [-9.8, -31.4], [-11.4, -28.6], [-10.9, -24.8], [-8.4, -22], [-5, -21]];
+  const spirales = [ruban(spG, 1.4), ruban(miroir(spG, -.6, 1.06), 1.4)];
+  const couches = [];
+  // le slip : sous le ventre (le ventre retombe dessus)
+  couches.push({os: 'torse', z: Z.torse - .5, dessin(p) {
+    const slip = 'M -16.4,-21.4 Q -.6,-16.6 16.6,-21.6 L 13.4,-16.4 Q 5.2,-10.6 -.6,-10.6 Q -6.4,-10.6 -13.4,-16.4 Z';
+    p.forme(slip, blanc, {taille: 'm', force: 1.1});
+    p.dans(slip, () => { p.forme('M -3,-17 Q -1,-14 -.4,-10.6 L -1.6,-10.6 Q -2.4,-14 -4.4,-17 Z', P.fonce(blanc, .9), {taille: 0}); });   // un pli
+  }});
+  couches.push({os: 'torse', z: Z.torse, dessin(p) {
+    p.forme(corps, peau, {taille: 'g', force: .9});
+    p.dans(corps, () => {
+      p.forme(ventre, peau, {taille: 'g', force: .8});
+      p.portee(P.ell(-.6, -37, 21, 5.4), ventre, peau, {dy: 1.4, flou: 2, force: .45});              // l'ombre des pectoraux sur le ventre
+      p.forme(arc, tat, {taille: 0}); spirales.forEach(d => p.forme(d, tat, {taille: 0}));
+      p.forme(P.ell(-.6, -21.6, 1.15, .62), P.fonce(peau, .55), {taille: 0});                          // nombril
+      p.forme(pecG, peau, {taille: 'g', force: .85}); p.forme(pecD, peau, {taille: 'g', force: .85});
+      p.portee(P.ell(-1, -53, 15, 9.5), corps, peau, {dy: 1.6, flou: 3, force: .6});                    // l'ombre de la tête
+      p.forme(bande, tat, {taille: 0});
+      [...glyphe(-12.2, .82), ...glyphe(8.4, 1)].forEach(d => p.forme(d, tat, {taille: 0}));
+      p.forme(cristal(-16.4, -36.8, 2.3, 7), GRIS[1], {taille: 'p'}); p.forme(cristal(-16.4, -36.8, 1.3, 7), GRIS[0], {taille: 0});
+      p.forme(cristal(13.6, -36.4, 2.5, 7), GRIS[1], {taille: 'p'}); p.forme(cristal(13.6, -36.4, 1.4, 7), GRIS[0], {taille: 0});
     });
-    for (const m of [...touffe, ...favoris]) p.portee(m, P.TETE, peau, {dy: 1, flou: 1.8, force: .35});
-    for (const m of [...favoris, ...touffe]) p.forme(m, c, {taille: 'm', force: 1.1});
-  }}];
+  }});
+  // les cailloux du haut du dos (derrière la tête, jusqu'à l'épaule du côté proche)
+  const dos = cailloux([[10, -50.4], [17, -50], [22.6, -47.4], [26, -42.8]], 6, 1, 29, {nombre: 5});
+  couches.push({os: 'torse', z: Z.torse + .5, dessin(p) {
+    p.portee(dos.base, corps, peau, {dy: 1.6, flou: 2.4, force: .5});
+    peindreCailloux(p, dos, clair, sombre);
+  }});
+  // les bras : épaule ronde, biceps, motif tatoué, cailloux sur l'épaule et sur le dehors de l'avant-bras
+  for (const [os1, os2, z, cote] of [['brasD1', 'brasD2', Z.brasD, -1], ['brasG1', 'brasG2', Z.brasG, 1]]) {
+    const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
+    const a = Math.atan2(cy - ey, cx - ex) * 180 / Math.PI;
+    const epaule = P.ell(ex + cote * .6, ey + 1.6, 6.8, 6.4);
+    const biceps = P.ell(ex + (cx - ex) * .6 + cote * .6, ey + (cy - ey) * .6, 5.4, 4.4, a);
+    couches.push({os: os1, z: z + .3, dessin(p) {
+      p.forme(epaule, peau, {taille: 'g', force: .9});
+      p.forme(biceps, peau, {taille: 'm', force: 1.1});
+      // tatouage du haut du bras : une bande en crochet et deux points
+      p.dans(epaule, () => {
+        p.forme(ruban([[ex - cote * 4.4, ey + 4.6], [ex + cote * .6, ey + 3.4], [ex + cote * 5.6, ey + 4.4]], 1.4), tat, {taille: 0});
+        p.forme(ruban([[ex + cote * .4, ey + 3.6], [ex + cote * 1.2, ey + .2], [ex + cote * 3.4, ey - .8]], 1.3), tat, {taille: 0});
+        p.forme(P.ell(ex - cote * .6, ey + 6.6, .8, .8), tat, {taille: 0}); p.forme(P.ell(ex + cote * 2.2, ey + 6.8, .8, .8), tat, {taille: 0});
+      });
+      const c = cailloux([[ex - cote * 5, ey - 4.4], [ex + cote * .6, ey - 6], [ex + cote * 5.6, ey - 3.6], [ex + cote * 7.6, ey + 1.6]], 5, cote, 41 + z, {nombre: 4});
+      p.portee(c.base, epaule, peau, {dy: 1.2, flou: 2, force: .5});
+      peindreCailloux(p, c, clair, sombre);
+    }});
+    // avant-bras : les cailloux sur le dehors, du coude jusqu'avant le poing (jamais par-dessus le poing)
+    const n = Math.hypot(mx - cx, my - cy), ux = (mx - cx) / n, uy = (my - cy) / n, nx = -uy * cote, ny = ux * cote;
+    const sens = (nx * cote > 0) ? 1 : -1;   // le dehors = loin du corps
+    const pt = (t, d) => [cx + ux * n * t + nx * sens * d, cy + uy * n * t + ny * sens * d];
+    const av = cailloux([pt(-.05, 3.6), pt(.3, 4.2), pt(.66, 4)], 4.4, sens * (os1 === 'brasD1' ? -1 : 1), 53 + z, {nombre: 4});
+    const poing = 3.1 * (fiche.corps && fiche.corps.main || 1);
+    couches.push({os: os2, z: z + 1.05, dessin(p) {
+      const hors = new Path2D(); hors.rect(-400, -400, 800, 800); hors.ellipse(mx, my, poing + .2, poing + .2, 0, 2 * Math.PI, 0, true);
+      p.dans(hors, () => peindreCailloux(p, av, clair, sombre));
+    }});
+  }
+  // les jambes : rond tatoué sur le genou, bandage blanc à la cheville
+  for (const [os2, z] of [['jambeD2', Z.jambeD], ['jambeG2', Z.jambeG]]) {
+    const [gx, gy] = OS[os2].p, kj = (fiche.corps && fiche.corps.jambes) || 1;
+    couches.push({os: os2, z: z + 1.5, dessin(p) {
+      p.forme(anneau(gx - 1.6, gy + .4, 1.9, 1.1, 1.1), tat, {taille: 0});
+      const w = 2.9 * kj + .25, tour = (y0, y1) => `M ${gx - w},${y0} Q ${gx},${y0 + 1} ${gx + w},${y0 - .4} L ${gx + w},${y1 - .4} Q ${gx},${y1 + 1} ${gx - w},${y1} Z`;
+      p.forme(tour(-9, -6.6), blanc, {taille: 'p', force: 1.3});
+      p.forme(tour(-6.9, -4.6), P.fonce(blanc, .94), {taille: 'p', force: 1.3});
+    }});
+  }
+  return couches;
 };
 })();

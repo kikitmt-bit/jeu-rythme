@@ -51,6 +51,8 @@ P.Z = Z;
 /* Tête : mêmes mesures pour tout le monde */
 const TETE = 'M -1,-87 C 12.5,-87 22.6,-77.5 22.6,-64.5 C 22.6,-51.2 13.6,-43 -1,-43 C -15.6,-43 -24.6,-51.2 -24.6,-64.5 C -24.6,-77.5 -14.5,-87 -1,-87 Z';
 P.TETE = TETE;
+/* forme de la tête d'un perso (option `tete` de la fiche : créatures non humaines) ; sinon la tête ronde commune */
+P.teteDe = f => (f && f.tete) || TETE;
 
 /* ---------- Couleurs ---------- */
 function rvb(c) {
@@ -163,7 +165,7 @@ function pinceau(ctx, S, volume) {
 function couchesDuCorps(f) {
   const peau = f.peau || '#f9d5b5', yeux = f.yeux || '#2a4a6b', OS = P.osDe(f);
   // option `corps` : épaisseur des bras, des mains et des jambes (1 = la poupée commune), pieds nus
-  const E = Object.assign({bras: 1, main: 1, jambes: 1, pieds: 'bottes'}, f.corps), kb = E.bras, kj = E.jambes;
+  const E = Object.assign({bras: 1, main: 1, jambes: 1, pieds: 'bottes', taillePieds: 1}, f.corps), kb = E.bras, kj = E.jambes;
   const b = Object.assign({manche: '#cccccc', dessous: null, gant: null, main: null}, f.bras);
   const j = Object.assign({collant: '#eeeeee', botte: '#7a4a2c'}, f.jambes);
   const c = [];
@@ -227,7 +229,7 @@ function couchesDuCorps(f) {
       p.forme(P.capsule(gx, gy, gx, -6, 3 * kj, 2.9 * kj), j.collant, surPeau(j.collant));
       const x = gx;
       if (E.pieds === 'nus') {   // pied nu : large et arrondi, orteils vers la gauche (une seule forme, le volume vient des ombres)
-        const k = kj;
+        const k = E.taillePieds;
         p.forme(`M ${x + 3.4 * k},-6.4 C ${x + 4.6 * k},-4 ${x + 4.8 * k},-1.6 ${x + 3.6 * k},0 L ${x - 6.2 * k},0 C ${x - 8.8 * k},0 ${x - 9.6 * k},-1.6 ${x - 8.6 * k},-3.2 `
           + `C ${x - 7.4 * k},-4.8 ${x - 4.6 * k},-5.6 ${x - 2.4 * k},-6.6 C ${x - .4 * k},-7.6 ${x + 2.2 * k},-7.6 ${x + 3.4 * k},-6.4 Z`, j.collant, surPeau(j.collant));
         return;
@@ -246,20 +248,25 @@ function couchesDuCorps(f) {
     p.portee(P.ell(-1, -53, 12, 6), cou, peau, {dy: 1, flou: 1.6, force: .5});                // l'ombre du menton
   }});
   // la tête et le visage : identiques pour tous (seules les couleurs changent)
+  const tete = P.teteDe(f);
   c.push({os: 'tete', z: Z.tete, dessin(p) {
-    p.forme(TETE, peau, {taille: 'g', force: .5});
-    p.dans(TETE, () => { const j = f.joues || '#ff7d8c', a = f.joues ? .34 : .3; p.halo(-19, -53.4, 4.8, j, a); p.halo(12.5, -53.4, 5.4, j, a); });
-    // le nez : un tout petit ovale couché, presque noir
-    p.forme(P.ell(-6.6, -55.9, 1.25, .52), '#4a2c1c', {taille: 0});
+    p.forme(tete, peau, {taille: 'g', force: .5});
+    if (f.joues !== null) p.dans(tete, () => { const j = f.joues || '#ff7d8c', a = f.joues ? .3 : .3; p.halo(-19, -53.4, 4.8, j, a); p.halo(12.5, -53.4, 5.4, j, a); });
+    // le nez : un tout petit ovale couché, presque noir (option `nez` : plus large)
+    const kn = f.nez || 1;
+    p.forme(P.ell(-6.6, -55.9, 1.25 * kn, .52 * kn), '#4a2c1c', {taille: 0});
     // la bouche : un petit toit rose très plat, pointe vers la gauche
-    if (f.bouche === 'large')   // option : un large sourire (même dessin, en plus grand et plus sombre : colosses…)
-      p.forme('M -14.6,-50.8 Q -12.4,-50.2 -10.6,-49.7 Q -3.6,-48.2 5.2,-50.6 Q 6.4,-50.8 6.4,-50 Q 1.4,-46.6 -5.4,-46.8 Q -11.6,-47.2 -14.6,-50.8 Z', p.degrade(0, -50.8, 0, -46.6, f.levres || '#9a3f3a', P.clair(f.levres || '#9a3f3a', .25)), {taille: 0});
+    if (f.bouche === 'dents') {   // option : très large sourire qui montre une rangée de dents (colosse de roc)
+      const L = f.levres || '#5a3a14';
+      p.forme('M -20,-53.4 Q -18,-52.2 -15.8,-51.6 Q -4,-49 10,-52 Q 12.6,-52.8 14,-53.8 Q 14,-52.2 12.4,-51 Q 6,-44.6 -4,-44.6 Q -14.4,-44.8 -19.4,-51.4 Q -20.4,-52.6 -20,-53.4 Z', P.fonce(L, .9), {taille: 0});
+      p.forme('M -17.8,-51.4 Q -4,-48.2 12.2,-51.6 Q 6,-45.6 -4,-45.6 Q -13.8,-45.8 -17.8,-51.4 Z', p.degrade(0, -50, 0, -45.6, f.dents || '#f3efe6', P.fonce(f.dents || '#f3efe6', .82)), {taille: 0});
+    }
     else p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, '#e9539a', '#f77fb4'), {taille: 0});
   }});
   // les deux yeux ont exactement la même taille : ovales pleins, bien écartés, à peine plus sombres en bas
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'ouverts'}, dessin(p) {
-    const bas = P.fonce(yeux, .8);
-    for (const x of [-15.6, 5.2]) p.forme(P.ell(x, -60.4, 3.15, 3.95), p.degrade(0, -64.3, 0, -56.4, yeux, yeux, bas), {taille: 0});
+    const bas = P.fonce(yeux, .8), [rx, ry] = f.yeuxTaille || [3.15, 3.95];   // option `yeuxTaille` : yeux plus petits ou plus ronds
+    for (const x of [-15.6, 5.2]) p.forme(P.ell(x, -60.4, rx, ry), p.degrade(0, -64.3, 0, -56.4, yeux, yeux, bas), {taille: 0});
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'fermes'}, dessin(p) {
     for (const x of [-15.6, 5.2]) p.trait(`M ${x - 3},-59.8 Q ${x},-57.5 ${x + 3},-59.8`, P.fonce(yeux, .5), .9);
