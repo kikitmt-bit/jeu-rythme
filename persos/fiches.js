@@ -58,7 +58,7 @@ Poupee.fiche({
 // nageoires ; arme : un trident (14/11, d'après 3 images de Kiki).
 Poupee.fiche({
   id: 'princesse-eaux', nom: 'Princesse des eaux', coup: 'Grâce des eaux',
-  peau: '#dfe3bd', yeux: '#dca326', couleurBouche: ['#e0455e', '#ee7283'], nez: 0, joues: null,   // pas de nez : le V rouge du masque descend jusque-là
+  peau: '#dfe3bd', yeux: '#dca326', couleurBouche: ['#d02838', '#e2474f'], nez: 0, joues: null,   // pas de nez : le V rouge du masque descend jusque-là
   tete: Poupee.TETE_EAUX,
   cheveux: {modele: 'capuche', couleur: '#c4155a', dessous: '#eeeadb'},
   coiffe: {modele: 'bijouxEaux'},

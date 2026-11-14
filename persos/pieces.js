@@ -681,8 +681,9 @@ coiffures.capuche = (o, fiche) => {
   // le V rouge vif part du coin intérieur des yeux (sans mordre sur les yeux) et descend jusqu'au nez
   // le V rouge vif (d'après le coloriage de Kiki, 14/11) : ses deux bras continuent par-dessus le haut des yeux vers l'extérieur,
   // puis il descend en pointe jusqu'au nez ; les yeux sont peints PAR-DESSUS (ils sont redessinés dans cette couche)
-  const bec = 'M -18.8,-66.4 C -14.8,-67 -10.8,-65.4 -7.8,-62.6 L -5.6,-60.4 L -3.4,-62.6 C -.4,-65.4 3.6,-67 7.8,-66.4 L 8.2,-63.2 '
-    + 'C 4.8,-63.6 1.8,-62.4 -.2,-60.6 Q -2.8,-58 -5.6,-54.2 Q -8.4,-58 -11,-60.6 C -13,-62.4 -15.8,-63.6 -18.8,-63.2 Z';
+  // (14/11, 2e retouche : les bras du V sont prolongés vers l'extérieur et vers le haut, et ils passent SOUS la bande violet foncé du masque)
+  const bec = 'M -23.4,-68.4 C -17.4,-69.6 -11.4,-67.6 -7.8,-63.4 L -5.6,-61 L -3.4,-63.4 C .2,-67.6 6.2,-69.6 12.4,-68.4 L 12.6,-64.6 '
+    + 'C 7.4,-64.4 2.4,-63.2 -.2,-60.6 Q -2.8,-58 -5.6,-54.2 Q -8.4,-58 -11,-60.6 C -13.8,-63.2 -18.6,-64.4 -23.6,-64.6 Z';
   const panG = 'M -26.8,-63 C -28,-56 -27.6,-49 -26.2,-44 C -25.4,-41 -24.2,-38.6 -22.8,-37 C -22.8,-40 -22.6,-43.6 -22.4,-47 C -22.2,-52 -22.6,-57.6 -23.2,-63 Z';
   const panD = 'M 24.6,-63 C 25.6,-56 25.4,-49 24.2,-44 C 23.6,-41 22.8,-38.6 21.8,-37 C 21.4,-40 21,-43.6 20.8,-47 C 20.6,-52 20.6,-57.6 20.8,-63 Z';
   // la queue (repère de la tête, avant la réduction de 0,9) : elle descend derrière la tête et s'arrête au niveau des épaules,
@@ -706,6 +707,7 @@ coiffures.capuche = (o, fiche) => {
     {os: 'tete', z: Z.cheveux, dessin(p) {
       for (const d of [panG, panD]) { p.portee(d, tete, peau, {dy: .8, dx: 0, flou: 1.6, force: .35}); p.forme(d, c, {taille: 'm', force: 1.1}); }
       p.portee(capuche, tete, peau, {dy: 1.4, flou: 2, force: .5});
+      p.dans(tete, () => p.forme(bec, vif, {taille: 'p', force: .5}));      // le V rouge, sous la capuche et sa bande sombre
       p.forme(capuche, c, {taille: 'g', force: .9});
       p.dans(capuche, () => {
         p.forme(bande, masque, {taille: 'm', force: .7});
@@ -715,7 +717,6 @@ coiffures.capuche = (o, fiche) => {
         // la goutte du front : large en haut, pointue en bas
         p.forme('M -4.9,-80.4 C -3.5,-80.4 -3.2,-78.6 -3.6,-77.2 C -4,-75.8 -4.5,-74.6 -4.9,-73 C -5.3,-74.6 -5.8,-75.8 -6.2,-77.2 C -6.6,-78.6 -6.3,-80.4 -4.9,-80.4 Z', vif, {taille: 'p', force: .6});
       });
-      p.dans(tete, () => p.forme(bec, vif, {taille: 'p', force: .5}));
     }},
     // les yeux repassent par-dessus le V rouge (mêmes yeux que le moule : ovales pleins, à peine plus sombres en bas)
     {os: 'tete', z: Z.cheveux + .1, si: {yeux: 'ouverts'}, dessin(p) {
