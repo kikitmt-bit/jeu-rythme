@@ -116,7 +116,7 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   Avec une simple transparence trait par trait, les croisements (milieu du T, barres des arcs) se voyaient doublés : refusé par Kiki. 6 réglages comparés le 14/11, celui-ci retenu (l'encre suit les ombres et les reflets) ;
   5e version : la patte à trois griffes va **sur le biceps** (là où Kiki l'a dessinée en rouge, convertie d'après sa capture : centre (26,8 ; −37,7), penchée de −22°).
   Reste du perso : tête en cloche (`tete`, `Poupee.TETE_COLOSSE`), sourcils en cailloux froncés, barbichette en caillou, T tatoué jusqu'au nez, petits yeux ronds bleu-violet (`yeuxTaille`), nez plus large (`nez`), pas de joues (`joues: null`) ;
-  motif des pecs (arc + symbole) et bande dessous, ventre avec le grand arc et les deux spirales, slip blanc, rond sur les genoux, bandages aux chevilles, pieds nus normaux (`taillePieds`). Options du moule : `taille` (1,15), `os`, `corps`, `bras.manche: null`.
+  ventre avec le grand arc et les deux spirales, slip blanc, rond sur les genoux, bandages aux chevilles, pieds nus normaux (`taillePieds`). Options du moule : `taille` (1,15), `os`, `corps`, `bras.manche: null`.
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
 - Avant de livrer un perso : vérifier aussi la **marche** (captures `anim=marche&t=…`) et le **jeu** (`?auto`), où les persos se suivent et peuvent se chevaucher (arme de l'un sur le bouclier de l'autre). Tout ce qui est dans `poupee.js` (tête, visage, oreille, bras, main, jambes) est déjà validé et commun à tous.
 
