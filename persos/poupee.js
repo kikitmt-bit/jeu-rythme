@@ -256,10 +256,12 @@ function couchesDuCorps(f) {
     const kn = f.nez || 1;
     p.forme(P.ell(-6.6, -55.9, 1.25 * kn, .52 * kn), '#4a2c1c', {taille: 0});
     // la bouche : un petit toit rose très plat, pointe vers la gauche
-    if (f.bouche === 'dents') {   // option : très large sourire qui montre une rangée de dents (colosse de roc)
-      const L = f.levres || '#5a3a14';
-      p.forme('M -20,-53.4 Q -18,-52.2 -15.8,-51.6 Q -4,-49 10,-52 Q 12.6,-52.8 14,-53.8 Q 14,-52.2 12.4,-51 Q 6,-44.6 -4,-44.6 Q -14.4,-44.8 -19.4,-51.4 Q -20.4,-52.6 -20,-53.4 Z', P.fonce(L, .9), {taille: 0});
-      p.forme('M -17.8,-51.4 Q -4,-48.2 12.2,-51.6 Q 6,-45.6 -4,-45.6 Q -13.8,-45.8 -17.8,-51.4 Z', p.degrade(0, -50, 0, -45.6, f.dents || '#f3efe6', P.fonce(f.dents || '#f3efe6', .82)), {taille: 0});
+    if (f.bouche === 'levres') {   // option : une bouche très large et très plate, juste des lèvres (colosse de roc) ; lèvre du bas plus épaisse
+      const bas = 'M -18.8,-51.2 Q -4,-49.6 13,-51.8 Q 11.4,-48.4 4,-47.2 Q -4,-46.4 -11,-47.2 Q -17.2,-48.4 -18.8,-51.2 Z';
+      p.portee(bas, P.teteDe(f), peau, {dy: 1.1, flou: 1.6, force: .55});                          // l'ombre sous la lèvre
+      p.forme(bas, f.levres || P.clair(peau, .3), {taille: 'm', force: 1.1});
+      p.forme('M -19.8,-52 Q -4,-50.6 14,-52.6 Q 13,-51.4 12,-51.2 Q -4,-49.4 -18.8,-51 Q -19.6,-51.2 -19.8,-52 Z', P.clair(peau, .12), {taille: 'p'});   // lèvre du haut, fine
+      p.forme('M -20.6,-51.6 Q -4,-49.8 14.6,-52.2 Q -4,-49.2 -20.6,-51.6 Z', '#3e2810', {taille: 0});   // la fente, presque droite
     }
     else p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, '#e9539a', '#f77fb4'), {taille: 0});
   }});

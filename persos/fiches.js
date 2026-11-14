@@ -37,7 +37,7 @@ Poupee.fiche({
 // Même pinceau, mêmes yeux et même nez que les autres ; tête en cloche (option `tete`), carrure à part (options `taille`, `os`, `corps`).
 Poupee.fiche({
   id: 'colosse', nom: 'Colosse de roc', coup: 'Roulade de roc', taille: 1.15,   // un peu plus grand que les autres
-  peau: '#cf9a42', yeux: '#3c33a6', yeuxTaille: [2.6, 2.9], nez: 1.5, bouche: 'dents', levres: '#5a3a14', joues: null,
+  peau: '#cf9a42', yeux: '#3c33a6', yeuxTaille: [2.6, 2.9], nez: 1.5, bouche: 'levres', levres: '#e2d3b4', joues: null,
   tete: Poupee.TETE_COLOSSE,
   os: {
     racine: {p: [0, -20]}, torse: {p: [0, -21]},
