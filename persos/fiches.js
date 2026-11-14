@@ -53,14 +53,16 @@ Poupee.fiche({
   jambes: {collant: '#cf9a42'},
 });
 
-// princesse des eaux : peau rouge framboise sur la tête, le dos et les membres, devant vert pâle crème, yeux dorés, lèvres rouges,
-// bijoux d'argent et pierres turquoise, écharpe bleue, nageoires ; arme : un trident (14/11, d'après 3 images de Kiki).
+// princesse des eaux : peau rouge framboise sur la tête, le dos et les membres, devant vert pâle crème, visage fin en V,
+// yeux jaunes (même code que les autres), bijoux d'argent et pierres turquoise, écharpe bleue drapée avec l'emblème de Kiki,
+// nageoires ; arme : un trident (14/11, d'après 3 images de Kiki).
 Poupee.fiche({
   id: 'princesse-eaux', nom: 'Princesse des eaux', coup: 'Grâce des eaux',
-  peau: '#dfe3bd', yeux: '#e3a21c', yeuxTaille: [2.75, 3.35], pupilles: '#2b1306', nez: 0, joues: null, bouche: 'petite', couleurBouche: ['#cf1a24', '#e9433f'],
-  cheveux: {modele: 'capuche', couleur: '#c4155a', dessous: '#e6e3c8'},
+  peau: '#dfe3bd', yeux: '#ebb526', nez: 0, joues: null,   // pas de nez : le V rouge du masque descend jusque-là
+  tete: Poupee.TETE_EAUX,
+  cheveux: {modele: 'capuche', couleur: '#c4155a', dessous: '#eeeadb'},
   coiffe: {modele: 'bijouxEaux'},
-  tenue: {modele: 'eaux', rouge: '#c4155a'},
+  tenue: {modele: 'eaux', rouge: '#c4155a', embleme: 'embleme-eaux.png'},
   bras: {manche: null, dessous: '#c4155a', main: '#c4155a'},
   jambes: {collant: '#c4155a'},
   corps: {pieds: 'nus'},

@@ -130,6 +130,14 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   marques rouge vif sur les tibias, anneaux d'argent aux chevilles, griffe d'argent et talon orangé aux pieds ; `armes.trident` (manche d'argent, garde en croissant doré, 3 pointes à crochet, pierre turquoise).
   L'emblème imprimé sur l'écharpe (vrai jeu) n'est pas redessiné : vagues claires à la place (si Kiki le veut, il l'envoie en image → paquet chiffré).
   Options du moule ajoutées (sans effet sur les autres, vérifié au pixel près) : `pupilles` (pupille sombre dans l'œil), `bouche: 'petite'` (petites lèvres pleines), `couleurBouche` ([haut, bas]), `nez: 0` (pas de nez).
+  2e version (retours de Kiki, « très bon début… mais trop prototype ») : **yeux = simples ovales jaunes comme les autres** (pupilles refusées), **bouche = celle de la princesse** ;
+  **visage fin et féminin, en V, menton fin** (`tete: Poupee.TETE_EAUX`) ; cou fin (le corps remonte en un cou étroit, collier fin) ; épaules en pente douce, taille marquée ;
+  masque refait d'après un gros plan de Kiki : **bande plus sombre juste au-dessus des yeux** (elle touche le haut des yeux) qui descend en pointe entre eux, **3 points rouge vif en arc** sur la bande au-dessus de chaque œil,
+  **chevron rouge vif** qui sort de sous la bande, entre les coins intérieurs des yeux, jusqu'au nez (dessiné avant la capuche qui en recouvre le haut ; il ne mord pas sur les yeux), goutte du front large en haut et pointue en bas ;
+  **queue** : descend dans le dos, remonte vers l'arrière au bout, **nageoire fourchue** (une pointe vers le haut, une vers l'arrière, `feuille()`), **tout le dessous blanc** ;
+  **écharpe drapée** : pan posé sur l'épaule proche qui la recouvre et cache l'articulation (couche sur `brasG1`, avec la broche), plis (creux sombres, crêtes claires, `meche`), tour de taille plissé, cape plissée ;
+  **emblème de Kiki** (image `embleme-eaux.png`, détourée, bleu très clair) au milieu du tour de taille : `tenue.embleme` + `p.image` ; **pas encore dans `images/persos.bin`** (il faut le mot de passe) : sans lui, vagues claires.
+  L'image détourée attend dans le cerveau (privé) : `kiki-cerveau/projets/jeu-rythme/images-a-chiffrer/embleme-eaux.png`.
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
 - Avant de livrer un perso : vérifier aussi la **marche** (captures `anim=marche&t=…`) et le **jeu** (`?auto`), où les persos se suivent et peuvent se chevaucher (arme de l'un sur le bouclier de l'autre). Tout ce qui est dans `poupee.js` (tête, visage, oreille, bras, main, jambes) est déjà validé et commun à tous.
 

@@ -646,37 +646,66 @@ function rayures(p, zone, x0, y0, x1, y1, n, couleurs = ['#f3d92a', '#16c4c9']) 
   });
 }
 
-// La capuche : le crâne rouge qui descend en pointe entre les yeux, les deux longs pans le long du visage, la queue dans le dos,
-// et les marques rouge vif (bec entre les yeux jusqu'au nez, points au-dessus des yeux, goutte au milieu du front).
+// Une feuille (lobe de nageoire) : forme pointue aux deux bouts, la plus large vers 40 % de sa longueur.
+function feuille(x0, y0, x1, y1, w, courbe = 0) {
+  const dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy), nx = -dy / l, ny = dx / l;
+  const P1 = t => [x0 + dx * t + nx * courbe * Math.sin(Math.PI * t), y0 + dy * t + ny * courbe * Math.sin(Math.PI * t)];
+  const g = [], d = [];
+  for (let k = 0; k <= 24; k++) {
+    const t = k / 24, r = w / 2 * Math.pow(Math.sin(Math.PI * Math.min(1, t / .8 * .5 + (t > .4 ? (t - .4) / .6 * .5 : 0))), .8) * (t < .4 ? Math.sqrt(t / .4) : 1), [x, y] = P1(t);
+    g.push((x + nx * r).toFixed(2) + ',' + (y + ny * r).toFixed(2)); d.unshift((x - nx * r).toFixed(2) + ',' + (y - ny * r).toFixed(2));
+  }
+  return 'M ' + g.join(' L ') + ' L ' + d.join(' L ') + ' Z';
+}
+// Le visage de la princesse des eaux : plus fin et plus féminin, en V, menton fin (option `tete`).
+P.TETE_EAUX = 'M -1,-87 C 12.5,-87 22.6,-77.5 22.6,-64.5 C 22.4,-56.6 17.8,-50.4 11.4,-46.4 C 6.4,-43.4 1,-41.6 -2.8,-41.4 '
+  + 'C -6.6,-41.6 -12,-43.4 -16.8,-46.6 C -22.2,-50.4 -24.6,-56.6 -24.6,-64.5 C -24.6,-77.5 -14.5,-87 -1,-87 Z';
+
+// La capuche (refaite le 14/11 d'après les gros plans de Kiki) :
+//  - le crâne rouge framboise ; juste au-dessus des yeux une bande plus sombre (le masque) qui descend en pointe entre les yeux ;
+//  - sur cette bande, trois petits points rouge vif en arc au-dessus de chaque œil ; une goutte rouge vif au milieu du front (large en haut, pointue en bas) ;
+//  - du coin intérieur des yeux, un V rouge vif qui descend jusqu'au nez ;
+//  - deux pans fins qui tombent des tempes, le long du visage, jusqu'à la poitrine ;
+//  - derrière, la queue : elle descend dans le dos, remonte vers l'arrière au bout et finit en nageoire fourchue ; tout son dessous est blanc.
 coiffures.capuche = (o, fiche) => {
-  const c = o.couleur, dessous = o.dessous || fiche.peau, peau = fiche.peau, vif = o.marques || ROUGE_VIF;
-  const capuche = 'M -26.4,-47.6 C -28,-56 -27.4,-66 -24.4,-74.4 C -20.4,-84.6 -11.4,-90 -1,-90 C 10,-90 19.4,-84.6 23.4,-75.4 C 26,-68.4 26,-58 24.4,-49.6 '
-    + 'C 22.4,-54.4 19.6,-58.6 15.8,-61.8 C 12.6,-64.6 8.6,-66 4.6,-65.8 C 1,-65.6 -2.2,-64 -3.8,-61 L -5.6,-58.2 L -7.4,-61 '
-    + 'C -9.2,-64 -12.6,-66 -16.6,-66 C -20.8,-66 -24,-60 -26.4,-47.6 Z';
-  // les deux pans qui tombent le long du visage jusqu'à la poitrine, pointe vers le bas
-  const panG = 'M -26.6,-62 C -27.4,-55 -27,-48 -25.6,-43 C -24.8,-40.4 -23.8,-38.4 -22.6,-37 C -22.6,-40 -22.6,-43.6 -22.6,-47 C -22.6,-52 -22.8,-57 -23,-62 Z';
-  const panD = 'M 24.4,-62 C 25.4,-55 25.2,-48 24,-43 C 23.4,-40.4 22.6,-38.2 21.6,-36.6 C 21.2,-39.6 20.8,-43.4 20.6,-47 C 20.4,-52 20.6,-57 20.8,-62 Z';
-  // la queue : part de l'arrière du crâne, descend derrière le dos et finit en nageoire ; dessous clair (côté du corps)
-  const queue = 'M 4,-89 C 16,-89.4 25.4,-82 27.6,-70 C 29.4,-60 30.2,-50 29.8,-42 C 29.4,-35.6 28.4,-31 27,-27.6 C 29,-25 31.4,-22.8 33.4,-21.6 '
-    + 'C 30,-21.4 27.2,-22.2 25.2,-24 C 23.8,-22 21.2,-20.6 18.4,-20.2 C 20.4,-22.4 21.6,-25 22,-28.4 C 21.8,-34 21.4,-40 20.6,-47 C 19.6,-56 16,-66 4,-89 Z';
-  const ventre = 'M 20.6,-47 C 21.4,-40 21.8,-34 22,-28.4 C 23.2,-31 23.8,-36 23.8,-42 C 23.8,-50 22.6,-58 20,-64 C 20.4,-58 20.6,-52 20.6,-47 Z';
+  const c = o.couleur, blanc = o.dessous || '#eeeadb', peau = fiche.peau, vif = o.marques || ROUGE_VIF, masque = o.masque || P.fonce(o.couleur, .74);
+  const tete = P.teteDe(fiche);
+  // bord bas de la capuche, de la gauche vers la droite (au-dessus des yeux, pointe entre les deux)
+  const BORD = [[-27, -50], [-25.4, -58], [-23, -62.8], [-19.4, -64.7], [-14.6, -64.9], [-10.8, -63.6], [-7.8, -61.4], [-5.6, -59.6],
+                [-3.4, -61.4], [-.4, -63.6], [3, -64.9], [7.6, -64.9], [11.2, -63.6], [14.6, -60.4], [18.6, -55.4], [23.2, -50]];   // il touche juste le haut des yeux
+  const HAUT = [[-25.2, -61.6], [-22.2, -67.6], [-18.4, -70.2], [-13.6, -70], [-9.8, -68.4], [-5.6, -64.8], [-1.6, -68.4], [2.6, -70.2], [7.8, -70.4], [12, -68.4], [15.8, -64]];
+  const f2 = q => q[0].toFixed(2) + ',' + q[1].toFixed(2);
+  const capuche = 'M ' + f2(BORD[0]) + ' C -28.6,-60 -27.6,-68 -24.6,-75 C -20.6,-84.6 -11.4,-90 -1,-90 C 10,-90 19.4,-84.6 23.4,-75.4 C 26,-68.4 25.8,-58 23.2,-50 L '
+    + BORD.slice().reverse().slice(1).map(f2).join(' L ') + ' Z';
+  const bande = 'M ' + BORD.slice(1, 14).map(f2).join(' L ') + ' L ' + HAUT.slice().reverse().map(f2).join(' L ') + ' Z';
+  // le V rouge vif part du coin intérieur des yeux (sans mordre sur les yeux) et descend jusqu'au nez
+  const bec = 'M -12.4,-65.4 L -5.6,-61.4 L 1.2,-65.4 L 1.6,-61.6 Q -2.6,-58.8 -5.6,-54.4 Q -8.6,-58.8 -12.8,-61.6 Z';   // le haut passe sous la capuche
+  const panG = 'M -26.8,-63 C -28,-56 -27.6,-49 -26.2,-44 C -25.4,-41 -24.2,-38.6 -22.8,-37 C -22.8,-40 -22.6,-43.6 -22.4,-47 C -22.2,-52 -22.6,-57.6 -23.2,-63 Z';
+  const panD = 'M 24.6,-63 C 25.6,-56 25.4,-49 24.2,-44 C 23.6,-41 22.8,-38.6 21.8,-37 C 21.4,-40 21,-43.6 20.8,-47 C 20.6,-52 20.6,-57.6 20.8,-63 Z';
+  // la queue (repère de la tête, avant la réduction de 0,9) : bord extérieur rouge, bord côté corps blanc, nageoire fourchue au bout
+  const queue = 'M 4,-89.4 C 15,-89.2 24.6,-83 28.4,-72 C 30.6,-64 31,-54 30.8,-44 C 30.6,-36 31,-29.6 33.6,-25 C 35.4,-22 37.6,-20.4 40,-19.6 '
+    + 'L 40.6,-16.4 C 36.6,-15.2 32,-15.8 28.4,-18.8 C 24.6,-22.4 23,-28 22.6,-34 C 22.2,-42 21.8,-52 20.6,-60 C 19.2,-70 13,-80 4,-89.4 Z';
+  const dessous = 'M 20.6,-60 C 21.8,-52 22.2,-42 22.6,-34 C 23,-28 24.6,-22.4 28.4,-18.8 C 32,-15.8 36.6,-15.2 40.6,-16.4 L 40.2,-18.4 '
+    + 'C 36.4,-18 33,-19 30.8,-21.6 C 28.2,-24.8 27.2,-29.4 27,-34.4 C 26.8,-42 26.4,-50 25.4,-57.6 C 24.4,-64.6 22.4,-70.4 19.4,-75 C 20,-70 20.4,-65 20.6,-60 Z';
+  const lobes = [feuille(39.6, -18.4, 41, -30.6, 4.2, -1), feuille(39.6, -18, 49.4, -22.4, 4, 1)];
   return [
     {os: 'tete', z: Z.queue, dessin(p) {
+      for (const d of lobes) p.forme(d, c, {taille: 'm', force: 1.1});
       p.forme(queue, c, {taille: 'g'});
-      p.dans(queue, () => p.forme(ventre, dessous, {taille: 'm', force: .8}));
+      p.dans(queue, () => p.forme(dessous, blanc, {taille: 'm', force: .9}));
     }},
     {os: 'tete', z: Z.cheveux, dessin(p) {
-      const tete = P.teteDe(fiche);
-      for (const d of [panG, panD]) p.forme(d, c, {taille: 'm', force: 1.1});
-      p.portee(capuche, tete, peau, {dy: 1.4, flou: 2.2, force: .5});
+      for (const d of [panG, panD]) { p.portee(d, tete, peau, {dy: .8, dx: 0, flou: 1.6, force: .35}); p.forme(d, c, {taille: 'm', force: 1.1}); }
+      p.portee(capuche, tete, peau, {dy: 1.4, flou: 2, force: .5});
+      p.dans(tete, () => p.forme(bec, vif, {taille: 'p', force: .5}));
       p.forme(capuche, c, {taille: 'g', force: .9});
-      // les marques rouge vif
-      p.dans(new Path2D(tete), () => {
-        p.forme('M -9.4,-62.4 C -7.8,-61.6 -6.6,-60.4 -5.6,-57.6 C -4.6,-60.4 -3.4,-61.6 -1.8,-62.4 C -3.6,-61.2 -4.7,-59 -5.6,-55.4 C -6.5,-59 -7.6,-61.2 -9.4,-62.4 Z', vif, {taille: 'p', force: .6});
-      });
       p.dans(capuche, () => {
-        for (const [x, y, r] of [[-21, -63.4, .95], [-18.6, -65.4, .8], [9.4, -65.8, .8], [11.8, -64.4, .95]]) p.forme(P.ell(x, y, r, r * .8), vif, {taille: 0});
-        p.forme('M -4.8,-78 C -3.9,-75.4 -3.9,-73.2 -4.8,-71.4 C -5.7,-73.2 -5.7,-75.4 -4.8,-78 Z', vif, {taille: 'p', force: .6});
+        p.forme(bande, masque, {taille: 'm', force: .7});
+        // trois petits points en arc au-dessus de chaque œil, vers l'extérieur
+        for (const [x, y, r, a] of [[-19.8, -68.2, .85, -20], [-22.4, -66.6, .8, -40], [-24, -64.2, .7, -60], [9.4, -68.6, .85, 20], [12.2, -67.2, .8, 40], [14.2, -65, .7, 60]])
+          p.forme(P.ell(x, y, r * 1.25, r * .85, a), vif, {taille: 0});
+        // la goutte du front : large en haut, pointue en bas
+        p.forme('M -4.9,-80.4 C -3.5,-80.4 -3.2,-78.6 -3.6,-77.2 C -4,-75.8 -4.5,-74.6 -4.9,-73 C -5.3,-74.6 -5.8,-75.8 -6.2,-77.2 C -6.6,-78.6 -6.3,-80.4 -4.9,-80.4 Z', vif, {taille: 'p', force: .6});
       });
     }},
   ];
@@ -710,34 +739,38 @@ coiffes.bijouxEaux = o => {
 // marques rouge vif sur les tibias, anneaux d'argent aux chevilles, griffe et talon des pieds).
 tenues.eaux = (o, fiche) => {
   const rouge = o.rouge, creme = fiche.peau, bleu = o.echarpe || '#1f9fd2', bleuClair = o.echarpeClair || '#c9ecf4', ag = o.argent || ARGENT;
-  const corps = 'M -7.2,-49.8 L 2.4,-50.2 C 6,-49.6 8,-47.6 8.8,-44.2 C 10.8,-42.6 11.4,-40.4 11.4,-38 L 10.4,-30.4 C 10.2,-27 11.2,-24 12.2,-20.6 '
-    + 'Q 0,-14.6 -12.2,-20.6 C -11.2,-24 -10.2,-27 -10.4,-30.4 L -11.4,-38 C -11.4,-40.4 -10.8,-42.6 -8.8,-44.2 C -8.6,-46.8 -8.2,-48.6 -7.2,-49.8 Z';
-  const devant = 'M -7.6,-50 L 3.2,-50.2 C 5.6,-44 7,-38 7,-32.4 C 7,-26.6 5.6,-21.4 3.4,-17.4 Q -1.8,-15.6 -7,-17.4 C -9,-21.4 -9.8,-26.6 -9.8,-32.4 C -9.8,-38 -9,-44 -7.6,-50 Z';
+  // corps plus féminin : cou fin, épaules qui descendent en pente douce, taille marquée, hanches un peu plus larges
+  const corps = 'M -4.4,-49.8 L 1,-50 C 1.2,-47.2 1.8,-45.6 3.6,-44.8 C 6.4,-44 8.6,-43.2 9.8,-41.8 C 11,-40.6 11.4,-39.6 11.4,-38 '
+    + 'C 11,-35 9.6,-32.8 9.4,-30.4 C 9.4,-27 10.8,-24 12,-20.6 Q 0,-14.6 -12,-20.6 C -10.8,-24 -9.4,-27 -9.4,-30.4 C -9.6,-32.8 -11,-35 -11.4,-38 '
+    + 'C -11.4,-39.8 -10.8,-41 -9.6,-42 C -8.4,-43.2 -6.6,-44 -5.6,-44.8 C -4.8,-45.6 -4.4,-47.2 -4.4,-49.8 Z';
+  const devant = 'M -4.6,-50 L 1.2,-50.2 C 1.4,-47 2.4,-45.4 4.4,-44.4 C 6,-40 6.6,-36 6.4,-32.4 C 6.2,-26.6 5.2,-21.4 3.2,-17.4 Q -1.8,-15.6 -6.8,-17.4 '
+    + 'C -8.6,-21.4 -9.2,-26.6 -9,-32.4 C -8.8,-36 -8.2,-40.4 -6.8,-44.2 C -5.2,-45.4 -4.6,-47 -4.6,-50 Z';
   const couches = [];
   // la cape : le bout de l'écharpe qui retombe dans le dos, du côté proche (derrière le corps et le bras)
   couches.push({os: 'torse', z: Z.torse - 1.5, dessin(p) {
     const cape = 'M 6,-46 C 10,-46.4 13.6,-44 15.4,-40 C 17.4,-34 18.2,-26 17.6,-17.6 L 15.6,-15.4 L 14.4,-17.8 L 12.8,-15.2 L 11.6,-17.6 L 10.2,-15.4 C 10.4,-24 9.6,-34 6,-46 Z';
-    p.forme(cape, bleu, {taille: 'm', force: 1.1});
-    p.dans(cape, () => { for (let x = 9.4; x < 18; x += 2.2) p.forme(`M ${x},-17 L ${x + 1.1},-19.4 L ${x + 2.2},-17 Z`, bleuClair, {taille: 0}); });
+    p.forme(cape, bleu, {taille: 'g', force: 1});
+    p.dans(cape, () => {
+      for (const [pts, w, c] of [[[[9.4, -44], [12.6, -36], [13.6, -26], [13.4, -17]], 1, P.fonce(bleu, .78)], [[[11.6, -43], [15, -34], [16.2, -25], [16.4, -17]], .7, P.clair(bleu, .25)]])
+        p.forme(meche(pts, w, 2), c, {taille: 'p', force: .4});
+      for (let x = 9.4; x < 18; x += 2.2) p.forme(`M ${x},-17 L ${x + 1.1},-19.4 L ${x + 2.2},-17 Z`, bleuClair, {taille: 0});
+    });
   }});
   couches.push({os: 'torse', z: Z.torse, dessin(p) {
     p.forme(corps, rouge, {taille: 'g', force: .9});
     p.dans(corps, () => {
       p.forme(devant, creme, {taille: 'g', force: .7});
       p.portee(P.ell(-1, -53, 14, 9.5), corps, creme, {dy: 1.2, flou: 3, force: .45});         // l'ombre de la tête
-      // une petite trace de côtes sur le flanc (comme sur l'image), en rouge un peu plus sombre
-      p.forme(ruban([[-9.6, -36.4], [-8.4, -35.8]], .5), P.fonce(rouge, .8), {taille: 0});
-      p.forme(ruban([[-9.8, -34], [-8.6, -33.6]], .5), P.fonce(rouge, .8), {taille: 0});
     });
     // le haut collier (on n'en voit que le bas, sous le menton) : argent avec des V creusés
-    p.forme('M -6.2,-46.8 L 2.6,-47 L 2.4,-43.4 Q -1.8,-42.4 -6,-43.4 Z', ag, {taille: 'p', force: 1.2});
-    for (const x of [-4.6, -1.8, 1]) p.forme(`M ${x - .9},-45.6 L ${x + .9},-45.6 L ${x},-43.8 Z`, P.fonce(ag, .72), {taille: 0});
+    p.forme('M -4.7,-47 L 1.3,-47.2 L 1.5,-44.6 Q -1.7,-43.6 -4.9,-44.4 Z', ag, {taille: 'p', force: 1.2});
+    for (const x of [-3.2, -.2]) p.forme(`M ${x - .85},-46.2 L ${x + .85},-46.2 L ${x},-44.6 Z`, P.fonce(ag, .72), {taille: 0});
     // la parure des clavicules : une barre d'argent courbée, un écusson au milieu, des gouttes turquoise
-    p.forme(ruban([[-9.4, -42.4], [-5, -41.6], [-1.6, -41.2], [2, -41.6], [7.4, -42.6]], 1.1), ag, {taille: 'p', force: 1.2});
-    p.forme('M -3.6,-42.2 L .4,-42.2 Q .6,-39.8 -1.6,-38.8 Q -3.8,-39.8 -3.6,-42.2 Z', ag, {taille: 'p', force: 1.3});
-    for (const [x, y] of [[-6.4, -40.6], [3.6, -40.8], [-1.6, -40.4]]) goutte(p, x, y, .7);
+    p.forme(ruban([[-8.6, -41.8], [-5, -42.4], [-1.6, -42.2], [2, -42.4], [6.6, -42]], 1.05), ag, {taille: 'p', force: 1.2});
+    p.forme('M -3.4,-42.8 L .2,-42.8 Q .4,-40.6 -1.6,-39.6 Q -3.6,-40.6 -3.4,-42.8 Z', ag, {taille: 'p', force: 1.3});
+    for (const [x, y] of [[-6, -40.8], [3.2, -41]]) goutte(p, x, y, .7);
     // la chaîne en V sur la poitrine et son pendentif turquoise
-    p.forme(ruban([[-6, -40.4], [-3.8, -36.6], [-1.6, -34.6], [.8, -36.6], [2.8, -40.4]], .38), ag, {taille: 0});
+    p.forme(ruban([[-5.6, -40.6], [-3.6, -37], [-1.6, -35], [.6, -37], [2.6, -40.6]], .38), ag, {taille: 0});
     p.forme(P.ell(-1.6, -34.4, .6, .6), ag, {taille: 'p'}); goutte(p, -1.6, -32.4, .85);
     // la ceinture : des croissants d'argent sur les hanches, avec de petites pointes qui pendent
     p.dans(corps, () => {
@@ -748,26 +781,51 @@ tenues.eaux = (o, fiche) => {
         p.forme(`M ${x - .45},${y + .5} L ${x + .45},${y + .5} L ${x},${y + 2} Z`, P.fonce(ag, .85), {taille: 0});
       }
     });
-    // l'écharpe : de l'épaule proche jusqu'à la hanche opposée, puis le tour de taille ; motif de vagues claires et triangles blancs au bord
-    const biais = 'M 4.4,-47.4 C 7.6,-48.2 10.8,-46.6 11.6,-43.6 C 7.4,-40 1.4,-35 -4.4,-30.6 L -11.2,-31.6 C -5.4,-35.8 .4,-41.6 4.4,-47.4 Z';
-    const taille = 'M -11.6,-33 Q 0,-30.4 11.6,-33 C 12.4,-30 12.6,-27.4 12.2,-25 Q 0,-21.6 -12.2,-25 C -12.6,-27.4 -12.4,-30 -11.6,-33 Z';
-    p.portee(biais, corps, creme, {dy: 1, flou: 2, force: .4});
-    p.forme(biais, bleu, {taille: 'm', force: 1.1});
+    // l'écharpe DRAPÉE (Kiki : « un drap qui recouvre un peu l'épaule ») : un pan large posé sur l'épaule proche qui descend en biais
+    // jusqu'à la hanche opposée, puis le tour de taille, avec des plis (creux plus sombres, crêtes plus claires) et des triangles clairs au bord.
+    const biais = 'M 2.6,-46.8 C 6.4,-48.4 10.6,-47.4 12.4,-44.4 C 10,-41.4 6.8,-38.6 3.4,-35.8 C .2,-33.4 -4,-31 -8,-29.6 L -11.6,-31.2 '
+      + 'C -8.4,-33.4 -5,-36.4 -2.2,-39.6 C -.2,-42 1.4,-44.4 2.6,-46.8 Z';
+    const taille = 'M -11.8,-33.4 Q 0,-30.6 11.4,-33.6 C 12.2,-30.4 12.6,-27.6 12.2,-25 C 7.6,-23.2 3.2,-22.4 -1,-22.4 C -5.2,-22.4 -9,-23.4 -12.2,-25 C -12.8,-27.6 -12.6,-30.4 -11.8,-33.4 Z';
+    const fonce = P.fonce(bleu, .78), clair = P.clair(bleu, .25);
+    p.portee(biais, corps, creme, {dy: 1.2, flou: 2.2, force: .45});
+    p.forme(biais, bleu, {taille: 'g', force: 1});
+    p.dans(biais, () => {
+      for (const [pts, w, c] of [[[[9.6, -45.4], [4.6, -40], [-1.6, -35.4], [-8, -31.4]], 1.1, fonce], [[[6.6, -46.4], [2, -41.6], [-3.4, -37], [-9.6, -32.2]], .7, clair],
+                                 [[[11.6, -43.4], [7.4, -39], [2.6, -35.2], [-3.4, -32]], .8, fonce]]) p.forme(meche(pts, w, 1.6), c, {taille: 'p', force: .5});
+    });
     p.forme(taille, bleu, {taille: 'g', force: 1});
     p.dans(taille, () => {
-      for (let x = -12.4; x < 13; x += 2.4) p.forme(`M ${x},${-24.4 + Math.abs(x) * .02} L ${x + 1.2},${-26.6 + Math.abs(x) * .02} L ${x + 2.4},${-24.4 + Math.abs(x) * .02} Z`, bleuClair, {taille: 0});
-      p.forme(ruban([[-7.4, -29.6], [-5.6, -31], [-3.6, -29.6], [-1.6, -31], [.4, -29.6], [2.4, -31], [4.4, -29.6]], .7), bleuClair, {taille: 0});   // vagues
-      p.forme(ruban([[-6.4, -27.6], [-4.4, -28.8], [-2.4, -27.6], [-.4, -28.8], [1.6, -27.6], [3.6, -28.8]], .55), bleuClair, {taille: 0});
+      // plis du tour de taille (qui suivent le ventre) et triangles clairs au bord du bas
+      for (const [pts, w, c] of [[[[-11.8, -30.8], [-6, -29.2], [0, -29], [6, -29.4], [11.6, -31]], .8, fonce], [[[-11.6, -28.4], [-4, -27], [4, -27.2], [11.8, -28.6]], .6, clair]])
+        p.forme(meche(pts, w, 3), c, {taille: 'p', force: .4});
+      for (let x = -12.4; x < 13; x += 2.3) { const y = -23.4 - Math.cos(x / 13 * 1.5) * 1.1 + 1.1; p.forme(`M ${x},${y} L ${x + 1.15},${y - 2} L ${x + 2.3},${y} Z`, bleuClair, {taille: 0}); }
+      // l'emblème de Kiki (image chiffrée) devant, au milieu ; sans le mot de passe : des vagues claires
+      if (!(o.embleme && p.image(o.embleme, -1.6, -28.2, 6.2))) {
+        p.forme(ruban([[-6.4, -29.6], [-4.6, -31], [-2.6, -29.6], [-.6, -31], [1.4, -29.6], [3.4, -31]], .7), bleuClair, {taille: 0});
+        p.forme(ruban([[-5.4, -27.4], [-3.4, -28.6], [-1.4, -27.4], [.6, -28.6], [2.6, -27.4]], .55), bleuClair, {taille: 0});
+      }
     });
-    p.dans(biais, () => { for (let k = 0; k < 4; k++) { const t = .2 + k * .2, x = 4.4 + (-11.2 - 4.4) * t + 3.6, y = -47.4 + (-31.6 + 47.4) * t + 2.2; p.forme(`M ${x},${y} L ${x + 1.2},${y - 1.6} L ${x + 2},${y + .4} Z`, bleuClair, {taille: 0}); } });
-    // la broche ronde sur l'épaule, pierre bleue au centre
-    p.forme(P.ell(8.4, -45, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
-    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; p.forme(P.ell(8.4 + Math.cos(a) * 1.85, -45 + Math.sin(a) * 1.8, .32, .32), P.fonce(ag, .7), {taille: 0}); }
-    joyau(p, 8.4, -45, 1.15, '#2f7fe0');
     // la chaîne de hanche du côté proche, avec deux losanges turquoise
     p.forme(ruban([[8.6, -21.6], [9.4, -18.6], [10.6, -15.4], [11.4, -12.4]], .4), ag, {taille: 0});
     joyau(p, 9.6, -17.4, 1.15); joyau(p, 11.2, -12.6, 1.3);
   }});
+  // le drapé posé sur l'épaule proche : il recouvre le haut de l'épaule et retombe un peu sur le bras (il cache l'articulation)
+  {
+    const [ex, ey] = OS.brasG1.p;
+    couches.push({os: 'brasG1', z: Z.brasG + .7, dessin(p) {
+      const drape = `M ${ex - 6.2},${ey - 6.4} C ${ex - 2},${ey - 8.2} ${ex + 3.4},${ey - 7} ${ex + 5.2},${ey - 3.4} C ${ex + 6.6},${ey - .4} ${ex + 6.6},${ey + 3} ${ex + 5.8},${ey + 5.6} `
+        + `L ${ex + 4.4},${ey + 4.4} L ${ex + 3.4},${ey + 6} L ${ex + 2.2},${ey + 4.4} L ${ex + 1},${ey + 5.4} C ${ex - .4},${ey + 2} ${ex - 2.6},${ey - 1.4} ${ex - 6.2},${ey - 6.4} Z`;
+      p.forme(drape, bleu, {taille: 'g', force: 1});
+      p.dans(drape, () => {
+        p.forme(meche([[ex - 3, ey - 5.4], [ex + 1.6, ey - 3], [ex + 3.6, ey + 1.6], [ex + 3.4, ey + 5]], .9, 1.8), P.fonce(bleu, .78), {taille: 'p', force: .4});
+        p.forme(meche([[ex - 1, ey - 6.6], [ex + 3.4, ey - 4.4], [ex + 5.2, ey]], .6, 1.8), P.clair(bleu, .25), {taille: 'p', force: .4});
+      });
+      // la broche ronde, pierre bleue au centre, qui retient le drapé
+      p.forme(P.ell(ex - .6, ey - 5, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
+      for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; p.forme(P.ell(ex - .6 + Math.cos(a) * 1.85, ey - 5 + Math.sin(a) * 1.8, .32, .32), P.fonce(ag, .7), {taille: 0}); }
+      joyau(p, ex - .6, ey - 5, 1.15, '#2f7fe0');
+    }});
+  }
   // les nageoires des épaules (rouges, bord rayé jaune et turquoise) et des avant-bras (longues, plus bas que la main)
   for (const [os1, os2, z, s] of [['brasD1', 'brasD2', Z.brasD, -1], ['brasG1', 'brasG2', Z.brasG, 1]]) {
     const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
