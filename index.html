@@ -764,10 +764,37 @@ function texteCache(cle, txt, ...args) {
 /* Décor original : clairière de forêt */
 let fond = null;
 function hasard(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+/* Décor de chaque niveau : une image fixe (faite avec ChatGPT, 1536×1024), posée « en couvrant » et centrée
+   (en paysage, ~15 % coupés en haut et en bas). Peinte une seule fois dans le fond : aucun coût pendant la partie. */
+const DECORS = {gff: 'decors/gff.webp?v=1'};
+const DECOR_IMG = {};
+let fondDe = null;
+function chargerDecor(id) {
+  if (!DECORS[id]) return Promise.resolve(null);
+  if (!DECOR_IMG[id]) DECOR_IMG[id] = new Promise(ok => {
+    const im = new Image();
+    im.onload = () => (im.decode ? im.decode().catch(() => {}) : Promise.resolve()).then(() => ok(im));
+    im.onerror = () => ok(null);
+    im.src = DECORS[id];
+  }).then(im => (DECOR_IMG[id].img = im, im));
+  return DECOR_IMG[id];
+}
 function decor() {
   const [c, x] = [document.createElement('canvas'), null];
   c.width = Math.round(W * DPR); c.height = Math.round(H * DPR);
   const d = c.getContext('2d'); d.scale(DPR, DPR);
+  const im = niveau && DECOR_IMG[niveau.id] && DECOR_IMG[niveau.id].img;
+  fondDe = im ? niveau.id : null;
+  if (im) {
+    const k = Math.max(W / im.width, H / im.height), lw = im.width * k, lh = im.height * k;
+    d.imageSmoothingQuality = 'high';
+    d.drawImage(im, (W - lw) / 2, (H - lh) / 2, lw, lh);
+    // un voile léger pour que les notes ressortent
+    const gr = d.createLinearGradient(0, 0, 0, H);
+    gr.addColorStop(0, 'rgba(10,0,20,.12)'); gr.addColorStop(.6, 'rgba(10,0,20,.18)'); gr.addColorStop(1, 'rgba(10,0,20,.1)');
+    d.fillStyle = gr; d.fillRect(0, 0, W, H);
+    return c;
+  }
   const rnd = hasard(7);
   let gr = d.createLinearGradient(0, 0, 0, H);
   gr.addColorStop(0, '#5fb8e6'); gr.addColorStop(.38, '#bfe9e0'); gr.addColorStop(.42, '#d8f2d0'); gr.addColorStop(1, '#1d4a24');
@@ -1605,7 +1632,7 @@ function preparerEquipe(force) {
 function dessinerEquipe(st, horloge) {
   if (!window.Poupee) return;
   if (!poupees.length || (equipeAPrepar && etat !== 'jeu')) preparerEquipe(true);
-  const taille = H * .27, sol = H * .965, enRoute = etat === 'jeu' && st > niveau.avance;
+  const taille = H * .29, sol = H * .885, enRoute = etat === 'jeu' && st > niveau.avance;
   // un pas par temps de la musique
   const u = ((st - niveau.debut) / niveau.temps / 2 % 1 + 1) % 1, pose = enRoute ? null : Poupee.poseA('attente', horloge);
   for (let i = 0; i < poupees.length; i++) {
@@ -1623,6 +1650,7 @@ const $ = id => document.getElementById(id);
 function afficher(id) { for (const e of ['accueil', 'mdp', 'pause', 'fin']) $(e).classList.toggle('cache', e !== id); $('bpause').classList.toggle('cache', id !== null); }
 
 function lancer() {
+  if (fondDe !== (DECOR_IMG[niveau.id] && DECOR_IMG[niveau.id].img ? niveau.id : null)) peindreFond();
   nouvellePartie(); preparerEquipe();
   if (!AUTO) {
     initAudio(); actx.resume(); arreterSource(); nouveauBus();
@@ -1720,6 +1748,7 @@ async function verifierCle(k) { try { await dechiffrer(b64(catalogue.chiffrement
 function choisirNiveau(id) {
   if (!NIVEAUX[id]) id = 'foret';
   niveau = NIVEAUX[id];
+  chargerDecor(id);
   for (const b of $('niveaux').children) b.classList.toggle('actif', b.dataset.n === id);
   try { localStorage.setItem('jeu-rythme-niveau', id); } catch (e) {}
 }
@@ -1754,6 +1783,7 @@ async function preparer(nv) {
         return o;
       })});
   }
+  await chargerDecor(nv.id);
   if (AUTO) { nv.pret = true; return true; }
   if (!cle) { demanderMdp(); msg.textContent = ''; return false; }
   const k = `${nv.id}@${nv.info.version}`;
