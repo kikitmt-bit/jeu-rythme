@@ -26,9 +26,9 @@
 <div class="barre" id="persos"><span>Personnage</span></div>
 <div class="barre" id="anims"><span>Animation</span></div>
 <div class="barre" id="vues"><span>Affichage</span></div>
-<script src="persos/poupee.js?v=17"></script>
-<script src="persos/pieces.js?v=17"></script>
-<script src="persos/fiches.js?v=17"></script>
+<script src="persos/poupee.js?v=18"></script>
+<script src="persos/pieces.js?v=18"></script>
+<script src="persos/fiches.js?v=18"></script>
 <script>
 'use strict';
 const q = new URLSearchParams(location.search);
@@ -95,8 +95,8 @@ function image(ms) {
   g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(x, sol, taille * .2, taille * .035, 0, 0, 7); g.fill();
   Poupee.dessine(g, poupee, x, sol, pose, {taille});
   if (etat.os) {
-    const m = Poupee.matrices(pose), k = taille / 100;
-    for (const [nom, os] of Object.entries(Poupee.OS)) {
+    const m = Poupee.matrices(pose, poupee.os), k = taille / 100 * (poupee.fiche.taille || 1);
+    for (const [nom, os] of Object.entries(poupee.os)) {
       const a = m[nom], [px, py] = os.p, X = (a[0] * px + a[2] * py + a[4]) * k + x, Y = (a[1] * px + a[3] * py + a[5]) * k + sol;
       g.fillStyle = '#ff3b6b'; g.beginPath(); g.arc(X, Y, 4 * dpr, 0, 7); g.fill();
       g.strokeStyle = '#fff'; g.lineWidth = dpr; g.stroke();

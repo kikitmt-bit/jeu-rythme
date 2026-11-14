@@ -323,4 +323,96 @@ armes.rapiere = o => {
     });
   }}];
 };
+/* ============================================================
+   Pièces du colosse de roc (14/11) : corps massif à gros ventre, dos couvert de rochers, pagne, tatouage en spirale
+   ============================================================ */
+// une spirale pleine (un ruban qui s'enroule et s'affine vers le centre) : le tatouage du ventre
+function spirale(cx, cy, r, tours = 1.6, w = 1.3, ry = .85) {
+  const N = 70, g = [], d = [];
+  for (let k = 0; k <= N; k++) {
+    const t = k / N, a = -Math.PI / 2 - t * tours * 2 * Math.PI, rr = r * (1 - t * .86), l = w / 2 * (1 - t * .55);
+    g.push((cx + Math.cos(a) * (rr + l)).toFixed(2) + ',' + (cy + Math.sin(a) * (rr + l) * ry).toFixed(2));
+    d.unshift((cx + Math.cos(a) * (rr - l)).toFixed(2) + ',' + (cy + Math.sin(a) * (rr - l) * ry).toFixed(2));
+  }
+  return 'M ' + g.join(' L ') + ' L ' + d.join(' L ') + ' Z';
+}
+// un rocher : un caillou arrondi à facettes douces (n sommets, un peu irréguliers, coins adoucis)
+function rocher(cx, cy, r, n = 7, graine = 1, ry = 1) {
+  let s = graine * 9301 + 49297;
+  const hasard = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i + hasard() * .35) / n * 2 * Math.PI, rr = r * (.86 + hasard() * .2);
+    pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * ry]);
+  }
+  // côtés droits, coins juste adoucis (un caillou, pas une bulle) : on coupe chaque coin à 28 % des côtés
+  const k = .28, lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], f2 = q => q[0].toFixed(2) + ',' + q[1].toFixed(2);
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const z = pts[(i + n - 1) % n], a = pts[i], b = pts[(i + 1) % n], e = lerp(a, z, k), s2 = lerp(a, b, k);
+    d += (i ? 'L ' : 'M ') + f2(e) + ' Q ' + f2(a) + ' ' + f2(s2) + ' ';
+  }
+  return d + 'Z';
+}
+// le corps du colosse : épaules hautes et rondes (pas de cou : la tête s'enfonce entre les épaules), gros ventre rond,
+// dos couvert de rochers (vue de trois quarts : le dos est à droite, les rochers dépassent derrière l'épaule et derrière la tête),
+// pagne blanc, tatouage en spirale sur le ventre, petits tatouages sur les pectoraux
+tenues.roc = (o, fiche) => {
+  const peau = fiche.peau, roc = o.roc || '#a8784a', roc2 = o.roc2 || roc, tatouage = o.tatouage || '#ecc58c';
+  const corps = 'M -9,-48.6 C -13,-48 -17,-46.6 -19,-42.6 C -20.6,-39.6 -21.6,-35 -22,-30.4 C -22.4,-24.6 -21,-19.6 -17.4,-15.6 '
+    + 'C -12.6,-11.4 -5,-10.6 1,-10.8 C 9,-11 15.6,-12.8 19.4,-17 C 22.8,-20.8 23.6,-26.6 23.2,-31.6 C 22.8,-36.6 21.6,-40.6 19.4,-43.4 '
+    + 'C 16.8,-46.6 13.6,-48.2 9.6,-48.8 C 3,-49.8 -4,-49.6 -9,-48.6 Z';
+  // les rochers du dos, du haut (derrière la tête) vers le bas ; [x, y, rayon, sommets, aplatissement]
+  // (du fond vers le devant : les plus hauts, derrière la tête, d'abord ; chacun recouvre un peu le précédent)
+  const rocs = [[-15.6, -47.6, 5.4, 6, .85], [-9.4, -53, 6, 5, .85], [2, -59.6, 6.6, 6, .8], [10.8, -60.6, 7.2, 5, .85], [20.2, -56.2, 7.8, 6, .9],
+                [27.4, -47.4, 7.6, 5, 1], [31, -37.4, 7.2, 6, 1], [31, -27, 6.8, 5, 1], [27.6, -17.6, 6.4, 6, .9],
+                [16.6, -52, 6.4, 6, .9], [23.4, -41, 6.4, 5, 1], [24.6, -30, 6, 6, 1]];
+  const couches = [{os: 'torse', z: Z.torse - 1, dessin(p) {       // les rochers passent derrière le corps
+    rocs.forEach(([x, y, r, n, ry], i) => {
+      const d = rocher(x, y, r, n, i + 3, ry);
+      p.forme(d, i % 3 === 1 ? roc2 : roc, {taille: 'm', force: 1.6});
+    });
+    // chaque rocher jette une petite ombre sur ceux qu'il recouvre (seulement sur les rochers, jamais dans le vide)
+    rocs.forEach(([x, y, r, n, ry], i) => { if (i) p.portee(rocher(x, y, r, n, i + 3, ry), rocher(rocs[i - 1][0], rocs[i - 1][1], rocs[i - 1][2], rocs[i - 1][3], i + 2, rocs[i - 1][4]), roc, {dy: 1, dx: .8, flou: 1.2, force: .5}); });
+  }}, {os: 'torse', z: Z.torse, dessin(p) {
+    p.forme(corps, peau, {taille: 'g', force: .9});
+    p.portee(P.ell(-1, -53, 15, 9.5), corps, peau, {dy: 1.4, flou: 3, force: .6});          // l'ombre de la tête
+    // tatouages : une spirale sur le ventre (décalée à gauche, trois quarts), une petite sur chaque pectoral
+    p.forme(spirale(-3.2, -25.4, 6.4, 1.7, 1.5), tatouage, {taille: 'p', force: .6});
+    p.forme(spirale(-11.8, -40.4, 2.6, 1.2, .9, .8), tatouage, {taille: 0});
+    p.forme(spirale(5.4, -41, 3, 1.2, .95, .8), tatouage, {taille: 0});
+    // le pagne : une bande nouée autour des hanches, sous le ventre, et un pan qui pend devant
+    const pagne = 'M -17.6,-15.4 Q 0,-9.8 19.6,-16.6 L 19.4,-10.6 Q 0,-4.6 -16.6,-9.6 Z';
+    p.forme(pagne, o.pagne || '#efe8da', {taille: 'm'});
+    p.forme('M -8.4,-9.2 Q -3,-7.6 2.4,-8.2 L 1.8,-2.8 Q -3,-1.8 -7.6,-3.2 Z', P.fonce(o.pagne || '#efe8da', .93), {taille: 'm'});
+  }}];
+  return couches;
+};
+// petite touffe de cheveux clairs plantée sur le dessus du crâne, et deux favoris courts sur les joues
+coiffures.touffe = (o, fiche) => {
+  const c = o.couleur, peau = fiche.peau || PEAU;
+  const touffe = [
+    meche([[-8.6, -84.6], [-12, -88.4], [-16.4, -89.4]], 4.4, 1.3, true),
+    meche([[-5, -86], [-7, -91.4], [-11.4, -94]], 5.4, 1.3, true),
+    meche([[7.6, -84.6], [11, -88.6], [15, -89.6]], 4.6, 1.3, true),
+    meche([[4, -86], [6.4, -91.4], [10.4, -94.2]], 5.6, 1.3, true),
+    meche([[-1.6, -86.6], [-2.4, -92.6], [-5, -97.4]], 6, 1.3, true),
+    meche([[1.4, -86.6], [2, -92.8], [.8, -98.4]], 6.2, 1.3, true),
+  ];
+  const favoris = o.favoris ? [
+    meche([[-22.6, -66], [-24.2, -59], [-23.4, -52.6]], 5.2, 1.5, true),
+    meche([[18.2, -66], [20.6, -59], [20.4, -52.4]], 6, 1.5, true),
+  ] : [];
+  // arcade sourcilière lourde (option) : une seule forme couleur peau qui avance au-dessus des yeux ; seule son ombre se voit
+  const arcade = 'M -24.2,-63.2 C -22.6,-69 -17.6,-70.4 -12,-68.6 C -8.6,-67.6 -5.4,-67.4 -2.2,-68.4 C 3.4,-70.4 9.2,-70 11.4,-65.2 '
+    + 'C 9,-66.2 5.4,-66.4 2,-65.4 C -2.6,-64 -6.6,-64 -10.6,-65.4 C -15.6,-67 -20.8,-66.6 -24.2,-63.2 Z';
+  return [{os: 'tete', z: Z.cheveux, dessin(p) {
+    if (o.arcade) p.dans(P.TETE, () => {
+      p.portee(arcade, P.TETE, peau, {dy: 1.5, flou: 2, force: .55});
+      p.forme(arcade, peau, {taille: 'p', force: .7});
+    });
+    for (const m of [...touffe, ...favoris]) p.portee(m, P.TETE, peau, {dy: 1, flou: 1.8, force: .35});
+    for (const m of [...favoris, ...touffe]) p.forme(m, c, {taille: 'm', force: 1.1});
+  }}];
+};
 })();

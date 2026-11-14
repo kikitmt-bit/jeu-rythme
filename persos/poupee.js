@@ -34,6 +34,14 @@ const OS = {
 };
 const ORDRE_OS = Object.keys(OS);
 P.OS = OS;
+/* Carrure d'un personnage (option `os` de la fiche) : quelques pivots déplacés (épaules plus larges, jambes plus courtes…).
+   Sans option, c'est le squelette commun ci-dessus, tel quel. */
+P.osDe = f => {
+  if (!f || !f.os) return OS;
+  const o = {};
+  for (const k of ORDRE_OS) o[k] = f.os[k] ? Object.assign({}, OS[k], f.os[k]) : OS[k];
+  return o;
+};
 
 /* Ordre d'empilement des couches (du fond vers le devant) */
 const Z = {queue: 5, cheveuxArr: 8, brasD: 20, jambeD: 30, jambeG: 40, cou: 45, torse: 50,
@@ -153,7 +161,9 @@ function pinceau(ctx, S, volume) {
 
 /* ---------- Le mannequin : le corps commun ---------- */
 function couchesDuCorps(f) {
-  const peau = f.peau || '#f9d5b5', yeux = f.yeux || '#2a4a6b';
+  const peau = f.peau || '#f9d5b5', yeux = f.yeux || '#2a4a6b', OS = P.osDe(f);
+  // option `corps` : épaisseur des bras, des mains et des jambes (1 = la poupée commune), pieds nus
+  const E = Object.assign({bras: 1, main: 1, jambes: 1, pieds: 'bottes'}, f.corps), kb = E.bras, kj = E.jambes;
   const b = Object.assign({manche: '#cccccc', dessous: null, gant: null, main: null}, f.bras);
   const j = Object.assign({collant: '#eeeeee', botte: '#7a4a2c'}, f.jambes);
   const c = [];
@@ -161,7 +171,8 @@ function couchesDuCorps(f) {
   const bras = (os1, os2, z) => {
     const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
     c.push({os: os1, z, dessin(p) {
-      p.forme(P.capsule(ex, ey, cx, cy, 3, b.gant ? 2.2 : 2.7), b.dessous || peau, surPeau(b.dessous || peau));
+      p.forme(P.capsule(ex, ey, cx, cy, 3 * kb, (b.gant ? 2.2 : 2.7) * kb), b.dessous || peau, surPeau(b.dessous || peau));
+      if (!b.manche) return;   // bras nus (option : pas de manche)
       // manche courte, un peu évasée, qui se termine par un bord droit
       const l = Math.hypot(cx - ex, cy - ey), vx = (cx - ex) / l, vy = (cy - ey) / l, fin = l * .7;
       const pt = (a, t) => (ex + vx * a - vy * t).toFixed(2) + ',' + (ey + vy * a + vx * t).toFixed(2);
@@ -171,7 +182,7 @@ function couchesDuCorps(f) {
     // avant-bras : le vêtement de dessous (il s'arrête sous le début du gant)
     const n = Math.hypot(cx - mx, cy - my), ux = (cx - mx) / n, uy = (cy - my) / n, sg = n * .25;
     c.push({os: os2, z: z + 1, dessin(p) {
-      if (!b.gant) { p.forme(P.capsule(cx, cy, mx, my, 2.7, 2.5), b.dessous || peau, surPeau(b.dessous || peau)); return; }
+      if (!b.gant) { p.forme(P.capsule(cx, cy, mx, my, 2.7 * kb, 2.5 * kb), b.dessous || peau, surPeau(b.dessous || peau)); return; }
       // entre la manche et le gant, le bras est un morceau aux bords bien DROITS (pas de creux au coude) :
       // il part du bord de la manche et file tout droit jusque sous le début du gant
       // Il est toujours PLUS FIN que le gant (environ 1 unité de marge de chaque côté) : c'est lui qui sort du gant.
@@ -188,7 +199,7 @@ function couchesDuCorps(f) {
     c.push({os: os2, z: os1 === 'brasD1' ? Z.mainD : z + 1, dessin(p) {
       // la main (b.main = sa couleur ; si c'est celle du gant, le gant couvre toute la main : gants de princesse…)
       const ganteeEntiere = b.gant && b.main === b.gant;
-      p.forme(P.ell(mx, my, 3.1, 3), b.main || peau);
+      p.forme(P.ell(mx, my, 3.1 * E.main, 3 * E.main), b.main || peau);
       if (b.gant) {
         const RB = 3.12, s0 = sg - .7, sw = n - 2.45, rw = Math.sqrt(RB * RB - (sw - n) * (sw - n)), r0 = 3.4;
         // rayon du gant le long du bras (s = distance depuis le coude) : évasé, poignet fin, puis la boule
@@ -211,10 +222,17 @@ function couchesDuCorps(f) {
   };
   const jambe = (os1, os2, z) => {
     const [hx, hy] = OS[os1].p, [gx, gy] = OS[os2].p;
-    c.push({os: os1, z, dessin(p) { p.forme(P.capsule(hx, hy, gx, gy, 3.3, 3), j.collant); }});
+    c.push({os: os1, z, dessin(p) { p.forme(P.capsule(hx, hy, gx, gy, 3.3 * kj, 3 * kj), j.collant, surPeau(j.collant)); }});
     c.push({os: os2, z: z + 1, dessin(p) {
-      p.forme(P.capsule(gx, gy, gx, -6, 3, 2.9), j.collant);
-      const x = gx;   // botte, pointe vers la gauche
+      p.forme(P.capsule(gx, gy, gx, -6, 3 * kj, 2.9 * kj), j.collant, surPeau(j.collant));
+      const x = gx;
+      if (E.pieds === 'nus') {   // pied nu : large et arrondi, orteils vers la gauche (une seule forme, le volume vient des ombres)
+        const k = kj;
+        p.forme(`M ${x + 3.4 * k},-6.4 C ${x + 4.6 * k},-4 ${x + 4.8 * k},-1.6 ${x + 3.6 * k},0 L ${x - 6.2 * k},0 C ${x - 8.8 * k},0 ${x - 9.6 * k},-1.6 ${x - 8.6 * k},-3.2 `
+          + `C ${x - 7.4 * k},-4.8 ${x - 4.6 * k},-5.6 ${x - 2.4 * k},-6.6 C ${x - .4 * k},-7.6 ${x + 2.2 * k},-7.6 ${x + 3.4 * k},-6.4 Z`, j.collant, surPeau(j.collant));
+        return;
+      }
+      // botte, pointe vers la gauche
       p.forme(`M ${x - 3.7},-9.6 L ${x + 3.7},-9.6 L ${x + 3.9},-1.6 Q ${x + 3.9},0 ${x + 2.3},0 L ${x - 6.4},0 Q ${x - 8.4},0 ${x - 7.9},-2.1 Q ${x - 6.8},-4.3 ${x - 3.9},-4.8 Z`, j.botte);
       p.forme(`M ${x - 4.1},-10.4 L ${x + 4.1},-10.4 L ${x + 4.1},-8 L ${x - 4.1},-8 Z`, P.clair(j.botte, .12), {taille: 'p'});
     }});
@@ -230,11 +248,13 @@ function couchesDuCorps(f) {
   // la tête et le visage : identiques pour tous (seules les couleurs changent)
   c.push({os: 'tete', z: Z.tete, dessin(p) {
     p.forme(TETE, peau, {taille: 'g', force: .5});
-    p.dans(TETE, () => { p.halo(-19, -53.4, 4.8, '#ff7d8c', .3); p.halo(12.5, -53.4, 5.4, '#ff7d8c', .3); });
+    p.dans(TETE, () => { const j = f.joues || '#ff7d8c', a = f.joues ? .34 : .3; p.halo(-19, -53.4, 4.8, j, a); p.halo(12.5, -53.4, 5.4, j, a); });
     // le nez : un tout petit ovale couché, presque noir
     p.forme(P.ell(-6.6, -55.9, 1.25, .52), '#4a2c1c', {taille: 0});
     // la bouche : un petit toit rose très plat, pointe vers la gauche
-    p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, '#e9539a', '#f77fb4'), {taille: 0});
+    if (f.bouche === 'large')   // option : un large sourire (même dessin, en plus grand et plus sombre : colosses…)
+      p.forme('M -14.6,-50.8 Q -12.4,-50.2 -10.6,-49.7 Q -3.6,-48.2 5.2,-50.6 Q 6.4,-50.8 6.4,-50 Q 1.4,-46.6 -5.4,-46.8 Q -11.6,-47.2 -14.6,-50.8 Z', p.degrade(0, -50.8, 0, -46.6, f.levres || '#9a3f3a', P.clair(f.levres || '#9a3f3a', .25)), {taille: 0});
+    else p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, '#e9539a', '#f77fb4'), {taille: 0});
   }});
   // les deux yeux ont exactement la même taille : ovales pleins, bien écartés, à peine plus sombres en bas
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'ouverts'}, dessin(p) {
@@ -295,7 +315,7 @@ function couchesDe(f) {
 /* fabrique(fiche, {echelle, volume}) : echelle = pixels par unité (taille d'affichage / 100), volume 0 (à plat) à 1 */
 P.fabrique = function (f, o = {}) {
   if (typeof f === 'string') f = P.fiches[f];
-  const S = o.echelle || 4, volume = o.volume === undefined ? 1 : o.volume;
+  const S = (o.echelle || 4) * (f.taille || 1), volume = o.volume === undefined ? 1 : o.volume;   // perso plus grand (option `taille`) : peint plus fin d'autant
   const L = Math.ceil((CADRE[2] - CADRE[0]) * S), H = Math.ceil((CADRE[3] - CADRE[1]) * S);
   const tmp = document.createElement('canvas'); tmp.width = L; tmp.height = H;
   const ctx = tmp.getContext('2d', {willReadFrequently: true});
@@ -315,7 +335,7 @@ P.fabrique = function (f, o = {}) {
     img.getContext('2d').drawImage(tmp, -x0, -y0);
     couches.push({os: def.os, si: def.si, img, x: x0 / S + CADRE[0], y: y0 / S + CADRE[1], l: img.width / S, h: img.height / S});
   }
-  return {fiche: f, echelle: S, couches};
+  return {fiche: f, echelle: S / (f.taille || 1), couches, os: P.osDe(f)};
 };
 
 /* ---------- Poses et animations ---------- */
@@ -324,7 +344,7 @@ for (const o of ORDRE_OS) REPOS[o] = 0;
 P.pose = o => Object.assign({}, REPOS, o);
 
 const rad = Math.PI / 180;
-function matrices(pose) {
+function matrices(pose, OS = P.OS) {
   const m = {};
   for (const nom of ORDRE_OS) {
     const os = OS[nom], a = (pose[nom] || 0) * rad, c = Math.cos(a), s = Math.sin(a), [px, py] = os.p;
@@ -340,7 +360,7 @@ function matrices(pose) {
 }
 /* dessine(ctx, poupee, x, y, pose, {taille, miroir}) : pieds en (x, y), en pixels ; taille = hauteur d'une poupée de 100 */
 P.dessine = function (ctx, poupee, x, y, pose, o = {}) {
-  const k = (o.taille || poupee.echelle * 100) / 100, sx = o.miroir ? -k : k, m = matrices(pose || REPOS);
+  const k = (o.taille || poupee.echelle * 100) / 100 * (poupee.fiche.taille || 1), sx = o.miroir ? -k : k, m = matrices(pose || REPOS, poupee.os);
   const B = ctx.getTransform();   // on respecte l'échelle déjà en place sur la toile
   ctx.save();
   for (const c of poupee.couches) {

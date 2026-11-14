@@ -32,3 +32,22 @@ Poupee.fiche({
   jambes: {collant: '#f7f1f9', botte: '#c25591'},
   arme: {modele: 'rapiere', lame: '#e4eaf1', garde: '#e8bc45', poignee: '#8a3b5c', pierre: '#4f8fe0'},
 });
+
+// colosse de roc : créature massive à peau brun orangé et dos couvert de rochers (créé le 14/11 d'après 3 images de Kiki).
+// Même moule (tête, yeux, nez) ; carrure à part grâce aux options `os` (épaules larges, jambes courtes) et `corps` (bras, mains et jambes épais).
+Poupee.fiche({
+  id: 'colosse', nom: 'Colosse de roc', coup: 'Roulade de roc', taille: 1.1,   // 10 % plus grand que les autres
+  peau: '#cf8f4a', yeux: '#6e231d', bouche: 'large', levres: '#8f3d33', joues: '#e8706a',
+  os: {
+    racine: {p: [0, -17]}, torse: {p: [0, -18]},
+    jambeD1: {p: [-7.4, -17]}, jambeD2: {p: [-7.8, -9.6]}, jambeG1: {p: [7.4, -17]}, jambeG2: {p: [7.8, -9.6]},
+    tete: {p: [0, -45], d: [0, -3.6]},
+    brasD1: {p: [-17, -41.6]}, brasD2: {p: [-22.6, -30.4]}, arme: {p: [-24.4, -19.6]},
+    brasG1: {p: [18, -41.6]}, brasG2: {p: [22.4, -30.4]}, bouclier: {p: [23.4, -19.4]},
+  },
+  corps: {bras: 2, main: 1.75, jambes: 1.55, pieds: 'nus'},
+  cheveux: {modele: 'touffe', couleur: '#f2ead6', arcade: true},
+  tenue: {modele: 'roc', roc: '#b4885c', roc2: '#9c7550', pagne: '#efe8da'},
+  bras: {manche: null},
+  jambes: {collant: '#cf8f4a'},
+});
