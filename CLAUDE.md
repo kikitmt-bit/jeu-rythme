@@ -138,6 +138,12 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   **écharpe drapée** : pan posé sur l'épaule proche qui la recouvre et cache l'articulation (couche sur `brasG1`, avec la broche), plis (creux sombres, crêtes claires, `meche`), tour de taille plissé, cape plissée ;
   **emblème de Kiki** (image `embleme-eaux.png`, détourée, bleu très clair) au milieu du tour de taille : `tenue.embleme` + `p.image` ; **pas encore dans `images/persos.bin`** (il faut le mot de passe) : sans lui, vagues claires.
   L'image détourée attend dans le cerveau (privé) : `kiki-cerveau/projets/jeu-rythme/images-a-chiffrer/embleme-eaux.png`.
+  3e version (retours de Kiki, « on est sur la bonne voie ») : **queue plus courte, elle s'arrête au niveau des épaules** avec **deux grandes nageoires tombantes** ; décalée vers l'arrière pour qu'on la voie à droite du pan, avec sa bande blanche ;
+  **le V rouge continue par-dessus le haut des yeux** (coloriage de Kiki) et **les yeux passent par-dessus le V** (ils sont redessinés dans la couche de la capuche, `si: {yeux: 'ouverts'}` ; les yeux fermés aussi) ;
+  yeux un tout petit peu plus foncés (`#dca326`), bouche un peu plus rouge (`couleurBouche`, forme de la princesse) ;
+  **un seul vêtement** (pan en biais + tour de taille d'un seul tenant, plis doux), **manche** sur l'épaule proche à **ourlet droit et franc** (tracé bleu de Kiki) avec la broche ;
+  **supprimés** (entourés en jaune par Kiki) : les nageoires des avant-bras (mains normales), la cape qui pendait sous la main, la chaîne de hanche ; la nageoire de l'épaule proche aussi (il n'en dépassait qu'un bout rayé sous la manche) ;
+  **deux petites nageoires aux hanches** (tracé violet), rouges à bord rayé ; griffe d'argent et talon doré **peints dans la forme du pied** (jusqu'au bord, sans écart).
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
 - Avant de livrer un perso : vérifier aussi la **marche** (captures `anim=marche&t=…`) et le **jeu** (`?auto`), où les persos se suivent et peuvent se chevaucher (arme de l'un sur le bouclier de l'autre). Tout ce qui est dans `poupee.js` (tête, visage, oreille, bras, main, jambes) est déjà validé et commun à tous.
 

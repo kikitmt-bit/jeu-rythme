@@ -679,15 +679,20 @@ coiffures.capuche = (o, fiche) => {
     + BORD.slice().reverse().slice(1).map(f2).join(' L ') + ' Z';
   const bande = 'M ' + BORD.slice(1, 14).map(f2).join(' L ') + ' L ' + HAUT.slice().reverse().map(f2).join(' L ') + ' Z';
   // le V rouge vif part du coin intérieur des yeux (sans mordre sur les yeux) et descend jusqu'au nez
-  const bec = 'M -12.4,-65.4 L -5.6,-61.4 L 1.2,-65.4 L 1.6,-61.6 Q -2.6,-58.8 -5.6,-54.4 Q -8.6,-58.8 -12.8,-61.6 Z';   // le haut passe sous la capuche
+  // le V rouge vif (d'après le coloriage de Kiki, 14/11) : ses deux bras continuent par-dessus le haut des yeux vers l'extérieur,
+  // puis il descend en pointe jusqu'au nez ; les yeux sont peints PAR-DESSUS (ils sont redessinés dans cette couche)
+  const bec = 'M -18.8,-66.4 C -14.8,-67 -10.8,-65.4 -7.8,-62.6 L -5.6,-60.4 L -3.4,-62.6 C -.4,-65.4 3.6,-67 7.8,-66.4 L 8.2,-63.2 '
+    + 'C 4.8,-63.6 1.8,-62.4 -.2,-60.6 Q -2.8,-58 -5.6,-54.2 Q -8.4,-58 -11,-60.6 C -13,-62.4 -15.8,-63.6 -18.8,-63.2 Z';
   const panG = 'M -26.8,-63 C -28,-56 -27.6,-49 -26.2,-44 C -25.4,-41 -24.2,-38.6 -22.8,-37 C -22.8,-40 -22.6,-43.6 -22.4,-47 C -22.2,-52 -22.6,-57.6 -23.2,-63 Z';
   const panD = 'M 24.6,-63 C 25.6,-56 25.4,-49 24.2,-44 C 23.6,-41 22.8,-38.6 21.8,-37 C 21.4,-40 21,-43.6 20.8,-47 C 20.6,-52 20.6,-57.6 20.8,-63 Z';
-  // la queue (repère de la tête, avant la réduction de 0,9) : bord extérieur rouge, bord côté corps blanc, nageoire fourchue au bout
-  const queue = 'M 4,-89.4 C 15,-89.2 24.6,-83 28.4,-72 C 30.6,-64 31,-54 30.8,-44 C 30.6,-36 31,-29.6 33.6,-25 C 35.4,-22 37.6,-20.4 40,-19.6 '
-    + 'L 40.6,-16.4 C 36.6,-15.2 32,-15.8 28.4,-18.8 C 24.6,-22.4 23,-28 22.6,-34 C 22.2,-42 21.8,-52 20.6,-60 C 19.2,-70 13,-80 4,-89.4 Z';
-  const dessous = 'M 20.6,-60 C 21.8,-52 22.2,-42 22.6,-34 C 23,-28 24.6,-22.4 28.4,-18.8 C 32,-15.8 36.6,-15.2 40.6,-16.4 L 40.2,-18.4 '
-    + 'C 36.4,-18 33,-19 30.8,-21.6 C 28.2,-24.8 27.2,-29.4 27,-34.4 C 26.8,-42 26.4,-50 25.4,-57.6 C 24.4,-64.6 22.4,-70.4 19.4,-75 C 20,-70 20.4,-65 20.6,-60 Z';
-  const lobes = [feuille(39.6, -18.4, 41, -30.6, 4.2, -1), feuille(39.6, -18, 49.4, -22.4, 4, 1)];
+  // la queue (repère de la tête, avant la réduction de 0,9) : elle descend derrière la tête et s'arrête au niveau des épaules,
+  // où elle finit par deux GRANDES nageoires qui tombent vers le bas et l'arrière (Kiki, 14/11) ; tout son dessous (côté corps) est blanc
+  // elle passe derrière la tête puis s'écarte vers l'arrière : on la voit à droite du pan de la capuche, avec sa bande blanche
+  const queue = 'M 4,-89.4 C 16,-89.4 26.4,-84 31.2,-74 C 33.8,-68 35,-61 35,-54.4 C 35,-50.4 35.6,-47.2 37,-44.8 '
+    + 'L 33.8,-42.6 C 30.6,-45 28.8,-48.6 28,-53 C 27,-58.6 25.8,-64 23.4,-69 C 20,-77 13.4,-84 4,-89.4 Z';
+  const dessous = 'M 23.4,-69 C 25.8,-64 27,-58.6 28,-53 C 28.8,-48.6 30.6,-45 33.8,-42.6 L 35.6,-43.8 C 33.2,-46 32.2,-49.4 31.6,-53.8 '
+    + 'C 31,-59 30,-64.4 28.2,-69.4 C 26.6,-74 24,-78 20.6,-81.6 C 21.8,-77.6 22.8,-73.4 23.4,-69 Z';
+  const lobes = [feuille(35.4, -43.8, 33.6, -29.6, 7.6, 1.2), feuille(35.8, -44, 46, -33.2, 7.2, -1.4)];
   return [
     {os: 'tete', z: Z.queue, dessin(p) {
       for (const d of lobes) p.forme(d, c, {taille: 'm', force: 1.1});
@@ -697,7 +702,6 @@ coiffures.capuche = (o, fiche) => {
     {os: 'tete', z: Z.cheveux, dessin(p) {
       for (const d of [panG, panD]) { p.portee(d, tete, peau, {dy: .8, dx: 0, flou: 1.6, force: .35}); p.forme(d, c, {taille: 'm', force: 1.1}); }
       p.portee(capuche, tete, peau, {dy: 1.4, flou: 2, force: .5});
-      p.dans(tete, () => p.forme(bec, vif, {taille: 'p', force: .5}));
       p.forme(capuche, c, {taille: 'g', force: .9});
       p.dans(capuche, () => {
         p.forme(bande, masque, {taille: 'm', force: .7});
@@ -707,6 +711,15 @@ coiffures.capuche = (o, fiche) => {
         // la goutte du front : large en haut, pointue en bas
         p.forme('M -4.9,-80.4 C -3.5,-80.4 -3.2,-78.6 -3.6,-77.2 C -4,-75.8 -4.5,-74.6 -4.9,-73 C -5.3,-74.6 -5.8,-75.8 -6.2,-77.2 C -6.6,-78.6 -6.3,-80.4 -4.9,-80.4 Z', vif, {taille: 'p', force: .6});
       });
+      p.dans(tete, () => p.forme(bec, vif, {taille: 'p', force: .5}));
+    }},
+    // les yeux repassent par-dessus le V rouge (mêmes yeux que le moule : ovales pleins, à peine plus sombres en bas)
+    {os: 'tete', z: Z.cheveux + .1, si: {yeux: 'ouverts'}, dessin(p) {
+      const y = fiche.yeux, bas = P.fonce(y, .8);
+      for (const x of [-15.6, 5.2]) p.forme(P.ell(x, -60.4, 3.15, 3.95), p.degrade(0, -64.3, 0, -56.4, y, y, bas), {taille: 0});
+    }},
+    {os: 'tete', z: Z.cheveux + .1, si: {yeux: 'fermes'}, dessin(p) {
+      for (const x of [-15.6, 5.2]) p.trait(`M ${x - 3},-59.8 Q ${x},-57.5 ${x + 3},-59.8`, P.fonce(fiche.yeux, .5), .9);
     }},
   ];
 };
@@ -746,15 +759,14 @@ tenues.eaux = (o, fiche) => {
   const devant = 'M -4.6,-50 L 1.2,-50.2 C 1.4,-47 2.4,-45.4 4.4,-44.4 C 6,-40 6.6,-36 6.4,-32.4 C 6.2,-26.6 5.2,-21.4 3.2,-17.4 Q -1.8,-15.6 -6.8,-17.4 '
     + 'C -8.6,-21.4 -9.2,-26.6 -9,-32.4 C -8.8,-36 -8.2,-40.4 -6.8,-44.2 C -5.2,-45.4 -4.6,-47 -4.6,-50 Z';
   const couches = [];
-  // la cape : le bout de l'écharpe qui retombe dans le dos, du côté proche (derrière le corps et le bras)
-  couches.push({os: 'torse', z: Z.torse - 1.5, dessin(p) {
-    const cape = 'M 6,-46 C 10,-46.4 13.6,-44 15.4,-40 C 17.4,-34 18.2,-26 17.6,-17.6 L 15.6,-15.4 L 14.4,-17.8 L 12.8,-15.2 L 11.6,-17.6 L 10.2,-15.4 C 10.4,-24 9.6,-34 6,-46 Z';
-    p.forme(cape, bleu, {taille: 'g', force: 1});
-    p.dans(cape, () => {
-      for (const [pts, w, c] of [[[[9.4, -44], [12.6, -36], [13.6, -26], [13.4, -17]], 1, P.fonce(bleu, .78)], [[[11.6, -43], [15, -34], [16.2, -25], [16.4, -17]], .7, P.clair(bleu, .25)]])
-        p.forme(meche(pts, w, 2), c, {taille: 'p', force: .4});
-      for (let x = 9.4; x < 18; x += 2.2) p.forme(`M ${x},-17 L ${x + 1.1},-19.4 L ${x + 2.2},-17 Z`, bleuClair, {taille: 0});
-    });
+  // les deux petites nageoires des hanches (Kiki, 14/11) : elles sortent de derrière les hanches, de chaque côté, sous la ceinture ;
+  // rouges, avec un bord rayé jaune et turquoise en dessous
+  couches.push({os: 'torse', z: Z.torse - .6, dessin(p) {
+    for (const [x0, y0, x1, y1, c] of [[-9.4, -23, -14.6, -16.8, -1], [9.6, -23.2, 15.8, -17.4, 1]]) {
+      const raye = feuille(x0, y0 + .9, x1, y1 + .9, 4, c * .6), nag = feuille(x0, y0, x1, y1, 3.8, c * .6);
+      p.forme(raye, '#f3d92a', {taille: 0}); rayures(p, raye, x0, y0, x1, y1, 7);
+      p.forme(nag, rouge, {taille: 'm', force: 1.1});
+    }
   }});
   couches.push({os: 'torse', z: Z.torse, dessin(p) {
     p.forme(corps, rouge, {taille: 'g', force: .9});
@@ -781,55 +793,52 @@ tenues.eaux = (o, fiche) => {
         p.forme(`M ${x - .45},${y + .5} L ${x + .45},${y + .5} L ${x},${y + 2} Z`, P.fonce(ag, .85), {taille: 0});
       }
     });
-    // l'écharpe DRAPÉE (Kiki : « un drap qui recouvre un peu l'épaule ») : un pan large posé sur l'épaule proche qui descend en biais
-    // jusqu'à la hanche opposée, puis le tour de taille, avec des plis (creux plus sombres, crêtes plus claires) et des triangles clairs au bord.
-    const biais = 'M 2.6,-46.8 C 6.4,-48.4 10.6,-47.4 12.4,-44.4 C 10,-41.4 6.8,-38.6 3.4,-35.8 C .2,-33.4 -4,-31 -8,-29.6 L -11.6,-31.2 '
-      + 'C -8.4,-33.4 -5,-36.4 -2.2,-39.6 C -.2,-42 1.4,-44.4 2.6,-46.8 Z';
-    const taille = 'M -11.8,-33.4 Q 0,-30.6 11.4,-33.6 C 12.2,-30.4 12.6,-27.6 12.2,-25 C 7.6,-23.2 3.2,-22.4 -1,-22.4 C -5.2,-22.4 -9,-23.4 -12.2,-25 C -12.8,-27.6 -12.6,-30.4 -11.8,-33.4 Z';
-    const fonce = P.fonce(bleu, .78), clair = P.clair(bleu, .25);
-    p.portee(biais, corps, creme, {dy: 1.2, flou: 2.2, force: .45});
-    p.forme(biais, bleu, {taille: 'g', force: 1});
-    p.dans(biais, () => {
-      for (const [pts, w, c] of [[[[9.6, -45.4], [4.6, -40], [-1.6, -35.4], [-8, -31.4]], 1.1, fonce], [[[6.6, -46.4], [2, -41.6], [-3.4, -37], [-9.6, -32.2]], .7, clair],
-                                 [[[11.6, -43.4], [7.4, -39], [2.6, -35.2], [-3.4, -32]], .8, fonce]]) p.forme(meche(pts, w, 1.6), c, {taille: 'p', force: .5});
-    });
-    p.forme(taille, bleu, {taille: 'g', force: 1});
-    p.dans(taille, () => {
-      // plis du tour de taille (qui suivent le ventre) et triangles clairs au bord du bas
-      for (const [pts, w, c] of [[[[-11.8, -30.8], [-6, -29.2], [0, -29], [6, -29.4], [11.6, -31]], .8, fonce], [[[-11.6, -28.4], [-4, -27], [4, -27.2], [11.8, -28.6]], .6, clair]])
-        p.forme(meche(pts, w, 3), c, {taille: 'p', force: .4});
+    // le vêtement bleu, D'UN SEUL TENANT (Kiki, 14/11 : « un seul vêtement », on sent les plis mais pas les morceaux) :
+    // il part de l'épaule proche, descend en biais vers la hanche opposée (le devant de la poitrine reste visible à gauche),
+    // couvre tout le côté proche de la poitrine et fait le tour de la taille ; plis doux, triangles clairs au bord du bas, emblème devant.
+    const drap = 'M 2.6,-46.8 C 6.4,-48.4 10.4,-47.6 11.8,-44.6 C 12.4,-41 12,-37.4 11.4,-34 C 12.2,-30.6 12.6,-27.6 12.2,-25 '
+      + 'C 7.6,-23.2 3.2,-22.4 -1,-22.4 C -5.2,-22.4 -9,-23.4 -12.2,-25 C -12.6,-27.8 -12.6,-30.8 -11.8,-33.4 '
+      + 'C -8.2,-34.8 -4.6,-37 -1.8,-40 C .2,-42.2 1.6,-44.4 2.6,-46.8 Z';
+    const fonce = P.fonce(bleu, .8), clair = P.clair(bleu, .22);
+    p.portee(drap, corps, creme, {dy: 1.2, dx: -.4, flou: 2.2, force: .45});
+    p.forme(drap, bleu, {taille: 'g', force: 1});
+    p.dans(drap, () => {
+      // les plis : ils descendent de l'épaule et s'arrondissent autour de la taille (de longues formes douces, pas des traits)
+      for (const [pts, w, c] of [
+        [[[9.4, -45.6], [5.6, -40.6], [.6, -36], [-5.6, -32.4], [-11.6, -30.6]], 1.3, fonce],
+        [[[11.4, -41.6], [7.6, -36.4], [2.6, -32.2], [-3.6, -29.4], [-11, -28]], 1, fonce],
+        [[[6.8, -46.4], [3.2, -41.8], [-1.6, -37.6], [-7.6, -33.8]], .8, clair],
+        [[[11.8, -36], [8.6, -31.4], [3.6, -28.2], [-4, -26.6], [-11.6, -26.4]], .8, clair],
+        [[[12, -28.8], [6, -26.2], [-1, -25.2], [-8, -25.6]], .7, fonce]]) p.forme(meche(pts, w, 2.2), c, {taille: 'p', force: .35});
       for (let x = -12.4; x < 13; x += 2.3) { const y = -23.4 - Math.cos(x / 13 * 1.5) * 1.1 + 1.1; p.forme(`M ${x},${y} L ${x + 1.15},${y - 2} L ${x + 2.3},${y} Z`, bleuClair, {taille: 0}); }
       // l'emblème de Kiki (image chiffrée) devant, au milieu ; sans le mot de passe : des vagues claires
-      if (!(o.embleme && p.image(o.embleme, -1.6, -28.2, 6.2))) {
-        p.forme(ruban([[-6.4, -29.6], [-4.6, -31], [-2.6, -29.6], [-.6, -31], [1.4, -29.6], [3.4, -31]], .7), bleuClair, {taille: 0});
-        p.forme(ruban([[-5.4, -27.4], [-3.4, -28.6], [-1.4, -27.4], [.6, -28.6], [2.6, -27.4]], .55), bleuClair, {taille: 0});
+      if (!(o.embleme && p.image(o.embleme, -1.6, -28.6, 6.2))) {
+        p.forme(ruban([[-6.4, -30], [-4.6, -31.4], [-2.6, -30], [-.6, -31.4], [1.4, -30], [3.4, -31.4]], .7), bleuClair, {taille: 0});
+        p.forme(ruban([[-5.4, -27.8], [-3.4, -29], [-1.4, -27.8], [.6, -29], [2.6, -27.8]], .55), bleuClair, {taille: 0});
       }
     });
-    // la chaîne de hanche du côté proche, avec deux losanges turquoise
-    p.forme(ruban([[8.6, -21.6], [9.4, -18.6], [10.6, -15.4], [11.4, -12.4]], .4), ag, {taille: 0});
-    joyau(p, 9.6, -17.4, 1.15); joyau(p, 11.2, -12.6, 1.3);
   }});
-  // le drapé posé sur l'épaule proche : il recouvre le haut de l'épaule et retombe un peu sur le bras (il cache l'articulation)
-  {
-    const [ex, ey] = OS.brasG1.p;
-    couches.push({os: 'brasG1', z: Z.brasG + .7, dessin(p) {
-      const drape = `M ${ex - 6.2},${ey - 6.4} C ${ex - 2},${ey - 8.2} ${ex + 3.4},${ey - 7} ${ex + 5.2},${ey - 3.4} C ${ex + 6.6},${ey - .4} ${ex + 6.6},${ey + 3} ${ex + 5.8},${ey + 5.6} `
-        + `L ${ex + 4.4},${ey + 4.4} L ${ex + 3.4},${ey + 6} L ${ex + 2.2},${ey + 4.4} L ${ex + 1},${ey + 5.4} C ${ex - .4},${ey + 2} ${ex - 2.6},${ey - 1.4} ${ex - 6.2},${ey - 6.4} Z`;
-      p.forme(drape, bleu, {taille: 'g', force: 1});
-      p.dans(drape, () => {
-        p.forme(meche([[ex - 3, ey - 5.4], [ex + 1.6, ey - 3], [ex + 3.6, ey + 1.6], [ex + 3.4, ey + 5]], .9, 1.8), P.fonce(bleu, .78), {taille: 'p', force: .4});
-        p.forme(meche([[ex - 1, ey - 6.6], [ex + 3.4, ey - 4.4], [ex + 5.2, ey]], .6, 1.8), P.clair(bleu, .25), {taille: 'p', force: .4});
-      });
-      // la broche ronde, pierre bleue au centre, qui retient le drapé
-      p.forme(P.ell(ex - .6, ey - 5, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
-      for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; p.forme(P.ell(ex - .6 + Math.cos(a) * 1.85, ey - 5 + Math.sin(a) * 1.8, .32, .32), P.fonce(ag, .7), {taille: 0}); }
-      joyau(p, ex - .6, ey - 5, 1.15, '#2f7fe0');
-    }});
-  }
+  // La MANCHE sur l'épaule proche (d'après le trait bleu de Kiki, 14/11) : son bord intérieur descend de la broche vers le bras,
+  // son ourlet est un trait droit et franc en travers du haut du bras (on voit bien que c'est une manche), puis elle remonte vers l'épaule.
+  // Elle recouvre l'articulation de l'épaule.
+  couches.push({os: 'brasG1', z: Z.brasG + .7, dessin(p) {
+    const manche = 'M 3.2,-46.8 C 4.4,-44.8 5,-43 5.4,-41.4 C 6.2,-39.2 7.2,-37.4 8.4,-35.6 L 14.6,-35.9 '
+      + 'C 14.9,-37.8 14.8,-40 14.2,-41.8 C 13.4,-44.4 11.8,-46.4 9.6,-47.4 C 7.4,-48.2 5,-47.9 3.2,-46.8 Z';
+    p.forme(manche, bleu, {taille: 'g', force: 1});
+    p.dans(manche, () => {
+      p.forme(meche([[7.6, -46.4], [9.4, -42.4], [10.4, -38.6], [10.6, -35.6]], 1.1, 2.4), P.fonce(bleu, .8), {taille: 'p', force: .35});
+      p.forme(meche([[10.4, -47], [12.4, -43.4], [13.2, -39], [13.4, -35.8]], .7, 2.4), P.clair(bleu, .22), {taille: 'p', force: .35});
+      p.forme('M 8,-36.4 L 14.8,-36.7 L 14.8,-35.6 L 8.4,-35.4 Z', P.clair(bleu, .55), {taille: 0});    // l'ourlet, bien net
+    });
+    // la broche ronde, pierre bleue au centre
+    p.forme(P.ell(7.9, -45, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; p.forme(P.ell(7.9 + Math.cos(a) * 1.85, -45 + Math.sin(a) * 1.8, .32, .32), P.fonce(ag, .7), {taille: 0}); }
+    joyau(p, 7.9, -45, 1.15, '#2f7fe0');
+  }});
   // les nageoires des épaules (rouges, bord rayé jaune et turquoise) et des avant-bras (longues, plus bas que la main)
   for (const [os1, os2, z, s] of [['brasD1', 'brasD2', Z.brasD, -1], ['brasG1', 'brasG2', Z.brasG, 1]]) {
     const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
-    couches.push({os: os1, z: z + .4, dessin(p) {
+    if (s < 0) couches.push({os: os1, z: z + .4, dessin(p) {   // seulement l'épaule éloignée : la proche est sous la manche
       // la nageoire de l'épaule : elle part du haut du bras vers l'extérieur et finit en pointe, son bord du bas est rayé
       const nag = `M ${ex - s * 1.2},${ey - 3.6} C ${ex + s * 3.2},${ey - 4.2} ${ex + s * 7},${ey - 3} ${ex + s * 9.6},${ey + 2.2} `
         + `C ${ex + s * 7.6},${ey + 3} ${ex + s * 5.2},${ey + 4.2} ${ex + s * 3},${ey + 6} C ${ex + s * 1.2},${ey + 3.4} ${ex},${ey} ${ex - s * 1.2},${ey - 3.6} Z`;
@@ -837,16 +846,7 @@ tenues.eaux = (o, fiche) => {
       p.forme(bord, '#f3d92a', {taille: 0}); rayures(p, bord, ex + s * 3.2, ey + 6.8, ex + s * 9.6, ey + 2.4, 8);
       p.forme(nag, rouge, {taille: 'm', force: 1.1});
     }});
-    // nageoire de l'avant-bras : derrière le bras, elle part du coude et PEND vers le bas jusqu'en dessous de la main
-    // (face extérieure rouge, face intérieure rayée jaune et turquoise, visible côté corps)
     const n = Math.hypot(mx - cx, my - cy), ux = (mx - cx) / n, uy = (my - cy) / n;
-    couches.push({os: os2, z: z + .5, dessin(p) {
-      const X = (x, y) => (x).toFixed(2) + ',' + (y).toFixed(2);
-      const dedans = `M ${X(cx + s * .6, cy + .4)} C ${X(mx + s * 1.8, my - 1)} ${X(mx + s * .9, my + 6)} ${X(mx + s * 1.2, my + 10)} C ${X(mx - s * 1.2, my + 6.6)} ${X(mx - s * 1.6, my + 3)} ${X(mx - s * .6, my + .8)} Z`;
-      const dehors = `M ${X(cx + s * 2, cy - 1.4)} C ${X(mx + s * 5.4, my - 2)} ${X(mx + s * 5, my + 5.4)} ${X(mx + s * 2.4, my + 10.4)} C ${X(mx + s * 1.8, my + 6.6)} ${X(mx + s * 1.2, my + 3)} ${X(mx + s * 1.4, my)} Z`;
-      p.forme(dedans, '#16c4c9', {taille: 'm'}); rayures(p, dedans, cx, cy, mx + s * 1.2, my + 10, 12);
-      p.forme(dehors, rouge, {taille: 'm', force: 1.1});
-    }});
     // le bracelet d'argent au poignet (avec un petit cœur creusé), sans passer sur la main
     const w = 2.75, bx = cx + ux * n * .62, by = cy + uy * n * .62, a = Math.atan2(uy, ux) * 180 / Math.PI;
     couches.push({os: os2, z: z + 1.05, dessin(p) {
@@ -876,8 +876,15 @@ tenues.eaux = (o, fiche) => {
       for (const x of [gx - 1.6, gx + .4]) p.forme(`M ${x - .8},-7.4 L ${x + .8},-7.4 L ${x},-5.6 Z`, P.fonce(ag, .72), {taille: 0});
       for (const x of [gx - w, gx + w]) p.forme(P.ell(x, -7.6, .55, .55), ag, {taille: 'p'});
       p.forme(`M ${gx - 1.4},-4.8 L ${gx - .4},-4.8 L ${gx - .9},-3.2 Z`, ag, {taille: 'p'});
-      p.forme(`M ${gx - 9.2},-1.6 L ${gx - 6.6},-2.6 L ${gx - 6.8},-.2 Z`, ag, {taille: 'p', force: 1.3});        // la griffe au bout du pied
-      p.forme(`M ${gx + 1.6},-1.6 L ${gx + 3.8},-2.4 L ${gx + 3.8},0 L ${gx + 1.8},0 Z`, '#f2a51e', {taille: 'p'});  // le talon orangé
+      // la griffe d'argent et le talon orangé font partie du pied : peints DANS la forme du pied (même contour que le moule),
+      // ils vont jusqu'au bord et jusqu'en bas, sans écart
+      const x = gx, pied = `M ${x + 3.4},-6.4 C ${x + 4.6},-4 ${x + 4.8},-1.6 ${x + 3.6},0 L ${x - 6.2},0 C ${x - 8.8},0 ${x - 9.6},-1.6 ${x - 8.6},-3.2 `
+        + `C ${x - 7.4},-4.8 ${x - 4.6},-5.6 ${x - 2.4},-6.6 C ${x - .4},-7.6 ${x + 2.2},-7.6 ${x + 3.4},-6.4 Z`;
+      p.dans(pied, () => {
+        p.forme(`M ${x - 11},-4.6 L ${x - 8.2},-3.4 L ${x - 6},.6 L ${x - 11},.6 Z`, ag, {taille: 'p', force: 1.2});
+        p.forme(`M ${x - 9.6},-2.4 L ${x - 8.2},-3 L ${x - 7.4},-1.4 Z`, P.clair(ag, .5), {taille: 0});
+        p.forme(`M ${x + 2.2},.6 L ${x + 3.2},-2.8 L ${x + 6},-2.8 L ${x + 6},.6 Z`, '#f2a51e', {taille: 'p', force: .8});
+      });
     }});
   }
   return couches;
