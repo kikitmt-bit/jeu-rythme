@@ -834,12 +834,20 @@ tenues.eaux = (o, fiche) => {
     p.dans(manche, () => {
       p.forme(meche([[7.2, -46.6], [8.4, -42.4], [9.2, -39], [9.6, -36.6]], 1.1, 2.4), P.fonce(bleu, .8), {taille: 'p', force: .35});
       p.forme(meche([[10.4, -47.2], [12, -43.6], [12.8, -40.6], [13.2, -38.2]], .7, 2.4), P.clair(bleu, .22), {taille: 'p', force: .35});
-      lisere(p, [[6.4, -35.8], [10.6, -37.3], [15, -38.8]], bleuClair);    // l'ourlet : le même liseré que le bas du vêtement
+      lisere(p, [[6.2, -35.7], [15, -38.8]], bleuClair);    // l'ourlet : le même liseré que le bas du vêtement
     });
-    // la broche ronde, pierre bleue au centre
-    p.forme(P.ell(7.9, -45, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
-    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; p.forme(P.ell(7.9 + Math.cos(a) * 1.85, -45 + Math.sin(a) * 1.8, .32, .32), P.fonce(ag, .7), {taille: 0}); }
-    joyau(p, 7.9, -45, 1.15, '#2f7fe0');
+    // la broche (d'après un gros plan de Kiki, 14/11) : descendue pour ne plus toucher le visage ; un anneau d'argent bordé de petites
+    // perles, un sertissage, et au centre une pierre RONDE bleue taillée en facettes (pas un losange)
+    const [bx, by] = [9.2, -43.4];
+    p.forme(P.ell(bx, by, 2.75, 2.65), ag, {taille: 'p', force: 1.3});
+    for (let i = 0; i < 12; i++) { const a = i * Math.PI / 6; p.forme(P.ell(bx + Math.cos(a) * 2.15, by + Math.sin(a) * 2.07, .36, .36), '#9b6f72', {taille: 'p', force: .8}); }
+    p.forme(P.ell(bx, by, 1.55, 1.5), P.fonce(ag, .78), {taille: 'p'});
+    p.forme(P.ell(bx, by, 1.3, 1.26), p.degrade(bx - 1, by - 1, bx + 1, by + 1, '#7fc4ff', '#2a6fd6', '#173f94'), {taille: 'p', force: .8});
+    let hexa = ''; for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + Math.PI / 6; hexa += (i ? 'L ' : 'M ') + (bx + Math.cos(a) * .7).toFixed(2) + ',' + (by + Math.sin(a) * .68).toFixed(2) + ' '; }
+    p.forme(hexa + 'Z', '#4c95ec', {taille: 0});
+    for (let i = 0; i < 6; i += 2) { const a = i * Math.PI / 3 + Math.PI / 6, b = a + Math.PI / 3;
+      p.forme(`M ${bx + Math.cos(a) * .7},${by + Math.sin(a) * .68} L ${bx + Math.cos(b) * .7},${by + Math.sin(b) * .68} L ${bx + Math.cos((a + b) / 2) * 1.28},${by + Math.sin((a + b) / 2) * 1.24} Z`, '#3a7fe0', {taille: 0}); }
+    p.forme(P.ell(bx - .45, by - .45, .32, .24, -35), '#e6f4ff', {taille: 0});
   }});
   // les nageoires des épaules (rouges, bord rayé jaune et turquoise) et des avant-bras (longues, plus bas que la main)
   for (const [os1, os2, z, s] of [['brasD1', 'brasD2', Z.brasD, -1], ['brasG1', 'brasG2', Z.brasG, 1]]) {
