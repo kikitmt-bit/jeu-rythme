@@ -253,8 +253,8 @@ function couchesDuCorps(f) {
     p.forme(tete, peau, {taille: 'g', force: .5});
     if (f.joues !== null) p.dans(tete, () => { const j = f.joues || '#ff7d8c', a = f.joues ? .3 : .3; p.halo(-19, -53.4, 4.8, j, a); p.halo(12.5, -53.4, 5.4, j, a); });
     // le nez : un tout petit ovale couché, presque noir (option `nez` : plus large)
-    const kn = f.nez || 1;
-    p.forme(P.ell(-6.6, -55.9, 1.25 * kn, .52 * kn), '#4a2c1c', {taille: 0});
+    const kn = f.nez === undefined ? 1 : f.nez;   // option `nez` : 0 = pas de nez visible (caché sous une marque)
+    if (kn) p.forme(P.ell(-6.6, -55.9, 1.25 * kn, .52 * kn), '#4a2c1c', {taille: 0});
     // la bouche : un petit toit rose très plat, pointe vers la gauche
     if (f.bouche === 'levres') {   // option : une bouche très large et très plate, juste des lèvres (colosse de roc) ; lèvre du bas plus épaisse
       const bas = 'M -18.8,-51.2 Q -4,-49.6 13,-51.8 Q 11.4,-48.4 4,-47.2 Q -4,-46.4 -11,-47.2 Q -17.2,-48.4 -18.8,-51.2 Z';
@@ -263,12 +263,19 @@ function couchesDuCorps(f) {
       p.forme('M -19.8,-52 Q -4,-50.6 14,-52.6 Q 13,-51.4 12,-51.2 Q -4,-49.4 -18.8,-51 Q -19.6,-51.2 -19.8,-52 Z', P.clair(peau, .12), {taille: 'p'});   // lèvre du haut, fine
       p.forme('M -20.6,-51.6 Q -4,-49.8 14.6,-52.2 Q -4,-49.2 -20.6,-51.6 Z', '#3e2810', {taille: 0});   // la fente, presque droite
     }
-    else p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, '#e9539a', '#f77fb4'), {taille: 0});
+    else if (f.bouche === 'petite') {   // option : de petites lèvres pleines (lèvre du haut en accolade, lèvre du bas arrondie)
+      const [h, b] = f.couleurBouche || ['#e9539a', '#f77fb4'];
+      p.forme('M -8.2,-49.3 Q -7.1,-50.3 -6,-50.2 Q -5.2,-50.1 -4.7,-49.6 Q -4,-50.3 -3,-50.2 Q -1.9,-50 -1,-49.2 Q -4.6,-48.5 -8.2,-49.3 Z', h, {taille: 0});
+      p.forme('M -8,-49.1 Q -4.6,-48.4 -1.2,-49 Q -2,-47 -4.6,-46.7 Q -7.2,-47 -8,-49.1 Z', b, {taille: 'p', force: .5});
+    }
+    else p.forme('M -8.4,-49.1 Q -6.6,-50.1 -5.3,-50.7 Q -1.5,-49.3 2.2,-48.3 Q -3.1,-47 -8.4,-49.1 Z', p.degrade(0, -50.7, 0, -47.4, ...(f.couleurBouche || ['#e9539a', '#f77fb4'])), {taille: 0});   // option `couleurBouche` : [haut, bas]
   }});
   // les deux yeux ont exactement la même taille : ovales pleins, bien écartés, à peine plus sombres en bas
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'ouverts'}, dessin(p) {
     const bas = P.fonce(yeux, .8), [rx, ry] = f.yeuxTaille || [3.15, 3.95];   // option `yeuxTaille` : yeux plus petits ou plus ronds
     for (const x of [-15.6, 5.2]) p.forme(P.ell(x, -60.4, rx, ry), p.degrade(0, -64.3, 0, -56.4, yeux, yeux, bas), {taille: 0});
+    // option `pupilles` : une pupille sombre au milieu de l'œil (yeux dorés de la princesse des eaux)
+    if (f.pupilles) for (const x of [-15.6, 5.2]) p.forme(P.ell(x + .25, -60, rx * .4, ry * .56), f.pupilles, {taille: 0});
   }});
   c.push({os: 'tete', z: Z.visage, si: {yeux: 'fermes'}, dessin(p) {
     for (const x of [-15.6, 5.2]) p.trait(`M ${x - 3},-59.8 Q ${x},-57.5 ${x + 3},-59.8`, P.fonce(yeux, .5), .9);

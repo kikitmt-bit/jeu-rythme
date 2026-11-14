@@ -52,3 +52,17 @@ Poupee.fiche({
   bras: {manche: null},
   jambes: {collant: '#cf9a42'},
 });
+
+// princesse des eaux : peau rouge framboise sur la tête, le dos et les membres, devant vert pâle crème, yeux dorés, lèvres rouges,
+// bijoux d'argent et pierres turquoise, écharpe bleue, nageoires ; arme : un trident (14/11, d'après 3 images de Kiki).
+Poupee.fiche({
+  id: 'princesse-eaux', nom: 'Princesse des eaux', coup: 'Grâce des eaux',
+  peau: '#dfe3bd', yeux: '#e3a21c', yeuxTaille: [2.75, 3.35], pupilles: '#2b1306', nez: 0, joues: null, bouche: 'petite', couleurBouche: ['#cf1a24', '#e9433f'],
+  cheveux: {modele: 'capuche', couleur: '#c4155a', dessous: '#e6e3c8'},
+  coiffe: {modele: 'bijouxEaux'},
+  tenue: {modele: 'eaux', rouge: '#c4155a'},
+  bras: {manche: null, dessous: '#c4155a', main: '#c4155a'},
+  jambes: {collant: '#c4155a'},
+  corps: {pieds: 'nus'},
+  arme: {modele: 'trident'},
+});

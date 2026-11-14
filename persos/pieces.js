@@ -621,4 +621,232 @@ tenues.colosse = (o, fiche) => {
   }
   return couches;
 };
+/* ============================================================
+   Pièces de la princesse des eaux (14/11, d'après 3 images de Kiki)
+   Pas de cheveux : une capuche de peau rouge framboise (crâne, pointe entre les yeux), deux longs pans de chaque côté du
+   visage et une grande queue de poisson dans le dos. Visage vert pâle, yeux dorés, lèvres rouges. Bijoux d'argent et
+   pierres turquoise. Corps : devant crème, côtés et membres rouges. Écharpe bleue sur l'épaule proche, nageoires aux
+   épaules et aux avant-bras (rayures jaunes et turquoise). Arme : un trident.
+   ============================================================ */
+const ARGENT = '#c3bdb5', TURQUOISE = '#2ccdd6', ROUGE_VIF = '#e8162a';
+function joyau(p, x, y, r, c = TURQUOISE) {             // une petite pierre taillée (losange) avec un reflet
+  p.forme(`M ${x},${y - r * 1.3} L ${x + r},${y} L ${x},${y + r * 1.3} L ${x - r},${y} Z`, c, {taille: 'p', force: 1.2});
+  p.forme(`M ${x},${y - r * 1.3} L ${x + r * .45},${y - r * .3} L ${x},${y} Z`, P.clair(c, .55), {taille: 0});
+}
+function goutte(p, x, y, r, c = TURQUOISE) {            // une pierre en goutte, pointe en haut
+  p.forme(`M ${x},${y - r * 1.6} C ${x + r * .9},${y - r * .4} ${x + r},${y + r * .4} ${x},${y + r} C ${x - r},${y + r * .4} ${x - r * .9},${y - r * .4} ${x},${y - r * 1.6} Z`, c, {taille: 'p', force: 1.2});
+}
+// rayures de nageoire (jaune et turquoise) peintes dans une forme
+function rayures(p, zone, x0, y0, x1, y1, n, couleurs = ['#f3d92a', '#16c4c9']) {
+  p.dans(zone, () => {
+    for (let i = 0; i < n; i++) {
+      const t0 = i / n, t1 = (i + .55) / n, ax = x0 + (x1 - x0) * t0, ay = y0 + (y1 - y0) * t0, bx = x0 + (x1 - x0) * t1, by = y0 + (y1 - y0) * t1;
+      p.forme(`M ${ax - 6},${ay - 6} L ${bx - 6},${by - 6} L ${bx + 6},${by + 6} L ${ax + 6},${ay + 6} Z`, couleurs[i % 2], {taille: 0});
+    }
+  });
+}
+
+// La capuche : le crâne rouge qui descend en pointe entre les yeux, les deux longs pans le long du visage, la queue dans le dos,
+// et les marques rouge vif (bec entre les yeux jusqu'au nez, points au-dessus des yeux, goutte au milieu du front).
+coiffures.capuche = (o, fiche) => {
+  const c = o.couleur, dessous = o.dessous || fiche.peau, peau = fiche.peau, vif = o.marques || ROUGE_VIF;
+  const capuche = 'M -26.4,-47.6 C -28,-56 -27.4,-66 -24.4,-74.4 C -20.4,-84.6 -11.4,-90 -1,-90 C 10,-90 19.4,-84.6 23.4,-75.4 C 26,-68.4 26,-58 24.4,-49.6 '
+    + 'C 22.4,-54.4 19.6,-58.6 15.8,-61.8 C 12.6,-64.6 8.6,-66 4.6,-65.8 C 1,-65.6 -2.2,-64 -3.8,-61 L -5.6,-58.2 L -7.4,-61 '
+    + 'C -9.2,-64 -12.6,-66 -16.6,-66 C -20.8,-66 -24,-60 -26.4,-47.6 Z';
+  // les deux pans qui tombent le long du visage jusqu'à la poitrine, pointe vers le bas
+  const panG = 'M -26.6,-62 C -27.4,-55 -27,-48 -25.6,-43 C -24.8,-40.4 -23.8,-38.4 -22.6,-37 C -22.6,-40 -22.6,-43.6 -22.6,-47 C -22.6,-52 -22.8,-57 -23,-62 Z';
+  const panD = 'M 24.4,-62 C 25.4,-55 25.2,-48 24,-43 C 23.4,-40.4 22.6,-38.2 21.6,-36.6 C 21.2,-39.6 20.8,-43.4 20.6,-47 C 20.4,-52 20.6,-57 20.8,-62 Z';
+  // la queue : part de l'arrière du crâne, descend derrière le dos et finit en nageoire ; dessous clair (côté du corps)
+  const queue = 'M 4,-89 C 16,-89.4 25.4,-82 27.6,-70 C 29.4,-60 30.2,-50 29.8,-42 C 29.4,-35.6 28.4,-31 27,-27.6 C 29,-25 31.4,-22.8 33.4,-21.6 '
+    + 'C 30,-21.4 27.2,-22.2 25.2,-24 C 23.8,-22 21.2,-20.6 18.4,-20.2 C 20.4,-22.4 21.6,-25 22,-28.4 C 21.8,-34 21.4,-40 20.6,-47 C 19.6,-56 16,-66 4,-89 Z';
+  const ventre = 'M 20.6,-47 C 21.4,-40 21.8,-34 22,-28.4 C 23.2,-31 23.8,-36 23.8,-42 C 23.8,-50 22.6,-58 20,-64 C 20.4,-58 20.6,-52 20.6,-47 Z';
+  return [
+    {os: 'tete', z: Z.queue, dessin(p) {
+      p.forme(queue, c, {taille: 'g'});
+      p.dans(queue, () => p.forme(ventre, dessous, {taille: 'm', force: .8}));
+    }},
+    {os: 'tete', z: Z.cheveux, dessin(p) {
+      const tete = P.teteDe(fiche);
+      for (const d of [panG, panD]) p.forme(d, c, {taille: 'm', force: 1.1});
+      p.portee(capuche, tete, peau, {dy: 1.4, flou: 2.2, force: .5});
+      p.forme(capuche, c, {taille: 'g', force: .9});
+      // les marques rouge vif
+      p.dans(new Path2D(tete), () => {
+        p.forme('M -9.4,-62.4 C -7.8,-61.6 -6.6,-60.4 -5.6,-57.6 C -4.6,-60.4 -3.4,-61.6 -1.8,-62.4 C -3.6,-61.2 -4.7,-59 -5.6,-55.4 C -6.5,-59 -7.6,-61.2 -9.4,-62.4 Z', vif, {taille: 'p', force: .6});
+      });
+      p.dans(capuche, () => {
+        for (const [x, y, r] of [[-21, -63.4, .95], [-18.6, -65.4, .8], [9.4, -65.8, .8], [11.8, -64.4, .95]]) p.forme(P.ell(x, y, r, r * .8), vif, {taille: 0});
+        p.forme('M -4.8,-78 C -3.9,-75.4 -3.9,-73.2 -4.8,-71.4 C -5.7,-73.2 -5.7,-75.4 -4.8,-78 Z', vif, {taille: 'p', force: .6});
+      });
+    }},
+  ];
+};
+
+// Les bijoux de tête : un diadème d'argent en arc par-dessus la capuche avec un croissant au sommet, un ornement en étoile
+// sur chaque tempe et des pendants d'oreilles (pierre turquoise et pointe d'argent).
+coiffes.bijouxEaux = o => {
+  const ag = o.argent || ARGENT;
+  const etoile = (x, y, r, a0) => { let d = ''; for (let i = 0; i < 6; i++) { const a = a0 + i * Math.PI / 3, rr = i % 2 ? r * .45 : r; d += (i ? 'L ' : 'M ') + (x + Math.cos(a) * rr).toFixed(2) + ',' + (y + Math.sin(a) * rr).toFixed(2) + ' '; } return d + 'Z'; };
+  return [{os: 'tete', z: Z.coiffe, dessin(p) {
+    p.forme(ruban([[-24, -70], [-19, -79.6], [-9.4, -86.6], [2, -88.2], [12.6, -84.4], [20.6, -75.6]], 1.4), ag, {taille: 'p', force: 1.3});
+    // le croissant au sommet, pointes vers le haut, et sa pierre
+    p.forme('M -5.6,-89.6 C -4.8,-86.6 -2.4,-85.4 0,-85.6 C 2.4,-85.4 4.8,-86.6 5.6,-89.6 C 4,-88 2,-87.4 0,-87.6 C -2,-87.4 -4,-88 -5.6,-89.6 Z', ag, {taille: 'p', force: 1.3});
+    goutte(p, 0, -84.2, 1);
+    // les tempes : une étoile d'argent à trois branches, une goutte turquoise dessous, puis le pendant d'oreille
+    for (const [x, y, s] of [[-25, -66.6, -1], [22.8, -67.6, 1]]) {
+      p.forme(etoile(x, y, 3.6, s > 0 ? -1.2 : -1.9), ag, {taille: 'p', force: 1.4});
+      p.forme(P.ell(x, y, 1.1, 1.1), P.fonce(ag, .8), {taille: 0});
+      goutte(p, x + s * .2, y + 4.4, 1.05);
+      p.forme(ruban([[x + s * .2, y + 5.6], [x + s * .3, y + 8.4]], .6), ag, {taille: 0});
+      joyau(p, x + s * .3, y + 9.8, 1.1);
+      p.forme(`M ${x + s * .3 - .9},${y + 11.4} L ${x + s * .3 + .9},${y + 11.4} L ${x + s * .3},${y + 15.4} Z`, ag, {taille: 'p'});
+    }
+  }}];
+};
+
+// La tenue : le corps (devant crème, côtés rouges), les bijoux (haut collier, parure des clavicules, chaîne et pendentif,
+// ceinture en croissants, chaîne de hanche), l'écharpe bleue (épaule proche → hanche opposée, tour de taille, cape dans le dos),
+// les nageoires des épaules et des avant-bras, les bracelets, et le bas des jambes (devant des cuisses crème, tache au genou,
+// marques rouge vif sur les tibias, anneaux d'argent aux chevilles, griffe et talon des pieds).
+tenues.eaux = (o, fiche) => {
+  const rouge = o.rouge, creme = fiche.peau, bleu = o.echarpe || '#1f9fd2', bleuClair = o.echarpeClair || '#c9ecf4', ag = o.argent || ARGENT;
+  const corps = 'M -7.2,-49.8 L 2.4,-50.2 C 6,-49.6 8,-47.6 8.8,-44.2 C 10.8,-42.6 11.4,-40.4 11.4,-38 L 10.4,-30.4 C 10.2,-27 11.2,-24 12.2,-20.6 '
+    + 'Q 0,-14.6 -12.2,-20.6 C -11.2,-24 -10.2,-27 -10.4,-30.4 L -11.4,-38 C -11.4,-40.4 -10.8,-42.6 -8.8,-44.2 C -8.6,-46.8 -8.2,-48.6 -7.2,-49.8 Z';
+  const devant = 'M -7.6,-50 L 3.2,-50.2 C 5.6,-44 7,-38 7,-32.4 C 7,-26.6 5.6,-21.4 3.4,-17.4 Q -1.8,-15.6 -7,-17.4 C -9,-21.4 -9.8,-26.6 -9.8,-32.4 C -9.8,-38 -9,-44 -7.6,-50 Z';
+  const couches = [];
+  // la cape : le bout de l'écharpe qui retombe dans le dos, du côté proche (derrière le corps et le bras)
+  couches.push({os: 'torse', z: Z.torse - 1.5, dessin(p) {
+    const cape = 'M 6,-46 C 10,-46.4 13.6,-44 15.4,-40 C 17.4,-34 18.2,-26 17.6,-17.6 L 15.6,-15.4 L 14.4,-17.8 L 12.8,-15.2 L 11.6,-17.6 L 10.2,-15.4 C 10.4,-24 9.6,-34 6,-46 Z';
+    p.forme(cape, bleu, {taille: 'm', force: 1.1});
+    p.dans(cape, () => { for (let x = 9.4; x < 18; x += 2.2) p.forme(`M ${x},-17 L ${x + 1.1},-19.4 L ${x + 2.2},-17 Z`, bleuClair, {taille: 0}); });
+  }});
+  couches.push({os: 'torse', z: Z.torse, dessin(p) {
+    p.forme(corps, rouge, {taille: 'g', force: .9});
+    p.dans(corps, () => {
+      p.forme(devant, creme, {taille: 'g', force: .7});
+      p.portee(P.ell(-1, -53, 14, 9.5), corps, creme, {dy: 1.2, flou: 3, force: .45});         // l'ombre de la tête
+      // une petite trace de côtes sur le flanc (comme sur l'image), en rouge un peu plus sombre
+      p.forme(ruban([[-9.6, -36.4], [-8.4, -35.8]], .5), P.fonce(rouge, .8), {taille: 0});
+      p.forme(ruban([[-9.8, -34], [-8.6, -33.6]], .5), P.fonce(rouge, .8), {taille: 0});
+    });
+    // le haut collier (on n'en voit que le bas, sous le menton) : argent avec des V creusés
+    p.forme('M -6.2,-46.8 L 2.6,-47 L 2.4,-43.4 Q -1.8,-42.4 -6,-43.4 Z', ag, {taille: 'p', force: 1.2});
+    for (const x of [-4.6, -1.8, 1]) p.forme(`M ${x - .9},-45.6 L ${x + .9},-45.6 L ${x},-43.8 Z`, P.fonce(ag, .72), {taille: 0});
+    // la parure des clavicules : une barre d'argent courbée, un écusson au milieu, des gouttes turquoise
+    p.forme(ruban([[-9.4, -42.4], [-5, -41.6], [-1.6, -41.2], [2, -41.6], [7.4, -42.6]], 1.1), ag, {taille: 'p', force: 1.2});
+    p.forme('M -3.6,-42.2 L .4,-42.2 Q .6,-39.8 -1.6,-38.8 Q -3.8,-39.8 -3.6,-42.2 Z', ag, {taille: 'p', force: 1.3});
+    for (const [x, y] of [[-6.4, -40.6], [3.6, -40.8], [-1.6, -40.4]]) goutte(p, x, y, .7);
+    // la chaîne en V sur la poitrine et son pendentif turquoise
+    p.forme(ruban([[-6, -40.4], [-3.8, -36.6], [-1.6, -34.6], [.8, -36.6], [2.8, -40.4]], .38), ag, {taille: 0});
+    p.forme(P.ell(-1.6, -34.4, .6, .6), ag, {taille: 'p'}); goutte(p, -1.6, -32.4, .85);
+    // la ceinture : des croissants d'argent sur les hanches, avec de petites pointes qui pendent
+    p.dans(corps, () => {
+      p.forme(ruban([[-12.6, -22.6], [-6, -20.4], [0, -19.8], [6, -20.4], [12.6, -22.6]], 1), ag, {taille: 'p', force: 1.2});
+      for (let i = 0; i < 6; i++) {
+        const x = -10.4 + i * 4.2, y = -21.4 + Math.abs(x) * .06;
+        p.forme(`M ${x - 1.8},${y - 1.2} C ${x - 1},${y + .8} ${x + 1},${y + .8} ${x + 1.8},${y - 1.2} C ${x + .8},${y - .2} ${x - .8},${y - .2} ${x - 1.8},${y - 1.2} Z`, ag, {taille: 'p'});
+        p.forme(`M ${x - .45},${y + .5} L ${x + .45},${y + .5} L ${x},${y + 2} Z`, P.fonce(ag, .85), {taille: 0});
+      }
+    });
+    // l'écharpe : de l'épaule proche jusqu'à la hanche opposée, puis le tour de taille ; motif de vagues claires et triangles blancs au bord
+    const biais = 'M 4.4,-47.4 C 7.6,-48.2 10.8,-46.6 11.6,-43.6 C 7.4,-40 1.4,-35 -4.4,-30.6 L -11.2,-31.6 C -5.4,-35.8 .4,-41.6 4.4,-47.4 Z';
+    const taille = 'M -11.6,-33 Q 0,-30.4 11.6,-33 C 12.4,-30 12.6,-27.4 12.2,-25 Q 0,-21.6 -12.2,-25 C -12.6,-27.4 -12.4,-30 -11.6,-33 Z';
+    p.portee(biais, corps, creme, {dy: 1, flou: 2, force: .4});
+    p.forme(biais, bleu, {taille: 'm', force: 1.1});
+    p.forme(taille, bleu, {taille: 'g', force: 1});
+    p.dans(taille, () => {
+      for (let x = -12.4; x < 13; x += 2.4) p.forme(`M ${x},${-24.4 + Math.abs(x) * .02} L ${x + 1.2},${-26.6 + Math.abs(x) * .02} L ${x + 2.4},${-24.4 + Math.abs(x) * .02} Z`, bleuClair, {taille: 0});
+      p.forme(ruban([[-7.4, -29.6], [-5.6, -31], [-3.6, -29.6], [-1.6, -31], [.4, -29.6], [2.4, -31], [4.4, -29.6]], .7), bleuClair, {taille: 0});   // vagues
+      p.forme(ruban([[-6.4, -27.6], [-4.4, -28.8], [-2.4, -27.6], [-.4, -28.8], [1.6, -27.6], [3.6, -28.8]], .55), bleuClair, {taille: 0});
+    });
+    p.dans(biais, () => { for (let k = 0; k < 4; k++) { const t = .2 + k * .2, x = 4.4 + (-11.2 - 4.4) * t + 3.6, y = -47.4 + (-31.6 + 47.4) * t + 2.2; p.forme(`M ${x},${y} L ${x + 1.2},${y - 1.6} L ${x + 2},${y + .4} Z`, bleuClair, {taille: 0}); } });
+    // la broche ronde sur l'épaule, pierre bleue au centre
+    p.forme(P.ell(8.4, -45, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
+    for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; p.forme(P.ell(8.4 + Math.cos(a) * 1.85, -45 + Math.sin(a) * 1.8, .32, .32), P.fonce(ag, .7), {taille: 0}); }
+    joyau(p, 8.4, -45, 1.15, '#2f7fe0');
+    // la chaîne de hanche du côté proche, avec deux losanges turquoise
+    p.forme(ruban([[8.6, -21.6], [9.4, -18.6], [10.6, -15.4], [11.4, -12.4]], .4), ag, {taille: 0});
+    joyau(p, 9.6, -17.4, 1.15); joyau(p, 11.2, -12.6, 1.3);
+  }});
+  // les nageoires des épaules (rouges, bord rayé jaune et turquoise) et des avant-bras (longues, plus bas que la main)
+  for (const [os1, os2, z, s] of [['brasD1', 'brasD2', Z.brasD, -1], ['brasG1', 'brasG2', Z.brasG, 1]]) {
+    const [ex, ey] = OS[os1].p, [cx, cy] = OS[os2].p, [mx, my] = OS[os1 === 'brasD1' ? 'arme' : 'bouclier'].p;
+    couches.push({os: os1, z: z + .4, dessin(p) {
+      // la nageoire de l'épaule : elle part du haut du bras vers l'extérieur et finit en pointe, son bord du bas est rayé
+      const nag = `M ${ex - s * 1.2},${ey - 3.6} C ${ex + s * 3.2},${ey - 4.2} ${ex + s * 7},${ey - 3} ${ex + s * 9.6},${ey + 2.2} `
+        + `C ${ex + s * 7.6},${ey + 3} ${ex + s * 5.2},${ey + 4.2} ${ex + s * 3},${ey + 6} C ${ex + s * 1.2},${ey + 3.4} ${ex},${ey} ${ex - s * 1.2},${ey - 3.6} Z`;
+      const bord = `M ${ex + s * 9.6},${ey + 2.2} C ${ex + s * 7.6},${ey + 3} ${ex + s * 5.2},${ey + 4.2} ${ex + s * 3},${ey + 6} L ${ex + s * 3.4},${ey + 7.6} C ${ex + s * 5.6},${ey + 6} ${ex + s * 8},${ey + 4.6} ${ex + s * 9.6},${ey + 2.2} Z`;
+      p.forme(bord, '#f3d92a', {taille: 0}); rayures(p, bord, ex + s * 3.2, ey + 6.8, ex + s * 9.6, ey + 2.4, 8);
+      p.forme(nag, rouge, {taille: 'm', force: 1.1});
+    }});
+    // nageoire de l'avant-bras : derrière le bras, elle part du coude et PEND vers le bas jusqu'en dessous de la main
+    // (face extérieure rouge, face intérieure rayée jaune et turquoise, visible côté corps)
+    const n = Math.hypot(mx - cx, my - cy), ux = (mx - cx) / n, uy = (my - cy) / n;
+    couches.push({os: os2, z: z + .5, dessin(p) {
+      const X = (x, y) => (x).toFixed(2) + ',' + (y).toFixed(2);
+      const dedans = `M ${X(cx + s * .6, cy + .4)} C ${X(mx + s * 1.8, my - 1)} ${X(mx + s * .9, my + 6)} ${X(mx + s * 1.2, my + 10)} C ${X(mx - s * 1.2, my + 6.6)} ${X(mx - s * 1.6, my + 3)} ${X(mx - s * .6, my + .8)} Z`;
+      const dehors = `M ${X(cx + s * 2, cy - 1.4)} C ${X(mx + s * 5.4, my - 2)} ${X(mx + s * 5, my + 5.4)} ${X(mx + s * 2.4, my + 10.4)} C ${X(mx + s * 1.8, my + 6.6)} ${X(mx + s * 1.2, my + 3)} ${X(mx + s * 1.4, my)} Z`;
+      p.forme(dedans, '#16c4c9', {taille: 'm'}); rayures(p, dedans, cx, cy, mx + s * 1.2, my + 10, 12);
+      p.forme(dehors, rouge, {taille: 'm', force: 1.1});
+    }});
+    // le bracelet d'argent au poignet (avec un petit cœur creusé), sans passer sur la main
+    const w = 2.75, bx = cx + ux * n * .62, by = cy + uy * n * .62, a = Math.atan2(uy, ux) * 180 / Math.PI;
+    couches.push({os: os2, z: z + 1.05, dessin(p) {
+      const hors = new Path2D(); hors.rect(-400, -400, 800, 800); hors.ellipse(mx, my, 3.15, 3.05, 0, 2 * Math.PI, 0, true);
+      p.dans(hors, () => p.repere(bx, by, a, () => {
+        p.forme(`M -1.4,${-w} L 1.4,${-w} L 1.4,${w} L -1.4,${w} Z`, ag, {taille: 'p', force: 1.3});
+        p.forme('M 0,.9 C -.9,.1 -.9,-.8 0,-.4 C .9,-.8 .9,.1 0,.9 Z', P.fonce(ag, .7), {taille: 0});
+      }));
+    }});
+  }
+  // les jambes : devant des cuisses crème avec une tache rouge au genou, marques rouge vif sur les tibias,
+  // anneaux d'argent aux chevilles (avec de petites pointes), griffe d'argent au bout du pied et talon orangé
+  for (const [os1, os2, z] of [['jambeD1', 'jambeD2', Z.jambeD], ['jambeG1', 'jambeG2', Z.jambeG]]) {
+    const [hx, hy] = OS[os1].p, [gx, gy] = OS[os2].p;
+    couches.push({os: os1, z: z + .5, dessin(p) {
+      const cuisse = P.capsule(hx, hy, gx, gy, 3.3, 3);
+      p.dans(cuisse, () => {
+        const crem = `M ${hx - 3.4},${hy - 1} L ${hx + 1.8},${hy - 1} C ${hx + 2},${hy + 3} ${gx + 1.6},${gy - 3} ${gx + .6},${gy - .2} C ${gx - .4},${gy + 1} ${gx - 2},${gy + 1} ${gx - 2.8},${gy - .4} C ${gx - 3.6},${gy - 3} ${hx - 3.6},${hy + 3} ${hx - 3.4},${hy - 1} Z`;
+        p.forme(crem, creme, {taille: 'm', force: .8});
+        p.forme(P.ell(gx - 1, gy - 1.9, 1.45, 1.3), rouge, {taille: 'p', force: .6});
+      });
+    }});
+    couches.push({os: os2, z: z + 1.5, dessin(p) {
+      for (const [dy, l] of [[-10.6, 1.2], [-9, 1], [-7.6, .8]]) p.forme(P.ell(gx + 2.3, gy + 11.4 + dy, .38, l * .7, 10), ROUGE_VIF, {taille: 0});
+      const w = 3.25;
+      p.forme(`M ${gx - w},-8 Q ${gx},-7.2 ${gx + w},-8 L ${gx + w},-5.6 Q ${gx},-4.8 ${gx - w},-5.6 Z`, ag, {taille: 'p', force: 1.3});
+      for (const x of [gx - 1.6, gx + .4]) p.forme(`M ${x - .8},-7.4 L ${x + .8},-7.4 L ${x},-5.6 Z`, P.fonce(ag, .72), {taille: 0});
+      for (const x of [gx - w, gx + w]) p.forme(P.ell(x, -7.6, .55, .55), ag, {taille: 'p'});
+      p.forme(`M ${gx - 1.4},-4.8 L ${gx - .4},-4.8 L ${gx - .9},-3.2 Z`, ag, {taille: 'p'});
+      p.forme(`M ${gx - 9.2},-1.6 L ${gx - 6.6},-2.6 L ${gx - 6.8},-.2 Z`, ag, {taille: 'p', force: 1.3});        // la griffe au bout du pied
+      p.forme(`M ${gx + 1.6},-1.6 L ${gx + 3.8},-2.4 L ${gx + 3.8},0 L ${gx + 1.8},0 Z`, '#f2a51e', {taille: 'p'});  // le talon orangé
+    }});
+  }
+  return couches;
+};
+
+// Le trident : long manche d'argent, garde en croissant avec une pierre turquoise, trois pointes à crochet (celle du milieu
+// plus longue), petite pointe en bas. Tenu par le milieu du manche, presque droit, la tête vers le haut.
+armes.trident = o => {
+  const [mx, my] = OS.arme.p, ag = o.metal || '#d3d8de', fonce = P.fonce(o.metal || '#d3d8de', .7), or = o.or || '#d9b24a';
+  return [{os: 'arme', z: Z.arme, dessin(p) {
+    p.repere(mx, my, o.angle === undefined ? -9 : o.angle, () => {
+      p.forme('M -.75,28 L .75,28 L .75,-46 L -.75,-46 Z', ag, {taille: 'p', force: .9});                     // le manche
+      p.forme('M 0,28 L .75,28 L .75,-46 L 0,-46 Z', P.fonce(ag, .86), {taille: 0});
+      for (const y of [-2.4, 2.4, 14, -30]) p.forme(`M -1.15,${y - .6} L 1.15,${y - .6} L 1.15,${y + .6} L -1.15,${y + .6} Z`, or, {taille: 'p'});   // bagues
+      p.forme('M -1.3,27.4 L 1.3,27.4 L 0,32 Z', ag, {taille: 'p'});                                         // la pointe du bas
+      // la garde en croissant, avec deux volutes et la pierre
+      p.forme('M -5.4,-49.4 C -4.6,-46.4 -2.4,-45 0,-45 C 2.4,-45 4.6,-46.4 5.4,-49.4 C 3.6,-47.8 1.8,-47.2 0,-47.2 C -1.8,-47.2 -3.6,-47.8 -5.4,-49.4 Z', or, {taille: 'p', force: 1.2});
+      p.forme(ruban([[-1.6, -44.6], [-3.4, -43.4], [-3.6, -41.6], [-2.4, -41.2]], .55), or, {taille: 0});
+      p.forme(ruban([[1.6, -44.6], [3.4, -43.4], [3.6, -41.6], [2.4, -41.2]], .55), or, {taille: 0});
+      // les trois pointes (celles des côtés s'écartent puis remontent), chacune avec un petit crochet
+      const pointe = s => `M ${s * .3},-47.4 C ${s * 3},-48 ${s * 4.4},-50 ${s * 4.4},-53.4 L ${s * 4.6},-58.4 L ${s * 5.6},-55.6 L ${s * 5.2},-55.4 C ${s * 5.2},-51 ${s * 4},-47 ${s * .3},-45.8 Z`;
+      p.forme(pointe(-1), ag, {taille: 'p', force: 1.1}); p.forme(pointe(1), ag, {taille: 'p', force: 1.1});
+      p.forme('M -.8,-46.6 L .8,-46.6 L .9,-59 L 0,-63.4 L -.9,-59 Z', ag, {taille: 'p', force: 1.1});
+      p.forme('M -.9,-59 L -2,-57 L -.8,-57.4 Z', ag, {taille: 0}); p.forme('M .9,-59 L 2,-57 L .8,-57.4 Z', ag, {taille: 0});
+      p.forme('M 0,-46.6 L .8,-46.6 L .9,-59 L 0,-63.4 Z', fonce, {taille: 0});
+      joyau(p, 0, -46.6, 1.1);
+    });
+  }}];
+};
 })();

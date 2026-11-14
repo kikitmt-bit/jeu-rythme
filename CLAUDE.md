@@ -121,6 +121,15 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   (Ancienne note) 5e version : la patte à trois griffes va **sur le biceps** (là où Kiki l'a dessinée en rouge, convertie d'après sa capture : centre (26,8 ; −37,7), penchée de −22°).
   Reste du perso : tête en cloche (`tete`, `Poupee.TETE_COLOSSE`), sourcils en cailloux froncés, barbichette en caillou, T tatoué jusqu'au nez, petits yeux ronds bleu-violet (`yeuxTaille`), nez plus large (`nez`), pas de joues (`joues: null`) ;
   ventre avec le grand arc et les deux spirales, slip blanc, rond sur les genoux, bandages aux chevilles, pieds nus normaux (`taillePieds`). Options du moule : `taille` (1,15), `os`, `corps`, `bras.manche: null`.
+- **Princesse des eaux** (`princesse-eaux`, 14/11, d'après 3 images de Kiki ; **1re version, dans l'atelier seulement**, pas encore dans `EQUIPE` : on valide d'abord le look avec Kiki) :
+  pas de cheveux : `coiffures.capuche` = capuche de peau rouge framboise (crâne, pointe entre les yeux), deux pans fins le long du visage jusqu'à la poitrine, queue de poisson dans le dos (dessous clair, `Z.queue`),
+  marques rouge vif (bec entre les yeux jusqu'au nez, points au-dessus des yeux, goutte au front) ; `coiffes.bijouxEaux` = diadème d'argent en arc + croissant au sommet, étoile d'argent sur chaque tempe, pendants d'oreilles turquoise ;
+  `tenues.eaux` = corps rouge à devant crème, haut collier, parure des clavicules et chaîne à pendentif turquoise, ceinture en croissants, chaîne de hanche à losanges turquoise,
+  écharpe bleue (épaule proche → hanche opposée, tour de taille à vagues claires et triangles blancs, cape dans le dos), broche ronde à pierre bleue, nageoires d'épaule et d'avant-bras
+  (elles **pendent vers le bas** sous la main : le long de l'avant-bras, celle du bras qui tient l'arme sortait à l'horizontale comme une aile), bracelets, devant des cuisses crème + tache rouge au genou,
+  marques rouge vif sur les tibias, anneaux d'argent aux chevilles, griffe d'argent et talon orangé aux pieds ; `armes.trident` (manche d'argent, garde en croissant doré, 3 pointes à crochet, pierre turquoise).
+  L'emblème imprimé sur l'écharpe (vrai jeu) n'est pas redessiné : vagues claires à la place (si Kiki le veut, il l'envoie en image → paquet chiffré).
+  Options du moule ajoutées (sans effet sur les autres, vérifié au pixel près) : `pupilles` (pupille sombre dans l'œil), `bouche: 'petite'` (petites lèvres pleines), `couleurBouche` ([haut, bas]), `nez: 0` (pas de nez).
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
 - Avant de livrer un perso : vérifier aussi la **marche** (captures `anim=marche&t=…`) et le **jeu** (`?auto`), où les persos se suivent et peuvent se chevaucher (arme de l'un sur le bouclier de l'autre). Tout ce qui est dans `poupee.js` (tête, visage, oreille, bras, main, jambes) est déjà validé et commun à tous.
 
