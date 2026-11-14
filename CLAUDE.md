@@ -144,6 +144,10 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   **un seul vêtement** (pan en biais + tour de taille d'un seul tenant, plis doux), **manche** sur l'épaule proche à **ourlet droit et franc** (tracé bleu de Kiki) avec la broche ;
   **supprimés** (entourés en jaune par Kiki) : les nageoires des avant-bras (mains normales), la cape qui pendait sous la main, la chaîne de hanche ; la nageoire de l'épaule proche aussi (il n'en dépassait qu'un bout rayé sous la manche) ;
   **deux petites nageoires aux hanches** (tracé violet), rouges à bord rayé ; griffe d'argent et talon doré **peints dans la forme du pied** (jusqu'au bord, sans écart).
+  4e version : **ourlet de la manche** dans l'angle du trait jaune de Kiki (il monte vers l'extérieur), bord intérieur de la manche plus à gauche (on ne voit plus le haut du bras) ;
+  **queue d'une seule forme** : le bout s'élargit et se sépare en deux grandes nageoires (encoche entre les deux), plus de lobes accrochés à un point ; la bande blanche descend dans la nageoire du bas ;
+  **nageoires des hanches** qui tombent vers le bas et reposent sur le côté des cuisses (plus longues, plus fines, peintes par-dessus les cuisses) ;
+  **collier** remplacé par un petit collier simple : fine chaîne d'argent et trois gouttes bleues (on en voit deux, la 3e passe sous le drap) ; plus de haut collier, de parure ni de chaîne en V.
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
 - Avant de livrer un perso : vérifier aussi la **marche** (captures `anim=marche&t=…`) et le **jeu** (`?auto`), où les persos se suivent et peuvent se chevaucher (arme de l'un sur le bouclier de l'autre). Tout ce qui est dans `poupee.js` (tête, visage, oreille, bras, main, jambes) est déjà validé et commun à tous.
 
