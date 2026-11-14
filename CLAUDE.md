@@ -111,7 +111,10 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   pec gauche élargi jusqu'au bras (coupé au bord du corps, comme celui de droite) ; **tétons au milieu de chaque pectoral** (`TETONS`, positions tirées des ronds verts de Kiki en se calant sur les yeux) ;
   motif des pecs = variante de l'image : grand arc + petit arc par-dessus l'étoile, reliés par une petite barre en haut, **sans jamais toucher l'étoile** (`motifPec`) ;
   bras proche (à droite de l'écran) : **patte à trois griffes** (coussinet arrondi + 3 griffes en triangle, d'après une petite image de Kiki), sur l'épaule seule (à cheval sur le biceps, ça faisait un raccord) ; le bras éloigné garde l'ancien motif ;
-  **tatouages incrustés** : peints en transparence (`tatoue()`, opacité 0,62, couleur `#fbe197`), ils gardent les ombres et le volume de la peau (avant : « trop posés dessus »).
+  **tatouages incrustés** (avant : « trop posés dessus ») et **d'un seul trait** : `encre(p, couleur, formes)` peint tous les traits d'un même tatouage
+  ensemble, pleins, sur une feuille à part, puis fond la feuille dans la peau d'un coup (`P.ENCRE` : voile à 30 % + « lumière douce » `soft-light`, bord adouci d'un rien).
+  Avec une simple transparence trait par trait, les croisements (milieu du T, barres des arcs) se voyaient doublés : refusé par Kiki. 6 réglages comparés le 14/11, celui-ci retenu (l'encre suit les ombres et les reflets) ;
+  5e version : la patte à trois griffes va **sur le biceps** (là où Kiki l'a dessinée en rouge, convertie d'après sa capture : centre (26,8 ; −37,7), penchée de −22°).
   Reste du perso : tête en cloche (`tete`, `Poupee.TETE_COLOSSE`), sourcils en cailloux froncés, barbichette en caillou, T tatoué jusqu'au nez, petits yeux ronds bleu-violet (`yeuxTaille`), nez plus large (`nez`), pas de joues (`joues: null`) ;
   motif des pecs (arc + symbole) et bande dessous, ventre avec le grand arc et les deux spirales, slip blanc, rond sur les genoux, bandages aux chevilles, pieds nus normaux (`taillePieds`). Options du moule : `taille` (1,15), `os`, `corps`, `bras.manche: null`.
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
