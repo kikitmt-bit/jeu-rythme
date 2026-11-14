@@ -4,7 +4,7 @@
    Personnages originaux seulement dans ce fichier (le dépôt est public).
    ============================================================ */
 /* Paquets d'images chiffrées à charger (voir Poupee.chargerImages). */
-Poupee.paquets = ['images/persos.bin?v=2'];
+Poupee.paquets = ['images/persos.bin?v=3'];
 
 Poupee.fiche({
   id: 'heros-vert', nom: 'Héros vert', coup: 'Attaque tourbillon',

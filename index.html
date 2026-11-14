@@ -108,9 +108,9 @@ td:last-child{text-align:right;font-weight:800}
   <div class="ligne"><button id="rejouer">Rejouer</button><button id="menu" class="discret">Menu</button></div>
 </div>
 
-<script src="persos/poupee.js?v=31"></script>
-<script src="persos/pieces.js?v=31"></script>
-<script src="persos/fiches.js?v=31"></script>
+<script src="persos/poupee.js?v=32"></script>
+<script src="persos/pieces.js?v=32"></script>
+<script src="persos/fiches.js?v=32"></script>
 <script>
 "use strict";
 /* ============================================================
@@ -1564,7 +1564,7 @@ function hud(st, dt) {
    pièces dans persos/pieces.js, personnages dans persos/fiches.js ; essais dans atelier.html).
    Pour l'instant : le héros, la princesse et le colosse de roc en bas de l'écran, qui marchent au rythme du morceau.
    ============================================================ */
-const EQUIPE = ['heros-vert', 'princesse', 'colosse'];
+const EQUIPE = ['heros-vert', 'princesse', 'colosse', 'princesse-eaux'];
 let poupees = [], poupeesEchelle = 0;
 function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) { equipeAPrepar = true; if (etat !== 'jeu') preparerEquipe(true); preparerCapitaine(true); peindreFond(); } }); }
 /* Pour la fluidité, la marche de chaque perso est pré-dessinée en IMAGES_MARCHE images au début de la partie :
