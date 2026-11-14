@@ -114,7 +114,10 @@ Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le so
   **tatouages incrustés** (avant : « trop posés dessus ») et **d'un seul trait** : `encre(p, couleur, formes)` peint tous les traits d'un même tatouage
   ensemble, pleins, sur une feuille à part, puis fond la feuille dans la peau d'un coup (`P.ENCRE` : voile à 30 % + « lumière douce » `soft-light`, bord adouci d'un rien).
   Avec une simple transparence trait par trait, les croisements (milieu du T, barres des arcs) se voyaient doublés : refusé par Kiki. 6 réglages comparés le 14/11, celui-ci retenu (l'encre suit les ombres et les reflets) ;
-  5e version : la patte à trois griffes va **sur le biceps** (là où Kiki l'a dessinée en rouge, convertie d'après sa capture : centre (26,8 ; −37,7), penchée de −22°).
+  6e version : patte **plus grosse, à cheval sur l'épaule et le biceps, dans l'axe du bras** (griffes vers l'épaule) ; astuce pour la cassure de l'articulation :
+  coupée au bord du biceps, la partie sur le biceps est un peu décalée et agrandie (le muscle avance) ; encre plus forte sur la partie épaule (dans l'ombre).
+  **T moins lumineux** : `encre(…, force)` ; `P.ENCRE_VISAGE = .6` (mesuré : à 1, le T éclaircissait la peau de 57 points contre 36 pour le corps ; à 0,6 : 39).
+  (Ancienne note) 5e version : la patte à trois griffes va **sur le biceps** (là où Kiki l'a dessinée en rouge, convertie d'après sa capture : centre (26,8 ; −37,7), penchée de −22°).
   Reste du perso : tête en cloche (`tete`, `Poupee.TETE_COLOSSE`), sourcils en cailloux froncés, barbichette en caillou, T tatoué jusqu'au nez, petits yeux ronds bleu-violet (`yeuxTaille`), nez plus large (`nez`), pas de joues (`joues: null`) ;
   ventre avec le grand arc et les deux spirales, slip blanc, rond sur les genoux, bandages aux chevilles, pieds nus normaux (`taillePieds`). Options du moule : `taille` (1,15), `os`, `corps`, `bras.manche: null`.
 - Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).

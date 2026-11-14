@@ -429,15 +429,16 @@ function cristal(cx, cy, r, n = 6, graine = 1) {          // étoile de pierre :
 // Un tatouage est INCRUSTÉ dans la peau (Kiki, 14/11) : peint en transparence, il garde les ombres et le volume de la peau dessous.
 // Tous les traits d'un même tatouage sont d'abord peints ensemble, pleins, sur une feuille à part (un seul dessin, aucun
 // croisement visible), puis la feuille est fondue dans la peau d'un coup (Kiki, 14/11 : « un seul trait », « intégrés à la peau »).
+P.ENCRE_VISAGE = .6;   // mesuré le 14/11 : à 1, le T éclaircissait la peau de 57 points contre 36 pour ceux du corps
 P.ENCRE = {passes: [['source-over', .3], ['soft-light', 1]], flou: .12};   // un voile léger + « lumière douce » : l'encre suit les ombres et les reflets de la peau
-function encre(p, couleur, formes) {
+function encre(p, couleur, formes, force = 1) {   // force < 1 : encre plus discrète (le T, sur la peau plus claire du visage)
   const c = p.ctx, cv = c.canvas, f = document.createElement('canvas'); f.width = cv.width; f.height = cv.height;
   const o = f.getContext('2d'); o.setTransform(c.getTransform()); o.fillStyle = couleur;
   for (const d of formes) o.fill(typeof d === 'string' ? new Path2D(d) : d);
   const E = P.ENCRE;
   c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
   if (E.flou) c.filter = `blur(${(E.flou * p.S).toFixed(2)}px)`;
-  for (const [mode, a] of E.passes || [[E.mode, E.a]]) { c.globalCompositeOperation = mode; c.globalAlpha = a; c.drawImage(f, 0, 0); }
+  for (const [mode, a] of E.passes || [[E.mode, E.a]]) { c.globalCompositeOperation = mode; c.globalAlpha = Math.min(1, a * force); c.drawImage(f, 0, 0); }
   c.restore();
 }
 function etoileDePierre(p, cx, cy, r, graine) {
@@ -498,7 +499,7 @@ coiffures.cailloux = (o, fiche) => {
   const T = [ruban([[-14.4, -73.4], [-5, -74.4], [4.4, -74]], 2.8), ruban([[-4.9, -73.6], [-5.2, -66], [-5.8, -59.4]], 2.6)];
   return [
     {os: 'tete', z: Z.visage - .5, dessin(p) {          // le T tatoué (sous les yeux et les sourcils)
-      p.dans(tete, () => encre(p, tat, T));
+      p.dans(tete, () => encre(p, tat, T, P.ENCRE_VISAGE));
     }},
     {os: 'tete', z: Z.cheveux, dessin(p) {
       p.portee(brosse, tete, peau, {dy: 1.4, flou: 2.2, force: .55});
@@ -576,9 +577,18 @@ tenues.colosse = (o, fiche) => {
       const q = (x, y) => [ex + .6 * cote + x * cote, ey + 1.6 + y];
       // bras proche (à droite de l'écran) : une patte à trois griffes sur le biceps, là où Kiki l'a dessinée (14/11) :
       // un coussinet arrondi et trois griffes fines en triangle, penchées vers l'avant
-      if (cote > 0) p.dans(biceps, () => p.repere(26.8, -37.7, -22, () => encre(p, tat, [
-        'M -2.7,1 C -2.9,3.4 -1.4,5 0,5.4 C 1.4,5 2.9,3.4 2.7,1 Q 0,-.3 -2.7,1 Z',
-        'M -.7,-.6 L .7,-.6 L 0,-5.6 Z', 'M -2.9,.1 L -1.6,-.7 L -4.2,-4.4 Z', 'M 2.9,.1 L 1.6,-.7 L 4.2,-4.4 Z']), .44));
+      if (cote > 0) {
+        // Plus grosse (Kiki, 14/11) : à cheval sur l'épaule et le biceps, dans l'axe du bras (griffes vers l'épaule).
+        // L'astuce pour la cassure de l'articulation : la patte est coupée au bord du biceps, et la partie posée sur le biceps est
+        // légèrement décalée et agrandie, comme si l'encre suivait le muscle qui avance.
+        const PATTE = ['M -2.7,1 C -2.9,3.4 -1.4,5 0,5.4 C 1.4,5 2.9,3.4 2.7,1 Q 0,-.3 -2.7,1 Z',
+          'M -.7,-.6 L .7,-.6 L 0,-5.6 Z', 'M -2.9,.1 L -1.6,-.7 L -4.2,-4.4 Z', 'M 2.9,.1 L 1.6,-.7 L 4.2,-4.4 Z'];
+        const axe = Math.atan2(ey - cy, ex - cx) * 180 / Math.PI + 90;            // les griffes pointent vers l'épaule
+        const [bx, by] = [ex + (cx - ex) * .6 + .6, ey + (cy - ey) * .6], [px, py] = [25.4, -38.9], K = .7;
+        const horsBiceps = new Path2D(); horsBiceps.rect(-400, -400, 800, 800); horsBiceps.ellipse(bx, by, 5.4, 4.4, a * Math.PI / 180, 2 * Math.PI, 0, true);
+        p.dans(epaule, () => p.dans(horsBiceps, () => p.repere(px, py, axe, () => encre(p, tat, PATTE, 1.9), K)));   // l'épaule est dans l'ombre : encre un peu plus forte
+        p.dans(biceps, () => p.repere(px + .35, py + .3, axe - 3, () => encre(p, tat, PATTE), K * 1.04));
+      }
       // bras éloigné : une large bande qui monte en travers de l'épaule, une barre qui la croise, un crochet autour de deux points
       else p.dans(epaule, () => encre(p, tat, [
         ruban([q(-4.6, 4.4), q(-1, 3.2), q(2.4, .6), q(4.4, -2.6)], 1.7), ruban([q(.2, -1.6), q(2.2, .6), q(4.6, 2.4)], 1.3),
