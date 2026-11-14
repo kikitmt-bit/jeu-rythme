@@ -810,12 +810,16 @@ tenues.eaux = (o, fiche) => {
         [[[6.8, -46.4], [3.2, -41.8], [-1.6, -37.6], [-7.6, -33.8]], .8, clair],
         [[[11.8, -36], [8.6, -31.4], [3.6, -28.2], [-4, -26.6], [-11.6, -26.4]], .8, clair],
         [[[12, -28.8], [6, -26.2], [-1, -25.2], [-8, -25.6]], .7, fonce]]) p.forme(meche(pts, w, 2.2), c, {taille: 'p', force: .35});
-      for (let x = -12.4; x < 13; x += 2.3) { const y = -23.4 - Math.cos(x / 13 * 1.5) * 1.1 + 1.1; p.forme(`M ${x},${y} L ${x + 1.15},${y - 2} L ${x + 2.3},${y} Z`, bleuClair, {taille: 0}); }
-      // l'emblème de Kiki (image chiffrée) devant, au milieu ; sans le mot de passe : des vagues claires
-      if (!(o.embleme && p.image(o.embleme, -1.6, -28.6, 6.2))) {
-        p.forme(ruban([[-6.4, -30], [-4.6, -31.4], [-2.6, -30], [-.6, -31.4], [1.4, -30], [3.4, -31.4]], .7), bleuClair, {taille: 0});
-        p.forme(ruban([[-5.4, -27.8], [-3.4, -29], [-1.4, -27.8], [.6, -29], [2.6, -27.8]], .55), bleuClair, {taille: 0});
-      }
+      // le bas du vêtement : un fin liseré clair qui suit le bord, et les petits triangles juste au-dessus
+      const bas = []; for (let k = 0; k <= 12; k++) { const x = -12.6 + k * 2.1; bas.push([x, -22.4 - 2.6 * (x + 1) * (x + 1) / 174 - .7]); }
+      lisere(p, bas, bleuClair);
+      // l'emblème de Kiki (image chiffrée), plus grand et en biais : il suit le drapé qui monte vers l'épaule ; sans le mot de passe : des vagues claires
+      p.repere(-.6, -30.4, -24, () => {
+        if (!(o.embleme && p.image(o.embleme, 0, 0, 8.6))) {
+          p.forme(ruban([[-5.6, -1.4], [-3.8, -2.8], [-1.8, -1.4], [.2, -2.8], [2.2, -1.4], [4.2, -2.8]], .7), bleuClair, {taille: 0});
+          p.forme(ruban([[-4.6, .8], [-2.6, -.4], [-.6, .8], [1.4, -.4], [3.4, .8]], .55), bleuClair, {taille: 0});
+        }
+      });
     });
   }});
   // La MANCHE sur l'épaule proche (d'après le trait bleu de Kiki, 14/11) : son bord intérieur descend de la broche vers le bras,
@@ -830,7 +834,7 @@ tenues.eaux = (o, fiche) => {
     p.dans(manche, () => {
       p.forme(meche([[7.2, -46.6], [8.4, -42.4], [9.2, -39], [9.6, -36.6]], 1.1, 2.4), P.fonce(bleu, .8), {taille: 'p', force: .35});
       p.forme(meche([[10.4, -47.2], [12, -43.6], [12.8, -40.6], [13.2, -38.2]], .7, 2.4), P.clair(bleu, .22), {taille: 'p', force: .35});
-      p.forme('M 6,-36 L 15,-39.2 L 15,-38 L 6.6,-35 Z', P.clair(bleu, .55), {taille: 0});    // l'ourlet, bien net
+      lisere(p, [[6.4, -35.8], [10.6, -37.3], [15, -38.8]], bleuClair);    // l'ourlet : le même liseré que le bas du vêtement
     });
     // la broche ronde, pierre bleue au centre
     p.forme(P.ell(7.9, -45, 2.5, 2.4), ag, {taille: 'p', force: 1.3});
@@ -892,6 +896,18 @@ tenues.eaux = (o, fiche) => {
   return couches;
 };
 
+// Le liseré du vêtement bleu (Kiki, 14/11) : un fin trait clair le long du bord et une rangée de petits triangles juste au-dessus.
+// pts = le bord, dans le sens où le « dessus » est à gauche ; le même liseré sur le bas du vêtement et sur l'ourlet de la manche.
+function lisere(p, pts, couleur, pas = 1.7) {
+  p.forme(ruban(pts.map(([x, y]) => [x, y]), .55), couleur, {taille: 0});
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i], [bx, by] = pts[i + 1], l = Math.hypot(bx - ax, by - ay), ux = (bx - ax) / l, uy = (by - ay) / l, nx = uy, ny = -ux;
+    for (let d = pas * .5; d + pas * .5 <= l + .01; d += pas) {
+      const cx = ax + ux * d + nx * .75, cy = ay + uy * d + ny * .75, w = pas * .32;
+      p.forme(`M ${cx - ux * w},${cy - uy * w} L ${cx + ux * w},${cy + uy * w} L ${cx + nx * 1.15},${cy + ny * 1.15} Z`, couleur, {taille: 0});
+    }
+  }
+}
 // Le trident : long manche d'argent, garde en croissant avec une pierre turquoise, trois pointes à crochet (celle du milieu
 // plus longue), petite pointe en bas. Tenu par le milieu du manche, presque droit, la tête vers le haut.
 armes.trident = o => {
