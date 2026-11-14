@@ -327,7 +327,7 @@ armes.rapiere = o => {
    Pièces du colosse de roc (refaites le 14/11 d'après l'image de Kiki, détail par détail)
    Les « cheveux » et ce qui couvre les épaules et les avant-bras ne sont pas des poils mais une ÉPAISSEUR DE CAILLOUX
    gris clair : une base sombre (les creux) et des éclats clairs posés dessus.
-   Tatouages clairs (dessins plats) : T sur le front, motif des pectoraux + bande sous les pecs, grand arc et deux spirales
+   Tatouages clairs (dessins plats) : T sur le front, motif des pectoraux autour des tétons (étoiles de pierre), grand arc et deux spirales
    sur le ventre, motif sur le haut des bras, rond sur les genoux. Slip blanc, bandages blancs aux chevilles.
    ============================================================ */
 // Un trait de tatouage : un ruban de largeur constante, aux bouts arrondis, qui passe par des points (courbe douce).
@@ -426,6 +426,8 @@ function cristal(cx, cy, r, n = 6, graine = 1) {          // étoile de pierre :
   for (let i = 0; i < n * 2; i++) { const a = -Math.PI / 2 + i * Math.PI / n + (h() - .5) * .35, rr = i % 2 ? r * (.38 + h() * .14) : r * (.72 + h() * .35); d += (i ? 'L ' : 'M ') + (cx + Math.cos(a) * rr).toFixed(2) + ',' + (cy + Math.sin(a) * rr * .9).toFixed(2) + ' '; }
   return d + 'Z';
 }
+// Un tatouage est INCRUSTÉ dans la peau (Kiki, 14/11) : peint en transparence, il garde les ombres et le volume de la peau dessous.
+function tatoue(p, d, couleur, a = .62) { p.ctx.save(); p.ctx.globalAlpha = a; p.forme(d, couleur, {taille: 0}); p.ctx.restore(); }
 function etoileDePierre(p, cx, cy, r, graine) {
   p.portee(cristal(cx, cy, r, 7, graine), P.ell(cx, cy, r * 2, r * 2), '#c08a3a', {dy: .6, flou: .9, force: .6});
   p.forme(cristal(cx, cy, r, 7, graine), '#cfc6b4', {taille: 'p', force: 1.4});
@@ -450,7 +452,7 @@ P.TETE_COLOSSE = 'M -2,-84.4 C 8.8,-84.6 16.4,-80.2 19.8,-73.2 C 22.8,-67 25,-60
 // Crête de cailloux sur le crâne (du front jusque derrière la tête, où elle rejoint les épaules), sourcils en cailloux froncés,
 // barbichette en caillou pointu sous le menton, et le T tatoué sur le front.
 coiffures.cailloux = (o, fiche) => {
-  const clair = o.couleur || GRIS[0], sombre = o.creux || '#a39a8a', tat = o.tatouage || '#f2d27a', peau = fiche.peau, tete = P.teteDe(fiche);
+  const clair = o.couleur || GRIS[0], sombre = o.creux || '#a39a8a', tat = o.tatouage || '#fbe197', peau = fiche.peau, tete = P.teteDe(fiche);
   // La coiffure : une coupe EN BROSSE de pierre (Kiki, 14/11) : courte, posée sur tout le dessus du crâne, de la tempe gauche
   // jusqu'à l'arrière de la tête, le dessus hérissé de petites pointes courtes. On suit le contour de la tête (mêmes courbes que TETE_COLOSSE).
   const bez = (a, b, c, d, t) => { const u = 1 - t; return [u*u*u*a[0] + 3*u*u*t*b[0] + 3*u*t*t*c[0] + t*t*t*d[0], u*u*u*a[1] + 3*u*u*t*b[1] + 3*u*t*t*c[1] + t*t*t*d[1]]; };
@@ -484,7 +486,7 @@ coiffures.cailloux = (o, fiche) => {
   const T = [ruban([[-14.4, -73.4], [-5, -74.4], [4.4, -74]], 2.8), ruban([[-4.9, -73.6], [-5.2, -66], [-5.8, -59.4]], 2.6)];
   return [
     {os: 'tete', z: Z.visage - .5, dessin(p) {          // le T tatoué (sous les yeux et les sourcils)
-      p.dans(tete, () => T.forEach(d => p.forme(d, tat, {taille: 0})));
+      p.dans(tete, () => T.forEach(d => tatoue(p, d, tat)));
     }},
     {os: 'tete', z: Z.cheveux, dessin(p) {
       p.portee(brosse, tete, peau, {dy: 1.4, flou: 2.2, force: .55});
@@ -502,22 +504,21 @@ coiffures.cailloux = (o, fiche) => {
 // cailloux sur le haut des épaules et du dos, sur le dessus des épaules et sur le dehors des avant-bras ;
 // biceps et épaules bien ronds ; tatouages ; bandages aux chevilles, rond tatoué sur chaque genou.
 tenues.colosse = (o, fiche) => {
-  const peau = fiche.peau, OS = P.osDe(fiche), tat = o.tatouage || '#f2d27a';
+  const peau = fiche.peau, OS = P.osDe(fiche), tat = o.tatouage || '#fbe197';
   const clair = o.cailloux || GRIS[0], sombre = o.creux || '#a39a8a', blanc = o.slip || '#ece8df';
   const corps = 'M -11,-49.6 C -16.6,-49.2 -21.4,-47 -23,-43 C -24,-39.8 -23.4,-36.6 -21.8,-34.4 C -23.8,-30.8 -24,-25.6 -21.2,-22 '
     + 'C -17,-18 -8.4,-17 .4,-17 C 9.2,-17 17.6,-18.2 21.6,-22 C 24.6,-25.6 24.6,-30.8 22.2,-34.4 C 24,-36.8 24.8,-40 23.6,-43 '
     + 'C 22,-47.2 16.8,-49.4 11,-49.8 C 4,-50.4 -4,-50.2 -11,-49.6 Z';
   const ventre = P.ell(-.6, -28.2, 20.8, 11.6);
   // pectoraux (vue de trois quarts : celui de gauche, côté éloigné, est plus étroit)
-  const pecG = 'M -19.6,-45.4 C -16,-47.8 -9.6,-48 -4.6,-46.4 C -3,-43 -3.4,-38 -5.6,-35.6 C -9.6,-33.4 -15.2,-33.6 -18.8,-35.8 C -21.4,-38.4 -21.4,-42.8 -19.6,-45.4 Z';
+  const pecG = 'M -23.2,-46 C -17.6,-48.4 -9.8,-48.4 -4.6,-46.6 C -3,-43 -3.4,-38 -5.6,-35.6 C -9.8,-33.2 -16.6,-33.2 -21,-35.2 C -25,-37.4 -26,-42.8 -23.2,-46 Z';   // jusqu'au bras (coupé au bord du corps)
   const pecD = 'M -3,-46.6 C 3,-48.4 12,-48.2 18.4,-45.6 C 21,-42.4 21,-38 18.6,-35.4 C 14,-33 5.6,-33.2 -.8,-35.4 C -3.6,-38 -4.2,-42.8 -3,-46.6 Z';
   // tatouages
-  const bande = ruban([[-20.6, -37.8], [-15, -34.8], [-8.6, -35], [-4.4, -37.2], [-1.8, -37.4], [2.6, -35], [10.4, -34.2], [17.4, -36.2], [20.6, -39]], 1.5);
-  const glyphe = (cx, k, y = -1) => [
-    ruban([[cx - 5.6 * k, -37 + y], [cx - 5.4 * k, -41.4 + y], [cx - 2.6 * k, -44.6 + y], [cx + 1.4 * k, -44.8 + y], [cx + 4.4 * k, -42.4 + y], [cx + 5 * k, -38.4 + y]], 1.15),
-    ruban([[cx - 2.8 * k, -37.6 + y], [cx - 2.6 * k, -40.2 + y], [cx - .2 * k, -41.6 + y], [cx + 2.2 * k, -40.4 + y], [cx + 2.4 * k, -38.6 + y]], 1),
-    ruban([[cx - .2 * k, -41.4 + y], [cx - .2 * k, -38.8 + y]], 1),
-  ];
+  // motif de chaque pectoral (variante de l'image de Kiki) : un grand arc et un petit arc par-dessus l'étoile du téton, reliés par une
+  // petite barre en haut ; il entoure l'étoile sans jamais la toucher. kx < 1 : le pec du côté éloigné est plus étroit (trois quarts)
+  const arcAutour = (cx, cy, r, kx, a0, a1, w) => { const pts = []; for (let k = 0; k <= 10; k++) { const a = (a0 + (a1 - a0) * k / 10) * Math.PI / 180; pts.push([cx + Math.cos(a) * r * kx, cy + Math.sin(a) * r]); } return ruban(pts, w); };
+  const motifPec = (cx, cy, kx) => [arcAutour(cx, cy, 5.8, kx, 160, 380, 1.25), arcAutour(cx, cy, 3.7, kx, 185, 355, 1.05), ruban([[cx, cy - 3.9], [cx, cy - 5.6]], 1.05)];
+  const TETONS = [[-13.7, -39.5], [6.7, -39.5]];            // au milieu de chaque pectoral (ronds verts de Kiki, 14/11)
   const arc = ruban([[-10.4, -19.6], [-15.6, -22], [-17.8, -26.8], [-15.8, -31.2], [-9, -33.6], [-.6, -34.2], [8, -33.6], [14.6, -31.2], [16.8, -26.8], [14.6, -22], [9.6, -19.6]], 1.6);
   // les deux spirales face à face : leur queue descend par l'extérieur et revient vers le nombril
   const spG = [[-6.6, -28.4], [-5.6, -29.2], [-6.6, -30.4], [-8.4, -29.8], [-8.9, -27.8], [-7.6, -26.2], [-5.1, -26.3], [-3.9, -28.4], [-4.6, -31], [-7, -32.2], [-9.8, -31.4], [-11.4, -28.6], [-10.9, -24.8], [-8.4, -22], [-5, -21]];
@@ -534,7 +535,7 @@ tenues.colosse = (o, fiche) => {
     p.dans(corps, () => {
       p.forme(ventre, peau, {taille: 'g', force: .8});
       p.portee(P.ell(-.6, -37, 21, 5.4), ventre, peau, {dy: 1.4, flou: 2, force: .45});              // l'ombre des pectoraux sur le ventre
-      p.forme(arc, tat, {taille: 0}); spirales.forEach(d => p.forme(d, tat, {taille: 0}));
+      tatoue(p, arc, tat); spirales.forEach(d => tatoue(p, d, tat));
       p.forme(P.ell(-.6, -21.6, 1.15, .62), P.fonce(peau, .55), {taille: 0});                          // nombril
       // les pectoraux : bien bombés, avec leur ombre sur le ventre et un creux entre les deux
       const pecs = new Path2D(pecG); pecs.addPath(new Path2D(pecD));
@@ -542,10 +543,9 @@ tenues.colosse = (o, fiche) => {
       p.forme(pecG, peau, {taille: 'g', force: 1.25}); p.forme(pecD, peau, {taille: 'g', force: 1.25});
       p.portee(pecD, pecG, peau, {dx: -1.2, dy: .4, flou: 1.4, force: .55});
       p.portee(P.ell(-1, -53, 15, 9.5), corps, peau, {dy: 1.6, flou: 3, force: .6});                    // l'ombre de la tête
-      p.forme(bande, tat, {taille: 0});
-      [...glyphe(-11.6, .7), ...glyphe(7.4, .85)].forEach(d => p.forme(d, tat, {taille: 0}));
-      // les tétons : de petites étoiles de pierre, en bas et sur le côté de chaque pectoral, à l'écart des traits
-      etoileDePierre(p, -18.2, -39.8, 2, 2); etoileDePierre(p, 15.3, -39.6, 2.2, 4);
+      [...motifPec(...TETONS[0], .82), ...motifPec(...TETONS[1], 1)].forEach(d => tatoue(p, d, tat));
+      // les tétons : de petites étoiles de pierre (argentées), au milieu de chaque pectoral, à l'écart des traits
+      etoileDePierre(p, ...TETONS[0], 1.8, 2); etoileDePierre(p, ...TETONS[1], 2, 4);
     });
   }});
   // les cailloux du haut du dos (derrière la tête, jusqu'à l'épaule du côté proche)
@@ -564,16 +564,26 @@ tenues.colosse = (o, fiche) => {
       // tatouage du haut du bras (d'après l'image de Kiki) : une large bande qui monte en travers de l'épaule, une barre qui la croise,
       // et en dessous un crochet qui entoure deux points
       const q = (x, y) => [ex + .6 * cote + x * cote, ey + 1.6 + y];
-      p.dans(epaule, () => {
-        p.forme(ruban([q(-4.6, 4.4), q(-1, 3.2), q(2.4, .6), q(4.4, -2.6)], 1.7), tat, {taille: 0});
-        p.forme(ruban([q(.2, -1.6), q(2.2, .6), q(4.6, 2.4)], 1.3), tat, {taille: 0});
-        p.forme(ruban([q(-3.4, 6.8), q(-.4, 7.4), q(2.6, 6.2), q(3.8, 3.6)], 1.2), tat, {taille: 0});
-        p.forme(P.ell(...q(-1.4, 5.4), .85, .85), tat, {taille: 0}); p.forme(P.ell(...q(1, 5), .85, .85), tat, {taille: 0});
+      const hautBras = new Path2D(epaule); hautBras.addPath(biceps);
+      if (cote > 0) p.dans(hautBras, () => {
+        // bras proche : une patte à trois griffes (modèle de Kiki, 14/11) : un coussinet arrondi et trois griffes en triangle au-dessus
+        p.repere(...q(-.8, .7), -12, () => {
+          tatoue(p, 'M -2.5,.9 C -2.7,3.3 -1.3,4.9 0,5.3 C 1.3,4.9 2.7,3.3 2.5,.9 Q 0,-.3 -2.5,.9 Z', tat);
+          tatoue(p, 'M -.85,-.7 L .85,-.7 L 0,-5.2 Z', tat);
+          tatoue(p, 'M -2.9,.1 L -1.45,-.75 L -3.9,-3.7 Z', tat);
+          tatoue(p, 'M 2.9,.1 L 1.45,-.75 L 3.9,-3.7 Z', tat);
+        }, .74);
+      });
+      else p.dans(epaule, () => {
+        tatoue(p, ruban([q(-4.6, 4.4), q(-1, 3.2), q(2.4, .6), q(4.4, -2.6)], 1.7), tat);
+        tatoue(p, ruban([q(.2, -1.6), q(2.2, .6), q(4.6, 2.4)], 1.3), tat);
+        tatoue(p, ruban([q(-3.4, 6.8), q(-.4, 7.4), q(2.6, 6.2), q(3.8, 3.6)], 1.2), tat);
+        tatoue(p, P.ell(...q(-1.4, 5.4), .85, .85), tat); tatoue(p, P.ell(...q(1, 5), .85, .85), tat);
       });
       // la croûte de pierre sur le dessus de l'épaule, dans le prolongement de la peau
       const [ox, oy] = [ex + cote * .6, ey + 1.6], arcs = [];
       for (let k = 0; k <= 6; k++) { const a = (cote > 0 ? -128 + k * 22 : -52 - k * 22) * Math.PI / 180; arcs.push([ox + Math.cos(a) * 6.5, oy + Math.sin(a) * 6.1]); }
-      croute(p, epaule, arcs, 1.7, -cote, 41 + z);
+      croute(p, epaule, arcs, cote > 0 ? 1.4 : 1.7, -cote, 41 + z);
     }});
     // avant-bras : la croûte fine sur le dehors, du coude jusque sur le dos du poing (elle ne dépasse jamais du bras)
     const kb = (fiche.corps && fiche.corps.bras) || 1, poing = 3.1 * ((fiche.corps && fiche.corps.main) || 1);
@@ -590,7 +600,7 @@ tenues.colosse = (o, fiche) => {
   for (const [os2, z] of [['jambeD2', Z.jambeD], ['jambeG2', Z.jambeG]]) {
     const [gx, gy] = OS[os2].p, kj = (fiche.corps && fiche.corps.jambes) || 1;
     couches.push({os: os2, z: z + 1.5, dessin(p) {
-      p.forme(anneau(gx - 1.6, gy + .4, 1.9, 1.1, 1.1), tat, {taille: 0});
+      tatoue(p, anneau(gx - 1.6, gy + .4, 1.9, 1.1, 1.1), tat);
       const w = 2.9 * kj + .25, tour = (y0, y1) => `M ${gx - w},${y0} Q ${gx},${y0 + 1} ${gx + w},${y0 - .4} L ${gx + w},${y1 - .4} Q ${gx},${y1 + 1} ${gx - w},${y1} Z`;
       p.forme(tour(-9, -6.6), blanc, {taille: 'p', force: 1.3});
       p.forme(tour(-6.9, -4.6), P.fonce(blanc, .94), {taille: 'p', force: 1.3});
