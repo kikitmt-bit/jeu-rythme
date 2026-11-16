@@ -1,0 +1,35 @@
+// node outils/menu/parcours.js <dossier des captures> — parcours au doigt dans la maquette : titre → menu → morceaux (choix, difficulté, extrait) → résultats → retour → options
+const {chromium} = require('playwright');
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({viewport: {width: 892, height: 412}, hasTouch: true, deviceScaleFactor: 1});
+  const err = []; p.on('console', m => { if (m.type() === 'error') err.push(m.text()); }); p.on('pageerror', e => err.push('PAGEERROR ' + e.message));
+  const ecran = () => p.evaluate(() => document.querySelector('.ecran.actif').id);
+  await p.goto('http://localhost:8765/atelier-menu.html'); await p.waitForTimeout(700);
+  console.log('départ :', await ecran());
+  await p.tap('#titre'); await p.waitForTimeout(500); console.log('après toucher :', await ecran());
+  await p.tap('.banniere.verte'); await p.waitForTimeout(900); console.log('bannière Morceaux :', await ecran(), '|', await p.textContent('#mTitre'));
+  await p.tap('.carte[data-i="1"]'); await p.waitForTimeout(900);
+  console.log('jaquette 2 :', await p.textContent('#mTitre'), '| extrait :', await p.textContent('#extraitEtat'), '| choisie :', await p.evaluate(() => document.querySelector('.carte.choisie').dataset.i));
+  await p.tap('.dif[data-dif="expert"]'); await p.waitForTimeout(200);
+  console.log('Expert :', (await p.textContent('#mInfos')).replace(/\s+/g, ' ').trim());
+  await p.tap('#bExtrait'); await p.waitForTimeout(200); console.log('extrait coupé :', await p.textContent('#extraitEtat'));
+  await p.tap('#bJouer', {force: true}); await p.waitForTimeout(1200); console.log('Jouer :', await ecran(), '| score en cours :', await p.textContent('#rScore'));
+  await p.screenshot({path: process.argv[2] + '/anim-1s.png'});
+  await p.waitForTimeout(1300); await p.screenshot({path: process.argv[2] + '/anim-2s5.png'});
+  await p.waitForTimeout(2600); console.log('score final :', await p.textContent('#rScore'), '| combo :', await p.textContent('#rCombo'));
+  await p.screenshot({path: process.argv[2] + '/anim-5s.png'});
+  await p.goBack(); await p.waitForTimeout(500); console.log('retour du téléphone :', await ecran());
+  await p.tap('#morceaux .retour'); await p.waitForTimeout(500); console.log('bouton retour :', await ecran());
+  await p.tap('.banniere.bleue'); await p.waitForTimeout(500); console.log('bannière Options :', await ecran());
+  const r = await p.locator('.opt[data-i="1"] .rail').boundingBox();
+  await p.mouse.move(r.x + r.width * .95, r.y + 4); await p.mouse.down(); await p.mouse.move(r.x + r.width * .25, r.y + 4, {steps: 5}); await p.mouse.up();
+  console.log('volume glissé à 25 % :', await p.textContent('.opt[data-i="1"] .valeur'), '| aide :', await p.textContent('#aideOpt'));
+  await p.tap('.opt[data-i="4"] .bascule').catch(async () => { await p.evaluate(() => document.querySelector('#liste').scrollTop = 200); await p.waitForTimeout(200); await p.tap('.opt[data-i="4"] .bascule'); });
+  console.log('performances :', await p.evaluate(() => document.querySelector('.opt[data-i="4"] .bascule').classList.contains('oui') ? 'Oui' : 'Non'));
+  await p.tap('#options .retour'); await p.waitForTimeout(400); console.log('retour :', await ecran());
+  await p.tap('.banniere.rouge'); await p.waitForTimeout(500); await p.tap('.membre[data-i="2"]'); await p.waitForTimeout(300);
+  console.log('Équipe, choix 3 :', await p.textContent('#fNom'), '|', await p.textContent('#fDesc'));
+  await p.screenshot({path: process.argv[2] + '/equipe-colosse.png'});
+  console.log('erreurs :', JSON.stringify(err));
+  await b.close();
+})();

@@ -39,6 +39,7 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 | `outils/analyse/` | Analyse audio (numpy + scipy) : `base`, `grid`, `notes`, `partition_gff`, `verif`. **Seule version à jour** (le cerveau n'a plus que des renvois) |
 | `outils/persos/` | `capture.js` (captures de l'atelier, `MDP=…` pour les images chiffrées), `comparer.py` (modèle de Kiki / poupée côte à côte) |
 | `outils/perf/mesure.js` | Coût d'une image (rendu logiciel) |
+| `outils/menu/` | Maquette du menu : `capture.js` (captures figées, finesse 2 pour Kiki), `verif.js` (rien hors écran, zones à toucher ≥ 44 px, textes coupés), `parcours.js` (parcours au doigt), `perf.js` (coût par image) ; comparaison avec les modèles de Kiki : `outils/persos/comparer.py` (modèles dans le cerveau, jamais ici) |
 | `outils/tests/` | `records-pause.js` (pause, décompte 3-2-1, records), `partie-auto.js` (partie simulée complète, doit donner 9 999 999), `pixels.js` + `comparer-pixels.py` (captures à horloge et hasard figés du menu et de 3 instants de `?auto&niveau=gff`, comparées pixel par pixel avec une ancienne version : pour vérifier qu'un rangement du code ne change rien à l'image) |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
