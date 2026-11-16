@@ -44,6 +44,12 @@ td:last-child{text-align:right;font-weight:800}
 #tourner .tel{font-size:64px;animation:pivote 2s ease-in-out infinite}
 @keyframes pivote{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
 @media (orientation:portrait){#tourner{display:flex}}
+.rec{color:#ffd98a;font-weight:700}
+.niv.actif .rec{color:#6a3400}
+#recordFin{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:0}
+#recordTitre{font-size:24px;font-weight:900;letter-spacing:.02em;background:linear-gradient(#fffbe0,#ffd04a 55%,#e88a10);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #5a2d00);animation:recordPop .6s ease-out}
+#recordDetail{font-size:13px;opacity:.9;line-height:1.35}
+@keyframes recordPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
 #bpause{position:fixed;left:0;top:0;width:240px;height:60px;padding:0;border-radius:0;font-size:1px;background:transparent;color:transparent;border:0;box-shadow:none}
 #bpause:active{transform:none;box-shadow:none}
 </style>
@@ -57,7 +63,7 @@ td:last-child{text-align:right;font-weight:800}
 <div id="accueil" class="ecran">
   <h1>Jeu de rythme</h1>
   <div class="niveaux" id="niveaux">
-    <button class="niv" data-n="foret">Forêt d'émeraude<small>musique intégrée · plus facile</small></button>
+    <button class="niv" data-n="foret">Forêt d'émeraude<small>musique intégrée · plus facile</small><small class="rec"></small></button>
   </div>
   <div class="sous">Joue n'importe où sur l'écran, avec un doigt ou les deux pouces. Les notes reliées par une barre bleue se tapent ensemble, un doigt sur chacune.</div>
   <div class="legende">
@@ -106,6 +112,7 @@ td:last-child{text-align:right;font-weight:800}
       <tr id="ligneCoffres"><td style="color:#ffc46a">Coffres</td><td id="rCoffres">0</td></tr>
     </table>
   </div>
+  <div id="recordFin" class="cache"><div id="recordTitre"></div><div id="recordDetail"></div></div>
   <div class="ligne"><button id="rejouer">Rejouer</button><button id="menu" class="discret">Menu</button></div>
 </div>
 
@@ -746,6 +753,9 @@ function preparerTextes() {
   const tc = H * .135;
   CHIF.chaine = chiffresStyle({taille: tc, poids: 900, remplissage: IRISE, contours: [[.12, '#0b1630'], [.045, 'rgba(255,255,255,.95)']], lueur: [tc * .13, 'rgba(110,230,255,.85)'], penche: .2});
   TXT.CHAIN = stylise('CHAIN', {taille: tc * .34, poids: 900, remplissage: CHROME, contours: [[.17, '#0b1e2e']], lueur: [tc * .34 * .3, 'rgba(110,230,255,.9)']});
+  const td = H * .5;
+  CHIF.decompte = {};
+  for (const ch of '321') CHIF.decompte[ch] = stylise(ch, {taille: td, poids: 900, remplissage: IRISE, contours: [[.1, '#0b1630'], [.04, 'rgba(255,255,255,.95)']], lueur: [td * .08, 'rgba(110,230,255,.85)']});
   CHIF.petit = chiffresStyle({taille: H * .036, poids: 700, remplissage: DEGRADE('#ffffff', '#e6e6e6'), contours: [[.18, '#2a1a08']]});
   cacheHud = {};
 }
@@ -923,6 +933,11 @@ function bande(lane, s0, s1, w) {
    ============================================================ */
 let etat = 'menu', notes = [], prochaine = 0, total = 0;
 let score = 0, points = 0, combo = 0, comboMax = 0, hp = 100, comptes = {};
+// Score : 9 999 999 pour une partie parfaite (tout en Critical), quel que soit le morceau.
+// scoreBrut = somme des notes réussies, chacune pesée par le Critical/Great/Good et par la chaîne (jusqu'à 120) ;
+// poidsMax = ce que vaudrait le morceau joué parfaitement.
+const SCORE_MAX = 9999999;
+let scoreBrut = 0, poidsMax = 1;
 let effets = [], textes = [], appuis = [0, 0, 0, 0], autoStart = 0;
 let coffres = 0, coffresMax = 0, jauge = 0, JAUGE_MAX = 30;
 // Mis de côté à la demande de Kiki (14/11), le code est gardé pour plus tard :
@@ -934,6 +949,8 @@ function nouvellePartie() {
   notes = niveau.notes().map(n => ({...n, fait: false, tete: false, queue: false, tenu: false, geste: false}));
   total = notes.reduce((s, n) => s + (n.type === 'hold' ? 2 : 1), 0);
   prochaine = 0; score = 0; points = 0; combo = 0; comboMax = 0; hp = 100;
+  scoreBrut = 0; poidsMax = 0;
+  for (let k = 1; k <= total; k++) poidsMax += 1 + Math.min(k, 120) / 240;
   comptes = {CRITICAL: 0, GREAT: 0, GOOD: 0, MISS: 0};
   effets = []; textes = []; gestes.clear();
   // coffres : quelques notes rouges portent un coffre ; on l'attrape avec un Critical ou un Great
@@ -955,7 +972,8 @@ function noter(j, n) {
   else {
     combo++; comboMax = Math.max(comboMax, combo); comboAge = 0;
     points += MULT[j];
-    score += Math.round(MULT[j] * 1000000 / total * (1 + Math.min(combo, 120) / 240));
+    scoreBrut += MULT[j] * (1 + Math.min(combo, 120) / 240);
+    score = Math.min(SCORE_MAX, Math.round(scoreBrut / poidsMax * SCORE_MAX));
     if (j === 'CRITICAL') hp = Math.min(100, hp + 1);
     if (navigator.vibrate && !AUTO) try { navigator.vibrate(j === 'CRITICAL' ? 18 : 10); } catch (e) {}
     jauge += j === 'CRITICAL' ? 1 : j === 'GREAT' ? .6 : .3;
@@ -1078,8 +1096,9 @@ function boucle(now) {
   if (cale60 && now - dernier < 12) return;
   const brut = now - dernier, dt = Math.min(.05, brut / 1000); dernier = now;
   if (etat === 'jeu') { programmer(); synchroniser(); mettreAJour(now / 1000 + ecartHorloge, dt); surveiller(brut); }
+  else if (etat === 'decompte' && performance.now() - decompte.debut >= 3 * PAS_DECOMPTE * 1000) finDecompte();
   const t1 = performance.now();
-  dessiner(etat === 'menu' ? -10 : tempsCourant, dt, now / 1000);
+  dessiner(etat === 'menu' ? -10 : tempsCourant, etat === 'decompte' ? 0 : dt, now / 1000);   // pendant le décompte, tout est figé (dt = 0)
   if (FPS) compteur(brut, performance.now() - t1);
 }
 /* Surveillance de la fluidité pendant la partie */
@@ -1284,6 +1303,7 @@ function dessiner(st, dt, horloge) {
     g.globalAlpha = 1;
   }
   if (etat !== 'menu') hud(st, dt);
+  if (etat === 'decompte') dessinerDecompte();
 }
 
 /* ============================================================
@@ -1596,7 +1616,7 @@ function hud(st, dt) {
    ============================================================ */
 const EQUIPE = ['heros-vert', 'princesse', 'colosse', 'princesse-eaux'];
 let poupees = [], poupeesEchelle = 0;
-function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) { equipeAPrepar = true; if (etat !== 'jeu') preparerEquipe(true); preparerCapitaine(true); peindreFond(); } }); }
+function chargerImagesPersos() { if (cle && window.Poupee) Poupee.chargerImages(cle).then(neuf => { if (neuf) { equipeAPrepar = true; if (etat !== 'jeu' && etat !== 'decompte') preparerEquipe(true); preparerCapitaine(true); peindreFond(); } }); }
 /* Pour la fluidité, la marche de chaque perso est pré-dessinée en IMAGES_MARCHE images au début de la partie :
    pendant le morceau, un perso = une seule image à recopier (au lieu de ~22 pièces à placer une par une).
    Indispensable pour avoir 4 persos et des monstres à l'écran sans ralentir. */
@@ -1634,8 +1654,8 @@ function preparerEquipe(force) {
 }
 function dessinerEquipe(st, horloge) {
   if (!window.Poupee) return;
-  if (!poupees.length || (equipeAPrepar && etat !== 'jeu')) preparerEquipe(true);
-  const taille = H * .29, sol = H * .885, enRoute = etat === 'jeu' && st > niveau.avance;
+  if (!poupees.length || (equipeAPrepar && etat !== 'jeu' && etat !== 'decompte')) preparerEquipe(true);
+  const taille = H * .29, sol = H * .885, enRoute = (etat === 'jeu' || etat === 'decompte') && st > niveau.avance;
   // un pas par temps de la musique
   const u = ((st - niveau.debut) / niveau.temps / 2 % 1 + 1) % 1, pose = enRoute ? null : Poupee.poseA('attente', horloge);
   for (let i = 0; i < poupees.length; i++) {
@@ -1689,13 +1709,106 @@ function bloquerRetour() {
 }
 addEventListener('popstate', () => {
   retourPiege = false;
-  if (etat === 'jeu' || etat === 'pause') bloquerRetour();
+  if (etat === 'jeu' || etat === 'pause' || etat === 'decompte') bloquerRetour();
 });
+/* Pause, puis reprise avec un décompte 3-2-1 : le son (actx suspendu) et les notes (dt = 0) restent figés pendant
+   le décompte ; à la fin, le son repart et l'horloge est resynchronisée. Les chiffres sont pré-dessinés (CHIF.decompte). */
+const PAS_DECOMPTE = .8;   // secondes par chiffre
+let decompte = null, debutPause = 0;
 function mettrePause() {
-  if (etat !== 'jeu' || AUTO) return;
-  etat = 'pause'; actx.suspend(); oublierHorloge(); afficher('pause');
+  if ((etat !== 'jeu' && etat !== 'decompte') || AUTO) return;
+  if (etat === 'jeu') debutPause = performance.now();
+  decompte = null; etat = 'pause'; actx.suspend(); oublierHorloge(); afficher('pause');
 }
-function reprendre() { oublierHorloge(); etat = 'jeu'; actx.resume(); afficher(null); }
+function reprendre() {
+  if (etat !== 'pause') return;
+  decompte = {debut: performance.now()}; etat = 'decompte'; afficher(null);
+}
+function finDecompte() {
+  const duree = performance.now() - debutPause;
+  for (const ge of gestes.values()) if (ge.age) ge.age += duree;   // un glissé commencé avant la pause n'est pas jugé trop lent
+  decompte = null; oublierHorloge(); etat = 'jeu'; actx.resume();
+}
+function dessinerDecompte() {
+  const e = (performance.now() - decompte.debut) / 1000 / PAS_DECOMPTE, k = Math.max(0, Math.min(2, Math.floor(e))), u = Math.min(1, e - k);
+  const sortie = k === 2 ? Math.min(1, (1 - u) * 4) : 1;   // le dernier chiffre s'efface en laissant place au jeu
+  g.globalAlpha = .4 * sortie; g.fillStyle = '#02080a'; g.fillRect(0, 0, W, H);
+  const img = CHIF.decompte[3 - k], pop = 1 + .45 * (1 - doux(u / .4)), cx = W / 2, cy = H * .5;
+  g.globalAlpha = sortie;
+  g.drawImage(img, cx - (img.avance / 2 + img.marge) * pop, cy - (img.base - img.t * .36) * pop, img.l * pop, img.h * pop);
+  g.globalAlpha = 1;
+}
+
+/* Records : gardés sur le téléphone (localStorage, chaque accès dans un try/catch), par morceau et par difficulté.
+   Format : {morceau: {normal: {score, rang, combo, full}}} ; chaque valeur est le meilleur résultat obtenu séparément
+   (meilleur score, meilleur rang, meilleur combo, Full combo oui/non). Une seule difficulté pour l'instant (« normal ») :
+   le chantier 1.1 (3 difficultés) n'aura qu'à changer DIFFICULTE. Seules les parties terminées comptent. */
+const DIFFICULTE = 'normal', CLE_RECORDS = 'rythme-records', RANGS = ['D', 'C', 'B', 'A', 'S'];
+let recordsMemoire = {};   // si le téléphone refuse localStorage (navigation privée…), on garde au moins ça jusqu'au rechargement
+function lireRecords() {
+  try {
+    const r = JSON.parse(localStorage.getItem(CLE_RECORDS) || '{}');
+    if (r && typeof r === 'object') return recordsMemoire = r;
+  } catch (e) {}
+  return recordsMemoire;
+}
+function recordDe(id, dif = DIFFICULTE) {
+  const r = (lireRecords()[id] || {})[dif];
+  if (!r || typeof r !== 'object' || !(r.score >= 0) || !RANGS.includes(r.rang)) return null;
+  return {score: Math.round(r.score), rang: r.rang, combo: r.combo > 0 ? Math.round(r.combo) : 0, full: r.full === true};
+}
+// enregistre un résultat ; rend l'ancien record et ce qui vient d'être battu
+function enregistrerRecord(id, res, dif = DIFFICULTE) {
+  const ancien = recordDe(id, dif), plus = (a, b) => !ancien || a > b;
+  const bat = {
+    score: plus(res.score, ancien && ancien.score),
+    rang: plus(RANGS.indexOf(res.rang), ancien && RANGS.indexOf(ancien.rang)),
+    combo: plus(res.combo, ancien && ancien.combo),
+    full: res.full && !(ancien && ancien.full),
+  };
+  if (bat.score || bat.rang || bat.combo || bat.full) {
+    const tous = lireRecords();
+    tous[id] = Object.assign({}, tous[id], {[dif]: {
+      score: bat.score ? res.score : ancien.score,
+      rang: bat.rang ? res.rang : ancien.rang,
+      combo: bat.combo ? res.combo : ancien.combo,
+      full: !!(res.full || (ancien && ancien.full)),
+    }});
+    recordsMemoire = tous;
+    try { localStorage.setItem(CLE_RECORDS, JSON.stringify(tous)); } catch (e) {}
+  }
+  return {ancien, bat};
+}
+const espaces = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const texteRecord = r => `${espaces(r.score)} · rang ${r.rang} · combo ${r.combo}${r.full ? ' · Full combo' : ''}`;
+// ligne de record sous chaque morceau du menu
+function majRecords() {
+  for (const b of $('niveaux').children) {
+    const el = b.querySelector('.rec'); if (!el) continue;
+    const r = recordDe(b.dataset.n);
+    el.textContent = r ? `Record : ${texteRecord(r)}` : '';
+  }
+}
+// bloc « Nouveau record ! » de l'écran de fin
+function afficherRecord(res) {
+  const {ancien, bat} = res, bloc = $('recordFin'), titre = $('recordTitre'), detail = $('recordDetail');
+  const autres = [];
+  if (ancien && bat.rang && !bat.score) autres.push('Meilleur rang !');
+  if (ancien && bat.combo && !bat.score) autres.push('Meilleur combo !');
+  if (ancien && bat.full) autres.push('Premier Full combo !');
+  if (bat.score) {
+    titre.textContent = 'Nouveau record !';
+    detail.textContent = ancien ? `Ancien record : ${texteRecord(ancien)}` : 'Premier score enregistré';
+  } else if (autres.some(Boolean)) {
+    titre.textContent = autres.filter(Boolean).join(' · ');
+    detail.textContent = `Record à battre : ${texteRecord(ancien)}`;
+  } else {
+    titre.textContent = '';
+    detail.textContent = ancien ? `Record à battre : ${texteRecord(ancien)}` : '';
+  }
+  bloc.classList.toggle('cache', !titre.textContent && !detail.textContent);
+}
+
 function terminer(gagne) {
   etat = 'fin';
   if (bus) bus.gain.setTargetAtTime(0, actx.currentTime, gagne ? .6 : .05);
@@ -1703,8 +1816,11 @@ function terminer(gagne) {
   const acc = points / total;
   const rang = !gagne ? 'D' : acc >= .95 ? 'S' : acc >= .85 ? 'A' : acc >= .7 ? 'B' : acc >= .5 ? 'C' : 'D';
   $('finTitre').textContent = gagne ? (comptes.MISS === 0 ? 'Full combo !' : 'Bravo !') : 'Raté…';
-  $('rang').textContent = rang; $('rScore').textContent = score;
+  $('rang').textContent = rang; $('rScore').textContent = espaces(score);
   $('rCrit').textContent = comptes.CRITICAL; $('rGreat').textContent = comptes.GREAT; $('rGood').textContent = comptes.GOOD; $('rMiss').textContent = comptes.MISS; $('rCombo').textContent = comboMax; $('rCoffres').textContent = `${coffres} / ${coffresMax}`; $('ligneCoffres').classList.toggle('cache', !coffresMax);
+  // record : seulement une partie terminée et jouée pour de vrai (pas ?auto, qui sert aux tests)
+  if (gagne && !AUTO) { afficherRecord(enregistrerRecord(niveau.id, {score, rang, combo: comboMax, full: comptes.MISS === 0})); majRecords(); }
+  else $('recordFin').classList.add('cache');
   setTimeout(() => afficher('fin'), gagne ? 600 : 300);
 }
 $('menu').onclick = () => { etat = 'menu'; afficher('accueil'); };
@@ -1761,12 +1877,13 @@ function construireMenu() {
     NIVEAUX[n.id] = {id: n.id, nom: n.titre, mp3: true, info: n};
     const b = document.createElement('button');
     b.className = 'niv'; b.dataset.n = n.id;
-    b.innerHTML = `${echap(n.titre)}<small>${echap(n.jeu)} · ${n.notes} notes</small>`;
+    b.innerHTML = `${echap(n.titre)}<small>${echap(n.jeu)} · ${n.notes} notes</small><small class="rec"></small>`;
     box.insertBefore(b, box.lastElementChild);
   }
   for (const b of box.children) b.onclick = () => choisirNiveau(b.dataset.n);
   let dernier = null; try { dernier = localStorage.getItem('jeu-rythme-niveau'); } catch (e) {}
   choisirNiveau(dernier || (catalogue.niveaux[0] && catalogue.niveaux[0].id) || 'foret');
+  majRecords();
 }
 
 // prépare un niveau en ligne : partition, puis musique (cache du téléphone, sinon téléchargement), déchiffrée
@@ -1870,6 +1987,7 @@ $('perfs').onchange = e => { FPS = reglages.performances = e.target.checked; if 
 $('decalage').value = reglages.decalage; $('decalageVal').textContent = reglages.decalage;
 $('decalage').oninput = e => { reglages.decalage = +e.target.value; $('decalageVal').textContent = reglages.decalage; sauver(); };
 
+majRecords();
 miseEnPage();
 chargerPolices().then(() => miseEnPage());   // les textes du HUD sont redessinés avec les bonnes polices
 demarrer();

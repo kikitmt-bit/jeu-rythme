@@ -28,6 +28,7 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 | `outils/analyse/` | Analyse audio (numpy + scipy) : `base`, `grid`, `notes`, `partition_gff`, `verif`. **Seule version à jour** (le cerveau n'a plus que des renvois) |
 | `outils/persos/` | `capture.js` (captures de l'atelier, `MDP=…` pour les images chiffrées), `comparer.py` (modèle de Kiki / poupée côte à côte) |
 | `outils/perf/mesure.js` | Coût d'une image (rendu logiciel) |
+| `outils/tests/` | `records-pause.js` (pause, décompte 3-2-1, records), `partie-auto.js` (partie simulée complète, doit donner 9 999 999) |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
 ## Règles absolues
@@ -45,6 +46,9 @@ y : t = taper, h = tenue (compte 2 dans le combo : tête + queue), s = glissé.
 ## Gameplay (décisions de Kiki)
 - Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas pour les pouces). **Pas de portrait** : un écran demande de tourner le téléphone et la partie se met en pause.
 - On touche **n'importe où** (le moment compte, pas l'endroit), 1 ou 2 pouces. Surtout une note à la fois ; doubles (barre **bleue**) et tenue d'un pouce + tape de l'autre aux moments forts. Le geste « retour » d'Android est ignoré en partie.
+- **Score** (16/11) : 9 999 999 pour une partie parfaite (tout en Critical), quel que soit le morceau (`SCORE_MAX`, `scoreBrut` / `poidsMax`).
+- **Records** (16/11) : sur le téléphone, `localStorage` clé `rythme-records` = `{morceau: {normal: {score, rang, combo, full}}}` (meilleur de chaque, séparément ; une clé par difficulté, `DIFFICULTE = 'normal'` pour le chantier 1.1). Seules les parties **terminées** comptent, et pas `?auto`. L'écran de fin dit « Nouveau record ! » avec l'ancien ; le menu montre le record sous chaque morceau. Tests : `outils/tests/records-pause.js` (pause, décompte, records) et `outils/tests/partie-auto.js` (partie simulée complète).
+- **Pause** : à la reprise, décompte 3-2-1 (`etat = 'decompte'`, `PAS_DECOMPTE` 0,8 s par chiffre) : son suspendu et notes figées (dt = 0), chiffres pré-dessinés (`CHIF.decompte`), horloge resynchronisée à la fin (`finDecompte`). Toucher le bandeau pendant le décompte redonne la pause.
 - Notes façon Final Bar Line : rond rouge à point blanc (taper), vert + bande (maintenir), doré avec grande flèche blanche (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
 - **HUD façon Final Bar Line** : pistes = fins traits blancs, cibles = gros anneaux à droite (x = W − 0,298 H, pistes de 0,2 H à 0,554 H) ; bandeau du titre en haut à gauche (jaquette, difficulté selon notes/s : Facile < 1,5, Normal < 2,5, Difficile < 3,5, Expert ; **toucher le bandeau = pause**) ; chaîne en haut au centre, score en haut à droite, barre TIME en bas, panneau du capitaine (`EQUIPE[0]`) en bas à droite. Critical = cercle magique de la couleur de la note.
   Coffres sur les notes et coup spécial : codés puis **mis de côté par Kiki le 14/11** (`COFFRES_SUR_NOTES = false`, `COUP_SPECIAL = false`, code gardé). Détails : PERSOS-HISTORIQUE.md.
