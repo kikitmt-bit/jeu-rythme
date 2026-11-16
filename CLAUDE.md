@@ -30,9 +30,10 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 | `persos/pieces.js` | Pièces : coiffures, coiffes, tenues, armes, boucliers |
 | `persos/fiches.js` | Les personnages : une fiche = des pièces + des couleurs |
 | `atelier.html` | Atelier des persos (voir un perso, ses animations, ombrage, squelette) |
+| `atelier-menu.html` + `atelier-menu.js` | **Maquette du menu** (chantier 2.1, rien de branché au jeu) : titre, menu principal, morceaux, équipe, résultats animés, options ; `?ecran=titre\|menu\|morceaux\|equipe\|resultats\|options`, `&fige` = animations arrêtées (captures). Lit records, réglages et clé du téléphone, n'écrit rien. Persos en films pré-dessinés (16 images par animation, une image recopiée par perso) |
 | `images/persos.bin` | Images fournies par Kiki (épée et bouclier du héros, emblème de la princesse des eaux, triforce), **chiffrées** : JSON `{nom.png: PNG base64}`, paquet `?v=4`. Sans mot de passe : losange doré. Ajouter une image = **redonner toutes les images** à `chiffrer.py images` (paquet réécrit en entier : déchiffrer l'ancien d'abord) |
 | `decors/<id>.webp` | Décor fixe de chaque niveau (1536×1024, fait avec ChatGPT par Kiki), déclaré dans `DECORS`, peint une seule fois dans le fond. Image immobile ; changer `?v=` si elle change. Prompt en 3 blocs : voir le CONTEXTE du cerveau |
-| `polices/` | Polices du HUD (OFL) : Cinzel 700/900, Libre Baskerville 700 |
+| `polices/` | Polices (OFL) : Cinzel 700/900, Libre Baskerville 700 (HUD) ; M PLUS Rounded 1c 700/800 (menus, typo ronde, via fontsource) |
 | `reserve/solarus-alttp-pack.zip.bin` | Réserve **chiffrée** du pack Solarus ALTTP envoyé par Kiki, pour piocher plus tard |
 | `outils/chiffrer.py` | Verrouille musiques (`morceau`), images (`images`), fichiers (`fichier`) ; `changer` = nouveau mot de passe |
 | `outils/analyse/` | Analyse audio (numpy + scipy) : `base`, `grid`, `notes`, `partition_gff`, `verif`. **Seule version à jour** (le cerveau n'a plus que des renvois) |

@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0c2669">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Maquette du menu</title>
+<!--
+  MAQUETTE du menu (chantier 2.1) : rien ici n'est branché au jeu. Elle sert à valider le look avec Kiki,
+  puis le chantier 2.2 la reproduira dans index.html.
+  Direction artistique (16/11, d'après 5 captures de menus de Kiki, gardées dans le cerveau, jamais ici) :
+  claire et joyeuse, panneaux arrondis blancs ou crème bordés d'or, rubans et onglets, pastilles bleues,
+  fonds dégradés bleu-turquoise étoilés, typo grasse et ronde (M PLUS Rounded 1c, licence OFL, polices/),
+  nos 4 persos dessinés par le code (persos/), nos jaquettes aux couleurs du morceau, nos propres icônes.
+  Mesures : tout est en rem, 1 rem = 10 px quand l'écran fait 892×412 (Pixel 7 Pro en paysage, plein écran).
+  Adresse : atelier-menu.html?ecran=titre|menu|morceaux|equipe|resultats|options (&fige = animations arrêtées, pour les captures).
+-->
+<style>
+@font-face{font-family:Rond;src:url(polices/m-plus-rounded-1c-800.woff2) format('woff2');font-weight:800;font-display:block}
+@font-face{font-family:Rond;src:url(polices/m-plus-rounded-1c-700.woff2) format('woff2');font-weight:700;font-display:block}
+@font-face{font-family:Cinzel;src:url(polices/cinzel-700.woff2) format('woff2');font-weight:700;font-display:block}
+@font-face{font-family:Cinzel;src:url(polices/cinzel-900.woff2) format('woff2');font-weight:900;font-display:block}
+:root{
+  --navy:#0c2669;--navy2:#16409c;--nuit:#081a4c;
+  --or1:#fff4c2;--or2:#ffd65c;--or3:#eda021;--or4:#a5620a;--orbord:#e8b84c;
+  --creme:#fffaf0;--creme2:#f6ecd6;
+  --bleu:#2f7fe6;--turq:#36cfd6;
+  --gold:linear-gradient(#fff6cf,#ffd65c 48%,#f0a020 52%,#ffcf55);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* 1 rem = 10 px à 892×412 ; la largeur peut descendre jusqu'à ~790 (iPhone avec l'encoche) sans rien couper */
+html{font-size:min(calc(100vh / 41.2), calc(100vw / 79));height:100%}
+@supports (height:100dvh){html{font-size:min(calc(100dvh / 41.2), calc((100dvw - env(safe-area-inset-left) - env(safe-area-inset-right)) / 79))}}
+body{margin:0;height:100%;overflow:hidden;background:#081a4c;font-family:Rond,system-ui,sans-serif;font-weight:800;color:#fff;
+  touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;border:0;background:none;padding:0;margin:0;cursor:pointer;touch-action:manipulation;text-align:inherit}
+svg{display:block}
+.ecran{position:fixed;inset:0;display:none;overflow:hidden}
+.ecran.actif{display:block;animation:entree .28s ease-out}
+@keyframes entree{from{opacity:0}to{opacity:1}}
+/* zone utile (hors encoche de l'iPhone) */
+.cadre{position:absolute;top:0;bottom:0;left:env(safe-area-inset-left);right:env(safe-area-inset-right)}
+/* textes cerclés (contour plein) */
+.ct{--b:#0b2466;text-shadow:.17rem 0 0 var(--b),-.17rem 0 0 var(--b),0 .17rem 0 var(--b),0 -.17rem 0 var(--b),.12rem .12rem 0 var(--b),-.12rem .12rem 0 var(--b),.12rem -.12rem 0 var(--b),-.12rem -.12rem 0 var(--b),0 .32rem 0 var(--b)}
+.ct-fin{--b:#0b2466;text-shadow:.1rem 0 0 var(--b),-.1rem 0 0 var(--b),0 .1rem 0 var(--b),0 -.1rem 0 var(--b),0 .2rem 0 var(--b)}
+/* textes en dégradé avec contour : data-t = le même texte */
+.grad{position:relative;display:inline-block;white-space:nowrap;color:var(--b,#3b1d00);-webkit-text-stroke:var(--e,.7rem) var(--b,#3b1d00)}
+.grad::after{content:attr(data-t);position:absolute;left:0;right:0;top:0;text-align:inherit;-webkit-text-stroke:0;background:var(--g,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ico{width:100%;height:100%;fill:currentColor}
+
+/* ---------- pièces communes ---------- */
+/* onglet du titre, en haut à gauche, avec le bouton retour */
+.onglet{position:absolute;left:0;top:.8rem;height:4.8rem;display:flex;align-items:center;gap:1rem;padding:0 5.2rem 0 1.2rem;
+  background:linear-gradient(#1d4cb0,#0c2669 70%);border-top:.2rem solid #6f9cff;border-bottom:.2rem solid #061640;
+  clip-path:polygon(0 0,calc(100% - 2rem) 0,100% 50%,calc(100% - 2rem) 100%,0 100%);font-size:2.5rem;z-index:5}
+.onglet .chev{position:absolute;right:2.6rem;top:50%;width:1.8rem;height:2.4rem;margin-top:-1.2rem;color:var(--or2)}
+.retour{width:4.8rem;height:4.8rem;flex:none;border-radius:50%;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 35%,#fffbe6,#ffd35a 60%,#e39318);border:.25rem solid #fff;
+  box-shadow:0 .25rem 0 #7a4300,0 0 0 .15rem #7a4300;color:#5a2c00}
+.retour svg{width:2.4rem;height:2.4rem}
+.retour:active{transform:translateY(.2rem);box-shadow:0 .05rem 0 #7a4300,0 0 0 .15rem #7a4300}
+/* pastille bleue */
+.pastille{display:flex;align-items:center;gap:.5rem;height:2.6rem;padding:0 1.1rem;border-radius:1.3rem;font-size:1.25rem;white-space:nowrap;
+  background:linear-gradient(#4f9bff,#1d5fd0 55%,#1449b0);box-shadow:inset 0 .15rem 0 rgba(255,255,255,.45),0 .2rem 0 #0b2f80;overflow:hidden;text-overflow:ellipsis}
+.pastille svg{width:1.5rem;height:1.5rem;flex:none;fill:#ffe48a}
+/* ruban à bouts repliés */
+.ruban{position:relative;display:inline-flex;align-items:center;justify-content:center;height:2rem;padding:0 1.2rem;font-size:1.15rem;letter-spacing:.06em;color:#fff;white-space:nowrap;
+  background:linear-gradient(var(--r1),var(--r2));clip-path:polygon(0 0,100% 0,calc(100% - .7rem) 50%,100% 100%,0 100%,.7rem 50%)}
+.ruban.or{--r1:#ffe58a;--r2:#d48a12;color:#5a2c00}
+.ruban.bleu{--r1:#62b0ff;--r2:#1a56c8}
+/* barre d'aide, en bas */
+.aide{position:absolute;left:1.4rem;right:1.4rem;bottom:.8rem;height:3rem;border-radius:1.5rem;display:flex;align-items:center;gap:1rem;padding:0 1.8rem;
+  background:linear-gradient(#173f99,#0b2668);border:.2rem solid #dbe6ff;font-size:1.4rem;font-weight:700;box-shadow:0 .2rem .6rem rgba(0,0,0,.35);z-index:6}
+.aide .note{width:1.6rem;height:2rem;flex:none;color:var(--or2)}
+/* bulle de dialogue */
+.bulle{position:absolute;background:#fffdf3;color:#2b2d3f;border-radius:1.6rem;padding:.7rem 1.6rem;font-size:1.4rem;font-weight:800;white-space:nowrap;
+  box-shadow:0 .3rem 0 rgba(0,0,0,.18);transform-origin:50% 120%}
+.bulle::after{content:"";position:absolute;left:var(--q,50%);bottom:-1rem;width:2rem;height:1.2rem;margin-left:-1rem;background:#fffdf3;clip-path:polygon(25% 0,75% 0,40% 100%)}
+.bulle.pop{animation:bullePop .35s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes bullePop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+/* message éphémère */
+#toast{position:fixed;left:50%;top:1.2rem;transform:translate(-50%,-250%);visibility:hidden;z-index:50;padding:1rem 2rem;border-radius:2rem;background:#0b2668;border:.2rem solid #ffd35a;font-size:1.5rem;
+  box-shadow:0 .4rem 1.2rem rgba(0,0,0,.4);transition:transform .25s ease-out;white-space:nowrap}
+#toast.vu{transform:translate(-50%,0);visibility:visible}
+.marque{position:absolute;font-size:1rem;font-weight:700;opacity:.55;letter-spacing:.08em;text-transform:uppercase;pointer-events:none}
+canvas.fig{position:absolute;pointer-events:none}
+
+/* ---------- 0 · écran titre ---------- */
+#titre{background:#0e2a3a center/cover no-repeat}
+#titre .voile{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,rgba(255,255,255,.12),rgba(8,20,60,.35) 85%)}
+#titre .logo{position:absolute;left:50%;top:3.4rem;transform:translateX(-50%) rotate(-3deg);text-align:center}
+#titre .logo .grad{font-size:6.4rem;--e:1.4rem;--b:#0b2466;filter:drop-shadow(0 .5rem 0 rgba(4,14,50,.55))}
+#titre .logo .sous{display:block;margin-top:.2rem;font-size:1.7rem;letter-spacing:.35em}
+#titre .logo .n{position:absolute;width:4rem;height:5rem;color:#fff;filter:drop-shadow(0 .25rem 0 #0b2466)}
+#titre .toucher{position:absolute;left:50%;top:19.2rem;transform:translateX(-50%);padding:1rem 3rem;border-radius:3rem;font-size:2rem;
+  background:rgba(8,26,76,.78);border:.25rem solid #fff;animation:clignote 1.6s ease-in-out infinite;white-space:nowrap}
+@keyframes clignote{0%,100%{opacity:1}50%{opacity:.35}}
+#titre .version{right:1.4rem;bottom:1rem}
+
+/* ---------- 1 · menu principal ---------- */
+#menu{background:linear-gradient(#0a1e5e,#14348c 45%,#0b215f 78%,#071640)}
+#menu .mosaique{position:absolute;inset:0;background-size:48rem 26rem;opacity:.9}
+#menu .lumiere{position:absolute;will-change:transform;top:-2rem;width:22rem;height:44rem;background:linear-gradient(rgba(255,250,215,.32),rgba(255,250,215,0) 85%);
+  clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);transform-origin:50% 0;animation:balaye 7s ease-in-out infinite alternate;pointer-events:none}
+@keyframes balaye{from{transform:rotate(var(--a1))}to{transform:rotate(var(--a2))}}
+#menu .sol{position:absolute;left:0;right:0;bottom:0;height:13rem;background:radial-gradient(ellipse 60% 70% at 50% 40%,rgba(120,150,255,.22),rgba(0,0,0,0) 70%),linear-gradient(rgba(10,14,40,0),rgba(8,10,30,.75))}
+#menu .lambrequin{position:absolute;left:0;right:0;top:0;height:3.4rem;background-size:12rem 3.4rem;background-repeat:repeat-x;z-index:1}
+#menu .confetti{position:absolute;width:1rem;height:.9rem;clip-path:polygon(50% 0,100% 100%,0 100%);animation:flotte 6s ease-in-out infinite alternate}
+@keyframes flotte{from{transform:translateY(0) rotate(0)}to{transform:translateY(-1.6rem) rotate(80deg)}}
+#menu .panneau{position:absolute;left:1.4rem;right:1.4rem;top:3rem;height:15rem;border-radius:3rem 2.4rem 2.4rem 3rem;background:#fff;z-index:2;
+  box-shadow:0 .5rem 0 rgba(0,0,0,.22),inset 0 0 0 .55rem #fff,inset 0 0 0 .8rem var(--orbord),inset 0 -1.4rem 2rem rgba(200,210,235,.25)}
+#menu .portee{position:absolute;left:2rem;right:2rem;top:5.2rem;height:4.7rem;background:repeating-linear-gradient(#d9deeb 0 .15rem,transparent .15rem 1.1rem)}
+#menu .onglet-or{position:absolute;left:50%;top:.6rem;transform:translateX(-50%);z-index:4;padding:.3rem 2.4rem .5rem;border-radius:.8rem;
+  background:linear-gradient(#4b2f0c,#22140a);border:.22rem solid var(--orbord);box-shadow:0 .25rem 0 rgba(0,0,0,.35)}
+#menu .onglet-or .grad{font-size:2rem;--e:.5rem;--b:#2a1704;letter-spacing:.12em}
+#menu .bannieres{position:absolute;left:2.6rem;right:15.4rem;top:0;bottom:0;display:flex;justify-content:space-between;gap:2.4rem;align-items:flex-end;padding-bottom:1.3rem}
+.banniere{position:relative;flex:1 1 0;max-width:21rem;min-width:0;height:13.4rem;display:block}
+.banniere .medaillon{position:absolute;left:50%;top:.6rem;width:11.4rem;height:11.4rem;margin-left:-5.7rem;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,#3d4466,#151a2e 75%);box-shadow:0 0 0 .5rem var(--c2),0 0 0 .85rem #fff,0 .4rem .4rem .85rem rgba(0,0,0,.18)}
+.banniere canvas{position:absolute;left:50%;top:-5.4rem;width:21rem;height:17.4rem;margin-left:-10.5rem;pointer-events:none}
+.roue-med{position:absolute;left:50%;top:50%;width:8.6rem;height:8.6rem;margin:-4.9rem 0 0 -4.3rem;animation:tourne 14s linear infinite;will-change:transform;filter:drop-shadow(0 .2rem .2rem rgba(0,0,0,.4))}
+@keyframes tourne{to{transform:rotate(1turn)}}
+.croche-med{position:absolute;left:55%;top:44%;width:3.6rem;height:4.2rem;fill:#fff;filter:drop-shadow(0 .15rem .2rem rgba(0,0,0,.5))}
+.banniere .bande{position:absolute;left:.4rem;right:.4rem;bottom:0;height:4.2rem}
+.banniere .bande::before,.banniere .bande::after{content:"";position:absolute;bottom:-.7rem;width:3.4rem;height:3.4rem;background:var(--c3);
+  clip-path:polygon(0 0,100% 0,100% 100%,0 100%,1rem 50%)}
+.banniere .bande::before{left:-1.4rem}
+.banniere .bande::after{right:-1.4rem;transform:scaleX(-1)}
+.banniere .bande span{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;font-size:2.3rem;letter-spacing:.02em;
+  background:linear-gradient(var(--c1),var(--c2) 60%,var(--c3));border:.22rem solid #fff;border-radius:.3rem;--b:var(--c4)}
+.banniere.verte{--c1:#7ff07c;--c2:#24b23e;--c3:#14802a;--c4:#0b4e18}
+.banniere.rouge{--c1:#ff8f86;--c2:#e2333a;--c3:#a5161f;--c4:#5e0a10}
+.banniere.bleue{--c1:#7cc4ff;--c2:#2a7ff0;--c3:#1550c0;--c4:#0b2f78}
+.banniere:active{transform:scale(.96)}
+.banniere.choisie .medaillon{box-shadow:0 0 0 .5rem var(--c2),0 0 0 .85rem #fff,0 0 2.2rem 1.2rem rgba(120,255,140,.55)}
+.etincelle{position:absolute;width:1.6rem;height:1.6rem;color:#fff8c0;animation:scintille 1.4s ease-in-out infinite;pointer-events:none;filter:drop-shadow(0 0 .3rem #fff)}
+@keyframes scintille{0%,100%{transform:scale(.3);opacity:.2}50%{transform:scale(1);opacity:1}}
+#menu .icones{position:absolute;right:2.2rem;top:0;bottom:0;display:flex;gap:1.2rem;align-items:center}
+.rondbtn{display:flex;flex-direction:column;align-items:center;gap:.4rem;width:6.2rem;color:#4b4f63;font-size:1.15rem;line-height:1.1;font-weight:800;text-align:center}
+.rondbtn .rond{width:5.8rem;height:5.8rem;border-radius:50%;display:grid;place-items:center;color:var(--or2);
+  background:radial-gradient(circle at 50% 35%,#4a4a4a,#191919 70%);border:.32rem solid #8e8e8e;box-shadow:inset 0 0 0 .2rem #2a2a2a,0 .3rem 0 rgba(0,0,0,.25)}
+.rondbtn .rond svg{width:2.9rem;height:2.9rem}
+.rondbtn.bientot .rond{color:#8d8d8d;background:radial-gradient(circle at 50% 35%,#5a5a5a,#2c2c2c 70%);border-style:dashed}
+.rondbtn:active .rond{transform:scale(.94)}
+#menu .scene{position:absolute;left:0;right:0;top:18rem;bottom:4rem}
+.socle{position:absolute;width:12rem;height:3.2rem;margin-left:-6rem;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 45%,rgba(255,255,255,.95),var(--s) 32%,rgba(0,0,0,0) 72%);box-shadow:0 0 2.2rem .2rem var(--s);opacity:.92}
+#menu .aide{bottom:.7rem}
+
+/* ---------- 2 · choix du morceau ---------- */
+#morceaux{background:radial-gradient(ellipse 55% 60% at 50% 42%,#4a9cff,rgba(30,90,230,0) 70%),linear-gradient(#1747c4,#2563de 40%,#1a4bc6 70%,#123a9e)}
+.etoiles{position:absolute;inset:0;background-size:26rem 26rem;pointer-events:none}
+#morceaux .tete{position:absolute;left:1.8rem;top:6.6rem;width:31rem}
+#morceaux .tete .t{font-size:2.9rem;line-height:1.15;white-space:normal}
+#morceaux .tete .j{margin-top:.8rem;font-size:1.35rem;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
+#morceaux .difs{position:absolute;left:1.8rem;top:16.4rem;display:flex;gap:.6rem}
+.dif{height:5rem;padding:0 1rem 0 .7rem;border-radius:1.2rem;display:flex;align-items:center;gap:.45rem;font-size:1.42rem;
+  background:rgba(6,22,80,.5);border:.22rem solid rgba(255,255,255,.35);color:rgba(255,255,255,.85)}
+.dif svg{width:2.7rem;height:2.7rem}
+.dif.choisi{background:linear-gradient(var(--d1),var(--d2));border-color:#fff;color:#fff;box-shadow:0 0 1.4rem var(--d2),0 .3rem 0 rgba(0,0,0,.25)}
+.dif.choisi svg path:first-child{fill:rgba(0,0,0,.35)}
+.dif:active{transform:scale(.96)}
+#morceaux .extrait{position:absolute;left:1.8rem;top:22.6rem;height:4.8rem;border-radius:2.4rem;display:flex;align-items:center;gap:1rem;padding:0 1.8rem 0 1.4rem;
+  background:rgba(6,22,80,.55);border:.22rem solid rgba(255,255,255,.55);font-size:1.5rem}
+#morceaux .extrait small{display:block;font-size:1.05rem;font-weight:700;opacity:.8}
+.eq{display:flex;align-items:flex-end;gap:.3rem;height:2.2rem}
+.eq i{width:.45rem;height:100%;background:var(--or2);border-radius:.2rem;transform-origin:50% 100%;transform:scaleY(.25);animation:eq .6s ease-in-out infinite alternate;animation-play-state:paused}
+.eq i:nth-child(2){animation-duration:.45s}.eq i:nth-child(3){animation-duration:.7s}.eq i:nth-child(4){animation-duration:.38s}
+.lecture .eq i{animation-play-state:running}
+@keyframes eq{from{transform:scaleY(.2)}to{transform:scaleY(1)}}
+#morceaux .infos{position:absolute;right:1.8rem;top:6.2rem;width:27rem}
+.infos .l{display:flex;justify-content:space-between;align-items:center;height:3.3rem;padding:0 .6rem;font-size:1.55rem;border-bottom:.14rem dotted rgba(255,255,255,.5)}
+.infos .l:first-child{border-top:.18rem solid rgba(255,255,255,.75)}
+.infos .l:last-child{border-bottom:.18rem solid rgba(255,255,255,.75)}
+.infos .l span:first-child{font-weight:700;opacity:.9}
+.infos .v{display:flex;align-items:center;gap:.6rem}
+.infos .v svg{width:2.2rem;height:2.2rem}
+.lettre{font-family:Cinzel,serif;font-weight:900;background:linear-gradient(#fff7cc,#ffd04a 50%,#e48a10);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 .15rem 0 #4a2600)}
+.exemple{font-size:1rem;font-weight:700;opacity:.7;margin-left:.4rem}
+#morceaux .jouer{position:absolute;right:1.8rem;top:20.2rem;width:27rem;height:5.6rem;border-radius:2.8rem;display:flex;align-items:center;justify-content:center;gap:1rem;
+  background:linear-gradient(#fff0a8,#ffc533 50%,#f39612);border:.3rem solid #fff6d0;color:#5a2a00;font-size:2.7rem;letter-spacing:.04em;
+  box-shadow:0 .5rem 0 #a35500,0 0 2.4rem rgba(255,210,90,.55);animation:pulse 1.8s ease-in-out infinite}
+#morceaux .jouer svg{width:2.4rem;height:2.4rem}
+#morceaux .jouer:active{transform:translateY(.3rem);box-shadow:0 .2rem 0 #a35500}
+@keyframes pulse{0%,100%{scale:1}50%{scale:1.03}}
+#morceaux .equipe{position:absolute;left:32.6rem;right:30.4rem;top:7rem;height:20.4rem}
+#morceaux .plancher{position:absolute;left:5%;right:5%;bottom:0;height:4rem;border-radius:50%;background:radial-gradient(ellipse at 50% 50%,rgba(200,230,255,.55),rgba(120,180,255,.18) 50%,rgba(0,0,0,0) 72%)}
+#morceaux .bande{position:absolute;left:0;right:0;bottom:0;height:13.4rem;
+  background:linear-gradient(rgba(26,16,8,.78),rgba(18,12,8,.93) 30%,rgba(12,8,6,.96));border-top:.22rem solid rgba(240,196,110,.75)}
+.carrousel{position:absolute;left:0;right:0;top:0;bottom:.6rem;display:flex;align-items:center;gap:1.6rem;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;
+  padding:2.6rem calc(50% - 3.9rem) 0;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.carrousel::-webkit-scrollbar{display:none}
+.carte{position:relative;flex:none;width:7.8rem;height:7.8rem;scroll-snap-align:center;border-radius:.5rem;background:#fff;padding:.35rem;
+  box-shadow:0 .3rem .7rem rgba(0,0,0,.6);transition:transform .18s ease-out}
+.carte canvas{width:100%;height:100%;display:block;border-radius:.2rem}
+.carte .nom{position:absolute;left:.35rem;right:.35rem;bottom:.35rem;padding:1.2rem .4rem .35rem;font-size:1.02rem;line-height:1.12;font-weight:800;
+  background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.72) 45%);border-radius:0 0 .2rem .2rem;text-shadow:0 .1rem .2rem #000}
+.carte.choisie{transform:scale(1.16);box-shadow:0 0 0 .3rem #fff,0 0 1.6rem rgba(255,255,255,.55),0 .4rem 1rem rgba(0,0,0,.6);z-index:2}
+.carte .etiquette{position:absolute;left:50%;top:-3.1rem;transform:translateX(-50%) scale(.84);display:none;align-items:center;gap:.4rem;height:2.4rem;padding:0 1.2rem;border-radius:.6rem;
+  background:linear-gradient(#ff6a5c,#d8222c);border:.18rem solid #fff;font-size:1.3rem;white-space:nowrap;box-shadow:0 .2rem 0 rgba(0,0,0,.4)}
+.carte .etiquette::after{content:"";position:absolute;left:50%;bottom:-.9rem;margin-left:-.7rem;width:1.4rem;height:.9rem;background:#fff;clip-path:polygon(0 0,100% 0,50% 100%)}
+.carte.choisie .etiquette{display:flex}
+.carte .ruban{position:absolute;left:50%;bottom:-.75rem;transform:translateX(-50%) scale(.78);height:1.9rem;font-size:1.05rem;z-index:1}
+.carte .rg{position:absolute;right:-.7rem;top:-.7rem;width:2.8rem;height:2.8rem;border-radius:50%;display:grid;place-items:center;font-family:Cinzel,serif;font-weight:900;font-size:1.6rem;
+  background:radial-gradient(circle at 50% 35%,#fffbe0,#ffd35a 55%,#d0880e);border:.18rem solid #fff;color:#5a2c00;box-shadow:0 .15rem .3rem rgba(0,0,0,.5)}
+.carte.vide{background:rgba(255,255,255,.08);border:.2rem dashed rgba(255,255,255,.4);box-shadow:none;display:grid;place-items:center;align-content:center;gap:.2rem;color:rgba(255,255,255,.55);font-size:1.15rem}
+.carte.vide svg{width:2.6rem;height:3.2rem;fill:rgba(255,255,255,.35)}
+.defil{position:absolute;left:8rem;right:8rem;bottom:.35rem;height:.3rem;border-radius:.2rem;background:rgba(255,255,255,.25)}
+.defil i{position:absolute;top:-.25rem;height:.8rem;width:5rem;border-radius:.4rem;background:#f2f2f2}
+#morceaux .marque{right:2rem;top:1.6rem}
+
+/* ---------- 3 · équipe ---------- */
+#equipe{background:linear-gradient(105deg,#5ee3d2,#34bfe0 35%,#2a95e6 70%,#2a6fdc)}
+#equipe .panneau{position:absolute;left:1.4rem;right:1.4rem;top:4.6rem;height:25.2rem;border-radius:2rem 2.6rem 2rem 2rem;background:linear-gradient(#fffdf6,#fbf3e1);
+  box-shadow:0 0 0 .3rem var(--orbord),0 0 0 .5rem #fff6d8,0 .6rem 1rem .4rem rgba(0,40,90,.3)}
+#equipe .portee{position:absolute;left:1.4rem;right:1.4rem;top:5.2rem;height:4.7rem;background:repeating-linear-gradient(#e6dcc6 0 .15rem,transparent .15rem 1.1rem)}
+#equipe .gribouillis{position:absolute;right:1.2rem;bottom:.8rem;width:30rem;height:12rem;color:#dccaa6;opacity:.9}
+#equipe .gribouillis use{fill:none;stroke:currentColor}
+#equipe .ruban-titre{position:absolute;left:50%;top:-1.4rem;transform:translateX(-50%);height:3rem;font-size:1.6rem;padding:0 2.4rem;letter-spacing:.1em}
+#equipe .portraits{position:absolute;left:2rem;top:2.2rem;display:flex;gap:1.2rem}
+.membre{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:.6rem;width:12.4rem}
+.membre .cadre-p{position:relative;width:11.6rem;height:11.6rem;margin:0 auto;border-radius:.5rem;background:radial-gradient(circle at 50% 30%,#3fa2b4,#16606e 80%);
+  box-shadow:0 0 0 .35rem #fff,0 .3rem .7rem .3rem rgba(0,0,0,.28);overflow:hidden}
+.membre canvas{position:absolute;inset:0;width:100%;height:100%}
+.membre .nomp{position:absolute;left:0;right:0;bottom:0;padding:1.2rem .5rem .4rem;text-align:center;font-size:1.3rem;line-height:1.1;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.65) 45%)}
+.membre .chef{position:absolute;left:-.2rem;top:-1rem;z-index:2;width:3.6rem;height:3.6rem;border-radius:50%;display:grid;place-items:center;color:#7a3e00;
+  background:radial-gradient(circle at 50% 35%,#fffbe0,#ffd35a 55%,#d0880e);border:.22rem solid #fff;box-shadow:0 .2rem .4rem rgba(0,0,0,.4)}
+.membre .chef svg{width:2.1rem;height:2.1rem;fill:currentColor}
+.membre .choix{position:absolute;left:-.1rem;right:-.1rem;top:-.7rem;height:13rem;border-radius:.9rem;border:.35rem solid #ff4b4b;box-shadow:0 0 1.2rem #ff6b6b;display:none;pointer-events:none}
+.membre.choisi .choix{display:block}
+.membre .pastille{width:100%;justify-content:flex-start;height:auto;min-height:2.6rem;padding:.3rem 1rem;white-space:normal;line-height:1.08;font-size:1.18rem}
+.membre .pastille span{overflow:hidden}
+#equipe .vedette{position:absolute;right:1rem;top:.4rem;left:57rem;bottom:.4rem}
+#equipe .vedette .socle{left:50%;bottom:1.6rem;--s:rgba(255,206,90,.85)}
+#equipe .fiche{position:absolute;left:0;right:0;bottom:0;height:10.6rem;background:linear-gradient(#123a96,#0b2668 40%,#09205a);border-top:.25rem solid #8fb4ff}
+#equipe .fiche .role{position:absolute;left:1.8rem;top:-1.5rem;height:2.6rem;padding:0 1.4rem 0 .8rem;display:flex;align-items:center;gap:.5rem;font-size:1.3rem;color:#5a2c00;
+  background:linear-gradient(#ffe58a,#e2a020);border-radius:.5rem;clip-path:polygon(0 0,calc(100% - 1rem) 0,100% 50%,calc(100% - 1rem) 100%,0 100%)}
+#equipe .fiche .role svg{width:1.6rem;height:1.6rem;fill:#7a3e00}
+#equipe .fiche .nomf{position:absolute;left:1.8rem;top:2rem;font-size:2.8rem}
+#equipe .fiche .sousf{position:absolute;left:1.9rem;top:5.6rem;font-size:1.2rem;letter-spacing:.12em;opacity:.8;text-transform:uppercase}
+#equipe .fiche .desc{position:absolute;left:29rem;right:1.8rem;top:1.6rem;min-height:3.6rem;padding:.6rem 1.6rem;display:flex;align-items:center;font-size:1.4rem;font-weight:700;line-height:1.3;
+  background:linear-gradient(90deg,rgba(80,140,240,.45),rgba(80,140,240,.2));border-radius:.6rem;clip-path:polygon(1.4rem 0,100% 0,100% 100%,0 100%,0 1.4rem)}
+#equipe .fiche .plus{position:absolute;left:29rem;right:1.8rem;top:6.6rem;padding-top:.9rem;border-top:.15rem dotted rgba(255,255,255,.4);font-size:1.2rem;font-weight:700;opacity:.65}
+
+/* ---------- 4 · résultats ---------- */
+#resultats{background-color:#fbf5e6;background-image:radial-gradient(circle,#ffc2d6 .32rem,rgba(0,0,0,0) .36rem),radial-gradient(circle,#bfe3ff .32rem,rgba(0,0,0,0) .36rem),radial-gradient(circle,#ffe6a0 .28rem,rgba(0,0,0,0) .32rem);
+  background-size:4.2rem 4.2rem;background-position:0 0,2.1rem 2.1rem,1rem 3.1rem}
+#resultats .tableau{position:absolute;left:1rem;top:1.2rem;bottom:1rem;width:45rem;border-radius:1.4rem;background:linear-gradient(#2b2724,#1d1a18);
+  box-shadow:0 0 0 .25rem #c9a14a,0 .4rem 1rem rgba(0,0,0,.35),inset 0 0 0 .55rem #1d1a18,inset 0 0 0 .7rem #8e7034}
+#resultats .tableau .tt{position:absolute;left:2rem;top:-1.6rem;font-size:2.4rem;--e:.65rem;--b:#2a1806;--g:linear-gradient(#fffbe9,#ffe7a6 55%,#e9b45a)}
+#resultats .titreb{position:absolute;left:-.4rem;right:-1.2rem;top:2.8rem;height:5.8rem}
+#resultats .titreb .haut{position:absolute;left:0;right:0;top:0;height:3.4rem;background:repeating-linear-gradient(120deg,rgba(255,255,255,.14) 0 1rem,rgba(255,255,255,0) 1rem 2rem),linear-gradient(#41a8ff,#1d74e6);
+  display:flex;align-items:center;padding-left:12.6rem;gap:.8rem;font-size:2.1rem;clip-path:polygon(0 0,calc(100% - 1.6rem) 0,100% 50%,calc(100% - 1.6rem) 100%,0 100%)}
+#resultats .titreb .haut svg{width:2.8rem;height:2.8rem;flex:none}
+#resultats .titreb .bas{position:absolute;left:0;right:3rem;top:3.4rem;height:2.4rem;background:#0b0b0d;display:flex;align-items:center;padding-left:13.2rem;font-size:1.3rem;letter-spacing:.1em;font-weight:700;text-transform:uppercase;border-bottom:.2rem solid #c9a14a}
+#resultats .jaq{position:absolute;left:2.2rem;top:-1.4rem;width:9rem;height:9rem;padding:.35rem;background:#fff;transform:rotate(-6deg);box-shadow:0 .3rem .8rem rgba(0,0,0,.55);z-index:1}
+#resultats .jaq canvas{width:100%;height:100%;display:block}
+.etq{display:inline-flex;align-items:center;justify-content:center;height:2.1rem;padding:0 1.4rem;border-radius:1.05rem;font-size:1.15rem;letter-spacing:.12em;color:#e8dcc4;
+  background:linear-gradient(#3b342c,#25211c);border:.15rem solid #9c7c3e}
+#resultats .zone{position:absolute;left:2rem;right:2rem}
+#resultats .z1{top:9.8rem;height:9.6rem}
+#resultats .z2{top:20.4rem;height:11rem;border-top:.15rem solid rgba(201,161,74,.35);padding-top:.9rem}
+#resultats .z3{top:32.4rem;height:4.6rem;border-top:.15rem solid rgba(201,161,74,.35);display:flex;align-items:center;gap:1.4rem}
+#resultats .score{position:absolute;left:0;top:0;width:27rem;text-align:center}
+#resultats .chiffres{display:block;margin-top:.3rem;font-family:Cinzel,serif;font-weight:700;font-size:4.6rem;line-height:1.05;letter-spacing:.02em;--e:.55rem;--b:#0c1a2c;
+  --g:linear-gradient(#ffffff,#ddf0fb 40%,#8eaec4 50%,#d3e8f4 58%,#ffffff)}
+#resultats .record{display:block;margin-top:.1rem;font-size:1.6rem;letter-spacing:.06em;--e:.45rem;--b:#4a2600;--g:linear-gradient(90deg,#ffe48a,#fff9dc 45%,#ffd04a 55%,#ffb21a);
+  filter:drop-shadow(0 0 .6rem rgba(255,190,60,.7))}
+#resultats .rang{position:absolute;right:0;top:0;width:12rem;text-align:center}
+#resultats .rang .lettre{display:block;font-size:8.6rem;line-height:1;margin-top:-.4rem;filter:drop-shadow(0 .25rem 0 #4a2600) drop-shadow(0 0 1.2rem rgba(255,210,90,.55))}
+#resultats .combo{position:absolute;left:0;top:.9rem;width:11rem;text-align:center}
+#resultats .combo .chiffres{font-size:3.4rem}
+#resultats .jugements{position:absolute;left:12.4rem;top:.6rem;width:14.8rem;font-size:1.6rem;line-height:2.25rem}
+#resultats .jugements div{display:flex;justify-content:space-between}
+#resultats .jugements b{font-weight:800}
+#resultats .jugements span:last-child{font-family:Cinzel,serif;font-weight:700;color:#fff}
+.j-crit{background:linear-gradient(90deg,#ff86d2,#ffbf5c 25%,#fff27a 45%,#90ff9e 62%,#70e2ff 80%,#c88cff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.j-great{color:#ffcf40}.j-good{color:#6ff0a0}.j-miss{color:#9a9aae}
+#resultats .macaron{position:absolute;right:.4rem;top:.4rem;width:10rem;height:10rem}
+#resultats .z3 .chiffres{font-size:2.4rem;margin:0}
+#resultats .z3 .lettre{font-size:3rem}
+#resultats .persos{position:absolute;left:47.8rem;right:2.4rem;top:4.8rem;height:29.6rem;display:flex;gap:.2rem}
+.carte-p{position:relative;flex:1;transform:skewX(-7deg);border-radius:.4rem;overflow:hidden;
+  background:linear-gradient(#fff3a6,#ffd2b0 45%,#ffb7d9);box-shadow:0 0 0 .2rem #2f63d8,0 .3rem .6rem rgba(0,0,0,.25)}
+.carte-p .dedans{position:absolute;inset:0 -1.5rem;transform:skewX(7deg)}
+.carte-p canvas{left:50%}
+.carte-p .nom{position:absolute;left:0;right:0;bottom:0;min-height:3.4rem;padding:.4rem 1.4rem;display:flex;align-items:center;justify-content:center;text-align:center;
+  font-size:1.2rem;line-height:1.1;background:linear-gradient(#3d8cff,#1a53c8)}
+#resultats .bulles .bulle{font-size:1.2rem;padding:.55rem 1rem;white-space:normal;text-align:center;line-height:1.15}
+#resultats .boutons{position:absolute;right:1.2rem;bottom:1rem;display:flex;gap:1.2rem}
+.btn{height:5rem;padding:0 2.4rem;border-radius:2.5rem;display:flex;align-items:center;gap:.8rem;font-size:1.9rem;border:.25rem solid #fff;box-shadow:0 .4rem 0 var(--o)}
+.btn svg{width:2.2rem;height:2.2rem;fill:currentColor}
+.btn.or{background:linear-gradient(#fff0a8,#ffc533 50%,#f39612);color:#5a2a00;--o:#a35500}
+.btn.bleu{background:linear-gradient(#5fb0ff,#1f62d6);--o:#0c3486}
+.btn:active{transform:translateY(.25rem);box-shadow:0 .15rem 0 var(--o)}
+/* animation de l'écran de résultats (classe .joue sur l'écran) */
+#resultats.joue .tableau{animation:glisseG .45s cubic-bezier(.2,.9,.3,1) both}
+#resultats.joue .carte-p{animation:glisseD .5s cubic-bezier(.2,.9,.3,1) both}
+#resultats.joue .carte-p:nth-child(2){animation-delay:.08s}#resultats.joue .carte-p:nth-child(3){animation-delay:.16s}#resultats.joue .carte-p:nth-child(4){animation-delay:.24s}
+@keyframes glisseG{from{transform:translateX(-110%)}to{transform:none}}
+@keyframes glisseD{from{transform:translateX(140%) skewX(-7deg)}to{transform:skewX(-7deg)}}
+#resultats.joue .rang .lettre{animation:tombe .7s cubic-bezier(.3,0,.7,1) 2.1s both}
+@keyframes tombe{0%{transform:translateY(-30rem) scale(1.8);opacity:0}55%{transform:translateY(0) scale(1.15,.82);opacity:1}72%{transform:translateY(-1.6rem) scale(.95,1.06)}86%{transform:translateY(0) scale(1.04,.96)}100%{transform:none;opacity:1}}
+#resultats.joue .record{animation:popR .5s cubic-bezier(.3,1.7,.5,1) 2.75s both}
+@keyframes popR{from{transform:scale(0);opacity:0}to{transform:none;opacity:1}}
+#resultats.joue .macaron{animation:tampon .45s cubic-bezier(.4,0,.6,1.4) 3.05s both}
+@keyframes tampon{0%{transform:scale(2.6) rotate(-30deg);opacity:0}70%{transform:scale(.92) rotate(4deg);opacity:1}100%{transform:none;opacity:1}}
+#resultats.joue .bulles .bulle{animation:bullePop .35s cubic-bezier(.3,1.6,.5,1) both}
+#resultats.joue .bulles .bulle:nth-child(1){animation-delay:3.3s}#resultats.joue .bulles .bulle:nth-child(2){animation-delay:3.45s}#resultats.joue .bulles .bulle:nth-child(3){animation-delay:3.6s}#resultats.joue .bulles .bulle:nth-child(4){animation-delay:3.75s}
+#resultats .eclat{position:absolute;right:6rem;top:4.6rem;width:1px;height:1px;pointer-events:none}
+#resultats .eclat i{position:absolute;width:2.2rem;height:2.2rem;margin:-1.1rem;color:#fff6b0;opacity:0}
+#resultats.joue .eclat i{animation:eclat .9s ease-out 2.5s both}
+@keyframes eclat{0%{transform:translate(0,0) scale(.2);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
+
+/* ---------- 5 · options ---------- */
+#options{background:linear-gradient(#10308a,#0b2468 50%,#081a50)}
+#options .entete{position:absolute;left:0;right:0;top:0;height:5.6rem;display:flex;align-items:center;gap:1.2rem;padding:0 1.6rem;z-index:3;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.1) 0 1.6rem,rgba(255,255,255,0) 1.6rem 3.4rem),linear-gradient(#2f86f0,#1658c8 60%,#0f46a8);border-bottom:.2rem solid #7fb2ff;
+  box-shadow:0 .3rem .8rem rgba(0,0,0,.35)}
+#options .entete .roue{width:3rem;height:3rem;color:#fff}
+#options .entete .t1{font-size:2.6rem}
+#options .entete .t2{font-size:1.6rem;opacity:.95;display:flex;align-items:center;gap:.4rem}
+#options .liste{position:absolute;left:3.2rem;right:3.6rem;top:6.4rem;bottom:4.6rem;overflow-y:auto;padding:0 0 .4rem;display:flex;flex-direction:column;gap:.8rem;scrollbar-width:none}
+#options .liste::-webkit-scrollbar{display:none}
+#options .piste-opt{position:absolute;right:1.6rem;top:6.6rem;bottom:5rem;width:.5rem;border-radius:.3rem;background:rgba(255,255,255,.18)}
+#options .piste-opt i{position:absolute;left:0;right:0;border-radius:.3rem;background:#fff}
+.opt{position:relative;flex:none;height:5.8rem;border-radius:1.1rem;display:flex;align-items:center;padding:0 1.4rem 0 2rem;gap:1.4rem;
+  background:linear-gradient(#2560d6,#1a4bb6);box-shadow:inset 0 0 0 .16rem #5b8ff0,0 .2rem 0 rgba(0,0,0,.25)}
+.opt.choisie{background:repeating-linear-gradient(115deg,rgba(255,255,255,.12) 0 1rem,rgba(255,255,255,0) 1rem 2.2rem),linear-gradient(#3fc4f5,#1f8be0);box-shadow:inset 0 0 0 .2rem #c9f0ff,0 0 1.2rem rgba(80,200,255,.6)}
+.opt .lib{flex:0 0 24rem;font-size:1.6rem}
+.opt .lib small{display:block;font-size:1.05rem;font-weight:700;opacity:.8;margin-top:.1rem}
+.curseur{position:relative;flex:1;height:100%;touch-action:none}
+.curseur .graduations{position:absolute;left:0;right:0;top:.7rem;height:1.4rem;font-size:1.05rem;font-weight:800}
+.curseur .graduations span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+.curseur .rail{position:absolute;left:0;right:0;top:3.1rem;height:.9rem;border-radius:.45rem;background:#0c2a6e;box-shadow:0 0 0 .16rem #cfe0ff}
+.curseur .rempli{position:absolute;left:0;top:0;bottom:0;border-radius:.45rem;background:linear-gradient(#ffc066,#ff9410)}
+.curseur .bouton{position:absolute;top:50%;width:2.6rem;height:2.6rem;margin:-1.3rem 0 0 -1.3rem;border-radius:50%;background:radial-gradient(circle at 45% 35%,#fff7c4,#ffcf3a 55%,#d18a0a);box-shadow:0 0 0 .18rem #6a4100,0 .2rem .3rem rgba(0,0,0,.4)}
+.valeur{flex:0 0 8.4rem;height:3.2rem;display:grid;place-items:center;font-size:1.6rem;background:#0a1c52;clip-path:polygon(1rem 0,calc(100% - 1rem) 0,100% 50%,calc(100% - 1rem) 100%,1rem 100%,0 50%)}
+.interrupteur{flex:1;display:flex;justify-content:flex-start}
+.bascule{position:relative;width:13rem;height:4.8rem;border-radius:2.4rem;background:#0a1c52;box-shadow:inset 0 0 0 .16rem #cfe0ff;display:flex;font-size:1.4rem}
+.bascule span{flex:1;display:grid;place-items:center;z-index:1;transition:color .2s}
+.bascule i{position:absolute;top:.4rem;bottom:.4rem;left:.4rem;width:calc(50% - .4rem);border-radius:2rem;background:linear-gradient(#ffd35a,#f09a12);transition:transform .2s}
+.bascule.oui i{transform:translateX(100%)}
+.bascule.oui span:last-child,.bascule:not(.oui) span:first-child{color:#5a2a00}
+.opt .act{height:4.8rem;padding:0 1.8rem;border-radius:2.4rem;font-size:1.4rem;background:linear-gradient(#fff0a8,#ffc533 50%,#f39612);color:#5a2a00;box-shadow:0 .3rem 0 #a35500;white-space:nowrap}
+.opt .act:active{transform:translateY(.2rem);box-shadow:0 .1rem 0 #a35500}
+.opt .etat{flex:1;font-size:1.4rem;font-weight:700;display:flex;align-items:center;gap:.6rem}
+.opt .etat svg{width:2rem;height:2rem;fill:#7dff9a}
+#options .aide{left:0;right:0;bottom:0;height:4rem;border-radius:0;border:0;border-top:.2rem solid #9ccfff;background:linear-gradient(#47b4f0,#2a8ad6);padding:0 1.6rem}
+#options .aide .texte{flex:1;height:2.9rem;border-radius:1.45rem;display:flex;align-items:center;padding:0 1.6rem;background:#0b2668;border:.18rem solid #dbe6ff;font-size:1.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* téléphone en portrait */
+#tourner{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#0c2669;text-align:center;font-size:22px;padding:20px}
+#tourner .tel{font-size:64px;animation:pivote 2s ease-in-out infinite}
+@keyframes pivote{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait){#tourner{display:flex}}
+</style>
+</head>
+<body>
+<!-- icônes (dessinées pour le jeu) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-croche" viewBox="0 0 40 50"><path d="M23.6 3.5c.9 6.4 4.4 9.4 7.9 12.4 4.5 3.9 5.6 10 2.6 16.1.5-6-2.9-10.2-10.5-12.2V39c0 5-4.6 9-10.6 9C8 48 5 45.6 5 42.1c0-4.6 5-8.1 10.5-8.1 1.9 0 3.3.4 4.5 1V3.5z"/></symbol>
+    <symbol id="i-double" viewBox="0 0 44 50"><path d="M14 7l26-5v35c0 4.5-4 8-9 8-4 0-6.5-2-6.5-5 0-4 4-7 8.5-7 1.3 0 2.5.2 3.5.7V14.6l-18.5 3.6V42c0 4.5-4 8-9 8-4 0-6.5-2-6.5-5 0-4 4-7 8.5-7 1.3 0 2.5.2 3 .5z"/></symbol>
+    <symbol id="i-retour" viewBox="0 0 40 40"><path d="M25 7 12 20l13 13" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 30 40"><path d="M4 6l12 14L4 34M15 6l12 14-12 14" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 40 40"><path d="M11 6.5c0-1.6 1.7-2.5 3-1.7l20.5 13.5c1.2.8 1.2 2.6 0 3.4L14 35.2c-1.3.8-3-.1-3-1.7z"/></symbol>
+    <symbol id="i-plein" viewBox="0 0 40 40"><path d="M5 15V5h10M25 5h10v10M35 25v10H25M15 35H5V25" fill="none" stroke="currentColor" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cadenas" viewBox="0 0 40 40"><path d="M13 18v-5a7 7 0 0 1 14 0v5" fill="none" stroke="currentColor" stroke-width="4.4"/><rect x="8" y="17" width="24" height="19" rx="4"/><circle cx="20" cy="26" r="2.6" fill="#2c2c2c"/></symbol>
+    <symbol id="i-etoile" viewBox="0 0 40 40"><path d="M20 0c1.4 12.4 7.6 18.6 20 20-12.4 1.4-18.6 7.6-20 20C18.6 27.6 12.4 21.4 0 20 12.4 18.6 18.6 12.4 20 0z"/></symbol>
+    <symbol id="i-rejouer" viewBox="0 0 40 40"><path d="M31 13a13 13 0 1 0 2.6 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M34.5 4.5v12h-12z"/></symbol>
+    <symbol id="i-maison" viewBox="0 0 40 40"><path d="M20 4 3 18.5h5V35h9.5V25h5v10H32V18.5h5z"/></symbol>
+    <symbol id="i-epee" viewBox="0 0 40 40"><path d="M31 3.5h5.5V9L17 28.5l-5.5-5.5zM9 21.5l9.5 9.5-2.6 2.6-2.8-1.6-5 5-3.6-3.6 5-5-1.6-2.8z"/></symbol>
+    <symbol id="i-eclair" viewBox="0 0 40 40"><path d="M23 2 7 23h11l-3 15 18-22H21z"/></symbol>
+    <symbol id="i-couronne" viewBox="0 0 40 40"><path d="M4 12l8 7 8-12 8 12 8-7-3 20H7zM7 34h26v4H7z"/></symbol>
+    <symbol id="i-ok" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18"/><path d="M11 20.5l6 6 12-13" fill="none" stroke="#0b2668" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cle" viewBox="0 0 40 40"><circle cx="12" cy="20" r="8" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M19 18h18v4.5h-3.5V28h-4.5v-5.5h-3V27h-4.5v-4.5H19z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ============ 0 · Écran titre ============ -->
+<section class="ecran" id="titre" data-ecran="titre">
+  <div class="voile"></div>
+  <div class="cadre">
+    <div class="logo">
+      <svg class="n" style="left:-4.6rem;top:-1rem;transform:rotate(-16deg)"><use href="#i-croche"/></svg>
+      <svg class="n" style="right:-4.8rem;top:.6rem;width:4.6rem;transform:rotate(12deg)"><use href="#i-double"/></svg>
+      <span class="grad" data-t="Jeu de rythme">Jeu de rythme</span>
+      <span class="sous ct">À TOI DE JOUER</span>
+    </div>
+    <div class="toucher ct-fin">Toucher pour commencer</div>
+    <div class="marque version">Maquette du menu · 16/11</div>
+  </div>
+</section>
+
+<!-- ============ 1 · Menu principal ============ -->
+<section class="ecran" id="menu" data-ecran="menu">
+  <div class="mosaique"></div>
+  <div class="lumiere" style="left:12%;--a1:-14deg;--a2:4deg"></div>
+  <div class="lumiere" style="left:44%;--a1:8deg;--a2:-8deg;animation-duration:8.5s"></div>
+  <div class="lumiere" style="left:72%;--a1:12deg;--a2:-6deg;animation-duration:6.2s"></div>
+  <div class="sol"></div>
+  <div class="lambrequin"></div>
+  <div class="cadre">
+    <div class="onglet-or"><span class="grad" data-t="MENU">MENU</span></div>
+    <div class="panneau">
+      <div class="portee"></div>
+      <div class="bannieres">
+        <button class="banniere verte choisie" data-aller="morceaux" data-aide="Choisis un morceau, sa difficulté, et joue !"><div class="medaillon"></div><canvas data-pop="heros-vert,princesse"></canvas><div class="bande"><span class="ct">Morceaux</span></div></button>
+        <button class="banniere rouge" data-aller="equipe" data-aide="Ton équipe : les 4 héros, leur arme et leur coup spécial."><div class="medaillon"></div><canvas data-pop="princesse-eaux,colosse"></canvas><div class="bande"><span class="ct">Équipe</span></div></button>
+        <button class="banniere bleue" data-aller="options" data-aide="Vitesse des notes, son, réglage du son, performances."><div class="medaillon"></div><canvas data-pop="roue"></canvas><div class="bande"><span class="ct">Options</span></div></button>
+      </div>
+      <div class="icones">
+        <button class="rondbtn" id="bPlein"><span class="rond"><svg><use href="#i-plein"/></svg></span>Plein<br>écran</button>
+        <button class="rondbtn bientot" id="bCombat"><span class="rond"><svg><use href="#i-cadenas"/></svg></span>Combat<br>bientôt</button>
+      </div>
+    </div>
+    <div class="scene" id="scene"></div>
+    <div class="aide"><svg class="note"><use href="#i-croche"/></svg><span id="aideMenu">Choisis un morceau, sa difficulté, et joue !</span></div>
+  </div>
+</section>
+
+<!-- ============ 2 · Choix du morceau ============ -->
+<section class="ecran" id="morceaux" data-ecran="morceaux">
+  <div class="etoiles"></div>
+  <div class="cadre">
+    <div class="onglet"><button class="retour" data-retour aria-label="Retour"><svg><use href="#i-retour"/></svg></button><span class="ct">Morceaux</span><svg class="chev"><use href="#i-chev"/></svg></div>
+    <div class="marque" id="marqueEx">Maquette · chiffres d'exemple</div>
+    <div class="tete"><div class="t ct" id="mTitre"></div><div class="j ct-fin" id="mJeu"></div></div>
+    <div class="difs" id="difs"></div>
+    <button class="extrait" id="bExtrait"><span class="eq"><i></i><i></i><i></i><i></i></span><span>Extrait<small id="extraitEtat">Touche pour écouter</small></span></button>
+    <div class="equipe" id="mEquipe"><div class="plancher"></div></div>
+    <div class="infos" id="mInfos"></div>
+    <button class="jouer ct-fin" id="bJouer" style="--b:#7a3a00;color:#fff"><svg style="fill:#fff;filter:drop-shadow(0 .15rem 0 #7a3a00)"><use href="#i-play"/></svg>Jouer</button>
+    <div class="bande">
+      <div class="carrousel" id="carrousel"></div>
+      <div class="defil"><i id="poignee"></i></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · Équipe ============ -->
+<section class="ecran" id="equipe" data-ecran="equipe">
+  <div class="etoiles"></div>
+  <div class="cadre">
+    <div class="onglet"><button class="retour" data-retour aria-label="Retour"><svg><use href="#i-retour"/></svg></button><span class="ct">Équipe</span><svg class="chev"><use href="#i-chev"/></svg></div>
+    <div class="panneau">
+      <div class="portee"></div>
+      <svg class="gribouillis" viewBox="0 0 300 120" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">
+        <use href="#i-croche" x="18" y="30" width="44" height="55" transform="rotate(-14 40 58)"/>
+        <use href="#i-double" x="70" y="52" width="46" height="52" transform="rotate(10 93 78)"/>
+        <use href="#i-croche" x="250" y="8" width="34" height="42" transform="rotate(16 267 29)"/>
+        <use href="#i-etoile" x="128" y="20" width="16" height="16"/><use href="#i-etoile" x="232" y="70" width="12" height="12"/>
+      </svg>
+      <span class="ruban or ruban-titre">TON ÉQUIPE</span>
+      <div class="portraits" id="portraits"></div>
+      <div class="vedette" id="vedette"><div class="socle"></div></div>
+    </div>
+    <div class="fiche">
+      <div class="role" id="fRole"></div>
+      <div class="nomf ct" id="fNom"></div>
+      <div class="sousf" id="fSous"></div>
+      <div class="desc" id="fDesc"></div>
+      <div class="plus">Niveaux, forces et objets : pas encore décidés (ils viendront avec le combat).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · Résultats ============ -->
+<section class="ecran" id="resultats" data-ecran="resultats">
+  <div class="cadre">
+    <div class="tableau" id="tableau">
+      <span class="grad tt" data-t="Résultats">Résultats</span>
+      <div class="titreb">
+        <div class="jaq"><canvas id="rJaq"></canvas></div>
+        <div class="haut ct-fin" id="rTitre"></div>
+        <div class="bas" id="rJeu"></div>
+      </div>
+      <div class="zone z1">
+        <div class="score"><span class="etq">SCORE</span><span class="grad chiffres" id="rScore" data-t="0">0</span><span class="grad record" data-t="NOUVEAU RECORD !">NOUVEAU RECORD !</span></div>
+        <div class="rang"><span class="etq">RANG</span><span class="lettre" id="rRang">S</span></div>
+        <div class="eclat" id="eclat"></div>
+      </div>
+      <div class="zone z2">
+        <div class="combo"><span class="etq">COMBO</span><span class="grad chiffres" id="rCombo" data-t="0">0</span></div>
+        <div class="jugements" id="rJug"></div>
+        <svg class="macaron" viewBox="0 0 100 100" id="macaron"></svg>
+      </div>
+      <div class="zone z3"><span class="etq">ANCIEN RECORD</span><span class="grad chiffres" id="rAncien" data-t=""></span><span class="lettre" id="rAncienRang"></span></div>
+    </div>
+    <div class="bulles" id="rBulles"></div>
+    <div class="persos" id="rPersos"></div>
+    <div class="boutons">
+      <button class="btn or" id="bRejouer"><svg><use href="#i-rejouer"/></svg>Rejouer</button>
+      <button class="btn bleu ct-fin" data-aller="menu"><svg><use href="#i-maison"/></svg>Menu</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · Options ============ -->
+<section class="ecran" id="options" data-ecran="options">
+  <div class="entete"><button class="retour" data-retour aria-label="Retour"><svg><use href="#i-retour"/></svg></button><svg class="roue" id="roueTitre"></svg><span class="t1 ct">Options</span><span class="t2 ct-fin">▸ Réglages du jeu</span></div>
+  <div class="cadre" style="top:0">
+    <div class="liste" id="liste"></div>
+    <div class="piste-opt"><i id="barreOpt"></i></div>
+  </div>
+  <div class="aide"><div class="texte" id="aideOpt"></div></div>
+</section>
+
+<div id="tourner"><div class="tel">📱</div><div>Tourne ton téléphone</div><div style="font-size:15px;opacity:.8">Le jeu se joue en paysage.</div></div>
+<div id="toast"></div>
+
+<script src="persos/poupee.js?v=33"></script>
+<script src="persos/pieces.js?v=33"></script>
+<script src="persos/fiches.js?v=33"></script>
+<script>let etat = 'menu';   /* utilisé par jeu/son.js (le synthé de « Forêt d'émeraude », pour son extrait) */</script>
+<script src="jeu/son.js?v=1"></script>
+<script src="jeu/foret.js?v=1"></script>
+<script src="atelier-menu.js?v=1"></script>
+</body>
+</html>
