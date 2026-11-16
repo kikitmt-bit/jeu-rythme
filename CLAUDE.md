@@ -12,7 +12,17 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 ## Structure
 | Fichier | Rôle |
 |---|---|
-| `index.html` | Le jeu (JS pur, aucune dépendance) ; charge les 3 fichiers de `persos/` |
+| `index.html` | La page du jeu : écrans (menu, mot de passe, pause, fin) et styles ; charge les 3 fichiers de `persos/` puis ceux de `jeu/`, **dans cet ordre** |
+| `jeu/*.js` | Le code du jeu (JS pur, aucune dépendance), en **scripts classiques** (pas de modules ni d'outil de construction, comme `persos/`) ; ce qui est déclaré au premier niveau d'un fichier est visible des suivants. **Monter le `?v=` du fichier changé** dans `index.html` (sinon le téléphone garde l'ancien) |
+| `jeu/reglages.js` | Fenêtres de jugement, `AUTO`, `DIR_ANGLE`, réglages mémorisés (`rythme-reglages`), `$`, `cv` (la toile) |
+| `jeu/son.js` | Synthé WebAudio, `programmer`, horloge du morceau calée sur le haut-parleur (`synchroniser`, `tempsA`), musique MP3 (`source`) |
+| `jeu/foret.js` | Le niveau intégré « Forêt d'émeraude » : composition originale + `partition()` |
+| `jeu/moteur.js` | `NIVEAUX`, état de la partie, `nouvellePartie`, `noter` (score, chaîne, PV, jauge), entrées (doigts, clavier), `mettreAJour`. **Ne connaît ni le dessin ni le HUD** : il annonce (`annoncer('partie' / 'note' / 'coffre' / 'fin')`) et les autres s'abonnent (`ecouter`). Garder ça pour le futur 2e mode et le combat |
+| `jeu/dessin.js` | Sprites pré-dessinés (notes, cibles, effets, `stylise`), décor (`DECORS`), `miseEnPage`, qualité, effets (`eclat`), `dessiner()` = l'image de chaque instant |
+| `jeu/hud.js` | HUD façon Final Bar Line (bandeau, chaîne, score, TIME, panneau du capitaine, coup spécial), `peindreFond`, compteur de performances (`FPS`) |
+| `jeu/equipe.js` | `EQUIPE`, marche pré-dessinée (`preparerEquipe`), `dessinerEquipe` |
+| `jeu/menu.js` | Écrans, `lancer`, plein écran, geste retour, pause et décompte 3-2-1, records, écran de fin (`terminer`), niveaux en ligne, mot de passe, cache des musiques, réglages du menu |
+| `jeu/boucle.js` | Boucle de jeu (`boucle`), surveillance de la fluidité (`surveiller`, `cale60`), démarrage (chargé en dernier) |
 | `niveaux/index.json` | Catalogue + chiffrement (sel, témoin). Généré par `outils/chiffrer.py`, ne pas éditer à la main. `notes` = combo maximal (une tenue compte double) |
 | `niveaux/<id>.json` | Un niveau : tempo, décalages, partition |
 | `musiques/<id>.bin` | Musique, MP3 128 kbit/s **chiffré** (AES-256-GCM) |
@@ -28,7 +38,7 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 | `outils/analyse/` | Analyse audio (numpy + scipy) : `base`, `grid`, `notes`, `partition_gff`, `verif`. **Seule version à jour** (le cerveau n'a plus que des renvois) |
 | `outils/persos/` | `capture.js` (captures de l'atelier, `MDP=…` pour les images chiffrées), `comparer.py` (modèle de Kiki / poupée côte à côte) |
 | `outils/perf/mesure.js` | Coût d'une image (rendu logiciel) |
-| `outils/tests/` | `records-pause.js` (pause, décompte 3-2-1, records), `partie-auto.js` (partie simulée complète, doit donner 9 999 999) |
+| `outils/tests/` | `records-pause.js` (pause, décompte 3-2-1, records), `partie-auto.js` (partie simulée complète, doit donner 9 999 999), `pixels.js` + `comparer-pixels.py` (captures à horloge et hasard figés du menu et de 3 instants de `?auto&niveau=gff`, comparées pixel par pixel avec une ancienne version : pour vérifier qu'un rangement du code ne change rien à l'image) |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
 ## Règles absolues

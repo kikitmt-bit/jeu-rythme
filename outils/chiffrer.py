@@ -14,7 +14,7 @@ la « clé de secours » (bouton du menu du jeu) par la variable CLE_FAMILLE.
 
   python3 outils/chiffrer.py images <sortie.bin> <dossier> <image.png>...
       Regroupe des images (chemins relatifs au dossier) dans un seul fichier chiffré :
-      un JSON {chemin: PNG en base64} — c'est ce que lit index.html (images/<nom>.bin).
+      un JSON {chemin: PNG en base64} — c'est ce que lit le jeu (images/<nom>.bin).
 
   python3 outils/chiffrer.py fichier <entrée> <sortie.bin>
       Chiffre un fichier tel quel (ex. la réserve de ressources, dans reserve/).
@@ -23,7 +23,7 @@ la « clé de secours » (bouton du menu du jeu) par la variable CLE_FAMILLE.
       Recalcule niveaux/index.json à partir des fichiers niveaux/*.json et musiques/*.bin.
 
 Format d'un fichier .bin : 12 octets d'IV puis le texte chiffré AES-256-GCM (avec son tag).
-Clé : PBKDF2-SHA256(mot de passe, sel, itérations) — exactement ce que fait index.html.
+Clé : PBKDF2-SHA256(mot de passe, sel, itérations) — exactement ce que fait le jeu (jeu/menu.js).
 """
 import base64, getpass, glob, hashlib, json, os, subprocess, sys, tempfile
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
