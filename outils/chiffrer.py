@@ -93,7 +93,7 @@ def recalculer(idx):
             print(f"  {d['id']} : musique absente, niveau non publié")
             continue
         h = hashlib.sha256(open(chemin, 'rb').read() + open(musique, 'rb').read()).hexdigest()[:10]
-        niveaux.append({'id': d['id'], 'titre': d['titre'], 'jeu': d['jeu'], 'notes': len(d['notes']), 'version': h})
+        niveaux.append({'id': d['id'], 'titre': d['titre'], 'jeu': d['jeu'], 'notes': sum(2 if n.get('y') == 'h' else 1 for n in d['notes']), 'version': h})
     idx['niveaux'] = niveaux
     ecrire_index(idx)
     print(f'index.json : {len(niveaux)} niveau(x)')

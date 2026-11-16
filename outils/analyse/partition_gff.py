@@ -1,3 +1,10 @@
+# AVANT DE LANCER (les fichiers de /tmp/rythme n'existent pas dans le dépôt, il faut les régénérer) :
+#   mkdir -p /tmp/rythme && cp outils/analyse/base.py /tmp/rythme/
+#   ffmpeg -i morceau.mp3 -ac 1 -ar 22050 -f f32le /tmp/rythme/morceau.raw
+#   python3 outils/analyse/grid.py     # écrit /tmp/rythme/grid.npy (tempo + phase) : c'est lui que lit ce script
+#   python3 outils/analyse/partition_gff.py   # écrit /tmp/rythme/partition.json
+#   python3 outils/analyse/verif.py    # vérifie chaque note sur une vraie attaque
+# (le MP3 n'est jamais dans le dépôt : Kiki le fournit)
 """Partition v2 de Great Fairy's Fountain : on suit la pulsation de la harpe.
 Chaque groupe = 4 demi-temps (0,77 s) : position 0 = note de mélodie (accent), 1-3 = cascade qui descend.
 Codes : b  = pulsation (mélodie en pos 0 + note plus grave en pos 2)

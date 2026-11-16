@@ -67,6 +67,7 @@ td:last-child{text-align:right;font-weight:800}
   </div>
   <div class="reglages">
     <div>Vitesse<span class="choix" id="vitesse"><button data-v="2.1">Lente</button><button data-v="1.6">Normale</button><button data-v="1.25">Rapide</button></span></div>
+    <label><input id="perfs" type="checkbox"> Afficher les performances</label>
     <label>Décalage audio <input id="decalage" type="range" min="-150" max="150" step="5"> <span id="decalageVal">0</span> ms</label>
   </div>
   <div class="ligne"><button id="jouer">Jouer</button><button id="bplein" class="discret">Plein écran</button><button id="bsecours" class="discret cache">Clé de secours</button></div>
@@ -123,7 +124,7 @@ const AUTO = /[?&]auto/.test(location.search);        // ?auto : le jeu joue tou
 const tb = (bar, beat) => START + (bar * 4 + beat) * BEAT;
 const MIDI = m => 440 * Math.pow(2, (m - 69) / 12);
 
-let reglages = {vitesse: 1.6, decalage: 0};
+let reglages = {vitesse: 1.6, decalage: 0, performances: true};
 try { Object.assign(reglages, JSON.parse(localStorage.getItem('rythme-reglages') || '{}')); } catch (e) {}
 function sauver() { try { localStorage.setItem('rythme-reglages', JSON.stringify(reglages)); } catch (e) {} }
 
@@ -1097,7 +1098,7 @@ function surveiller(ms) {
 }
 // Compteur d'images par seconde, affiché en permanence pendant la phase de test (sous le titre) :
 // images/s · pire écart entre deux images (ms) · temps de dessin moyen d'une image (ms) · résolution
-const FPS = true;
+let FPS = reglages.performances !== false;   // réglage « Afficher les performances » du menu (activé par défaut)
 let fpsN = 0, fpsT = 0, fpsPire = 0, fpsDessin = 0, fpsTxt = '', fpsAlerte = false;
 function compteur(ms, dessin) {
   fpsN++; fpsT += ms; fpsDessin += dessin; if (ms > fpsPire) fpsPire = ms;
@@ -1297,7 +1298,9 @@ const DIFFICULTES = [['Facile', '#5ad66c'], ['Normal', '#4aa8ff'], ['Difficile',
 function infosNiveau() {
   const nb = notes.length, t0n = nb ? notes[0].t : 0, t1n = nb ? notes[nb - 1].t : 1;
   const dens = nb / Math.max(10, t1n - t0n);
-  return {titre: niveau.nom, jeu: niveau.info ? niveau.info.jeu : 'Composition originale', nb,
+  // nb = combo maximal (une tenue compte double : tête + queue), le même nombre que dans le menu
+  const combo = notes.reduce((s, n) => s + (n.type === 'hold' ? 2 : 1), 0);
+  return {titre: niveau.nom, jeu: niveau.info ? niveau.info.jeu : 'Composition originale', nb: combo,
           dif: dens < 1.5 ? 0 : dens < 2.5 ? 1 : dens < 3.5 ? 2 : 3};
 }
 const teinteDe = txt => { let h = 0; for (const ch of String(txt)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
@@ -1862,6 +1865,8 @@ for (const b of $('vitesse').children) {
   b.classList.toggle('actif', +b.dataset.v === reglages.vitesse);
   b.onclick = () => { reglages.vitesse = +b.dataset.v; sauver(); for (const c of $('vitesse').children) c.classList.toggle('actif', c === b); };
 }
+$('perfs').checked = FPS;
+$('perfs').onchange = e => { FPS = reglages.performances = e.target.checked; if (!FPS) fpsTxt = ''; sauver(); };
 $('decalage').value = reglages.decalage; $('decalageVal').textContent = reglages.decalage;
 $('decalage').oninput = e => { reglages.decalage = +e.target.value; $('decalageVal').textContent = reglages.decalage; sauver(); };
 

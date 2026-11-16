@@ -1,9 +1,9 @@
 # Jeu de rythme — instructions pour Claude
 
 Jeu de rythme façon Theatrhythm (3DS / Final Bar Line sur Switch), joué au doigt sur téléphone.
-Projet familial de Kiki : seuls Kiki (Pixel 7 Pro, Android) et son frère (peut-être iPhone) y jouent.
-Jamais vendu. Kiki ne code pas : il dicte ses demandes à la voix. Réponds-lui toujours en français,
-simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-rythme/CONTEXTE.md`.
+Projet familial de Kiki : seuls Kiki (Pixel 7 Pro, Android) et son frère (peut-être iPhone) y jouent. Jamais vendu.
+Kiki ne code pas : il dicte à la voix. Réponds-lui toujours en français, simplement, sans jargon.
+Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS.md`, et **`PERSOS-HISTORIQUE.md`** = tout l'historique détaillé des passes de chaque perso et du HUD, à lire avant de créer ou retoucher un perso).
 
 ## En ligne
 - Site : https://kikitmt-bit.github.io/jeu-rythme/ (GitHub Pages, branche `main`, racine). Chaque envoi sur `main` met le site à jour en ~1 min.
@@ -12,167 +12,88 @@ simplement, sans jargon. Mémoire commune du projet : `kiki-cerveau/projets/jeu-
 ## Structure
 | Fichier | Rôle |
 |---|---|
-| `index.html` | Le jeu (JS pur, aucune dépendance) ; il charge les trois fichiers de `persos/` |
-| `niveaux/index.json` | Catalogue des niveaux + paramètres de chiffrement (sel, témoin). Généré par `outils/chiffrer.py`, ne pas éditer à la main |
-| `niveaux/<id>.json` | Un niveau : tempo, décalages, partition (`notes`) |
-| `musiques/<id>.bin` | Musique du niveau, MP3 128 kbit/s **chiffré** (AES-256-GCM) |
-| `persos/poupee.js` | **Le moule des personnages** : squelette, mannequin (tête, visage, bras, jambes), pinceau (ombrage), animations. Commun à tous, c'est lui qui garantit le style unique |
-| `persos/pieces.js` | Bibliothèque de pièces : coiffures, coiffes, tenues, armes, boucliers |
+| `index.html` | Le jeu (JS pur, aucune dépendance) ; charge les 3 fichiers de `persos/` |
+| `niveaux/index.json` | Catalogue + chiffrement (sel, témoin). Généré par `outils/chiffrer.py`, ne pas éditer à la main. `notes` = combo maximal (une tenue compte double) |
+| `niveaux/<id>.json` | Un niveau : tempo, décalages, partition |
+| `musiques/<id>.bin` | Musique, MP3 128 kbit/s **chiffré** (AES-256-GCM) |
+| `persos/poupee.js` | **Le moule des personnages** : squelette, mannequin (tête, visage, bras, jambes), pinceau (ombrage), animations. Commun à tous = le style unique |
+| `persos/pieces.js` | Pièces : coiffures, coiffes, tenues, armes, boucliers |
 | `persos/fiches.js` | Les personnages : une fiche = des pièces + des couleurs |
-| `atelier.html` | Atelier des personnages (https://kikitmt-bit.github.io/jeu-rythme/atelier.html) : voir un perso, ses animations, ombrage oui/non, squelette |
-| `reserve/solarus-alttp-pack.zip.bin` | Réserve **chiffrée** : tout le pack Solarus ALTTP envoyé par Kiki (sprites, sons, musiques .it, tilesets) pour piocher plus tard |
-| `outils/chiffrer.py` | Verrouille musiques (`morceau`), paquets d'images (`images`) et fichiers (`fichier`) avec le mot de passe familial |
-| `images/persos.bin` | Images des personnages fournies par Kiki, **chiffrées** : JSON `{nom.png: PNG base64}`. Contient `epee-heros.png`, `bouclier-heros.png` (belles images détourées envoyées par Kiki le 12/11, réduites à ~700 px de haut) `embleme-eaux.png` (logo de l'écharpe de la princesse des eaux, détouré, bleu très clair, ajouté le 14/11) et `triforce.png` (emblème du tablier de la princesse, renvoyé par Kiki déjà détouré, recadré à 360 px de haut, ajouté le 14/11 ; paquet `?v=4`). Sans le mot de passe : losange doré à la place. Pour ajouter une image il faut **redonner toutes les images** à `chiffrer.py images` (le paquet est réécrit en entier) : les récupérer d'abord en déchiffrant le paquet |
-| `outils/persos/` | `capture.js` (captures de l'atelier, avec les images chiffrées si on donne `MDP=…`) et `comparer.py` (modèle de Kiki et poupée côte à côte) |
-| `outils/analyse/` | Analyse audio (numpy + scipy) qui a servi à mapper Great Fairy's Fountain |
-| `decors/<id>.webp` | **Décor de chaque niveau** (image fixe 1536×1024 faite avec ChatGPT par Kiki, pas une image du vrai jeu), déclaré dans `DECORS` (index.html), posé « en couvrant », centré, avec un voile léger, peint une seule fois dans le fond (`decor()`) : coût nul en partie. Prompt en 3 blocs (STYLE et COMPOSITION fixes, SCÈNE propre au niveau) : `kiki-cerveau/projets/jeu-rythme/CONTEXTE.md`. **Image immobile** : rien de figé en mouvement (pétales, jets d'eau) ; les animations seront ajoutées par le code. Changer `?v=` si l'image change |
-| `polices/` | Polices du HUD (licence OFL, venues de fontsource) : Cinzel 700/900 (score, chaîne, CRITICAL, TIME), Libre Baskerville 700 (titre du morceau) |
+| `atelier.html` | Atelier des persos (voir un perso, ses animations, ombrage, squelette) |
+| `images/persos.bin` | Images fournies par Kiki (épée et bouclier du héros, emblème de la princesse des eaux, triforce), **chiffrées** : JSON `{nom.png: PNG base64}`, paquet `?v=4`. Sans mot de passe : losange doré. Ajouter une image = **redonner toutes les images** à `chiffrer.py images` (paquet réécrit en entier : déchiffrer l'ancien d'abord) |
+| `decors/<id>.webp` | Décor fixe de chaque niveau (1536×1024, fait avec ChatGPT par Kiki), déclaré dans `DECORS`, peint une seule fois dans le fond. Image immobile ; changer `?v=` si elle change. Prompt en 3 blocs : voir le CONTEXTE du cerveau |
+| `polices/` | Polices du HUD (OFL) : Cinzel 700/900, Libre Baskerville 700 |
+| `reserve/solarus-alttp-pack.zip.bin` | Réserve **chiffrée** du pack Solarus ALTTP envoyé par Kiki, pour piocher plus tard |
+| `outils/chiffrer.py` | Verrouille musiques (`morceau`), images (`images`), fichiers (`fichier`) ; `changer` = nouveau mot de passe |
+| `outils/analyse/` | Analyse audio (numpy + scipy) : `base`, `grid`, `notes`, `partition_gff`, `verif`. **Seule version à jour** (le cerveau n'a plus que des renvois) |
+| `outils/persos/` | `capture.js` (captures de l'atelier, `MDP=…` pour les images chiffrées), `comparer.py` (modèle de Kiki / poupée côte à côte) |
+| `outils/perf/mesure.js` | Coût d'une image (rendu logiciel) |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
 ## Règles absolues
-1. **Jamais de musique ni d'image de jeu en clair dans le dépôt** (droits d'auteur : Nintendo, Square Enix…). Seulement des `.bin` chiffrés. `.gitignore` bloque les `.mp3`.
-   Les ressources Nintendo, c'est **Kiki qui les fournit** (fichiers envoyés dans la conversation) ; Claude ne les télécharge pas lui-même et ne dessine pas de personnages existants.
-2. **Jamais le mot de passe familial dans un fichier**, un commit, un message de commit ou le cerveau. Kiki le redonne dans la conversation quand il faut chiffrer un morceau ; le passer par `MDP_FAMILLE=... python3 outils/chiffrer.py ...`.
-   S'il l'a oublié : bouton « Clé de secours » du menu du jeu (visible quand le téléphone est déverrouillé) → il colle la clé → `CLE_FAMILLE=... python3 outils/chiffrer.py ...`. Même règle : jamais écrite nulle part.
-3. Le mot de passe change rarement : `MDP_FAMILLE=ancien MDP_NOUVEAU=nouveau python3 outils/chiffrer.py changer` (ou `CLE_FAMILLE=...` pour l'ancien) rechiffre tous les `.bin` d'un coup ; chacun doit ensuite retaper le nouveau mot de passe dans le jeu.
+1. **Jamais de musique ni d'image de jeu en clair dans le dépôt** (Nintendo, Square Enix…) : seulement des `.bin` chiffrés. `.gitignore` bloque les `.mp3`.
+   Les ressources Nintendo, c'est **Kiki qui les fournit** (envoyées dans la conversation) ; Claude ne les télécharge pas et ne dessine pas de personnages existants.
+2. **Jamais le mot de passe familial dans un fichier**, un commit, un message de commit ou le cerveau. Kiki le redonne dans la conversation ; le passer par `MDP_FAMILLE=... python3 outils/chiffrer.py ...`.
+   Oublié : bouton « Clé de secours » du menu (visible téléphone déverrouillé) → il colle la clé → `CLE_FAMILLE=... python3 outils/chiffrer.py ...`. Jamais écrite nulle part.
+3. Changer le mot de passe : `MDP_FAMILLE=ancien MDP_NOUVEAU=nouveau python3 outils/chiffrer.py changer` (ou `CLE_FAMILLE=...` pour l'ancien) rechiffre tous les `.bin` ; chacun retape ensuite le nouveau mot de passe dans le jeu.
 
 ## Format d'un niveau (`niveaux/<id>.json`)
-`bpm`, `grille` (s, premier temps de la grille dans le MP3), `avance` (s de silence avant le MP3, 1,5),
-`fin` (s dans le MP3 où la partie se termine), `musique`, puis `notes` : une note par ligne
+`bpm`, `grille` (s, premier temps de la grille dans le MP3), `avance` (s de silence avant le MP3, 1,5), `fin` (s dans le MP3 où la partie se termine), `musique`, puis `notes`, une par ligne :
 `{"y": "t"|"h"|"s", "t": temps dans le MP3 (s), "l": piste 0-3 (0 = grave, en bas en paysage), "e": fin de tenue, "d": sens du glissé (u, d, l, r, ur, ul, dr, dl), "p": n° de note double}`.
+y : t = taper, h = tenue (compte 2 dans le combo : tête + queue), s = glissé.
 
 ## Gameplay (décisions de Kiki)
-- Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas est pour les pouces). **Pas de mode portrait** (décision de Kiki, 08/11) : en portrait, un écran demande de tourner le téléphone et la partie se met en pause.
-- On touche **n'importe où** : c'est le moment qui compte, pas l'endroit. 1 ou 2 pouces.
-- Surtout une note à la fois ; doubles (barre bleue, comme sur Switch) et tenue d'un pouce + tape de l'autre aux moments forts.
-- Le geste « retour » d'Android est ignoré pendant une partie.
-- Look des notes repris de Final Bar Line (captures de Kiki, 08/11) : rond rouge à point blanc (taper), vert + bande verte (maintenir), doré avec grande flèche blanche qui sort du rond (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
-- Personnages (12/11) : style « poupée » façon Theatrhythm (grosse tête, yeux ovales, joues roses, petit corps), en **marionnettes articulées dessinées par le code** (plus de planches d'images, plus de ChatGPT). L'ancienne scène (Link pixel art, Ganon, Grande Fée, planche chibi de Link) a été supprimée à la demande de Kiki.
-- Place de l'équipe (14/11, comme Theatrhythm) : pieds à 88,5 % de la hauteur, taille 0,29 H (avant : 96,5 % et 0,27), têtes au niveau de la piste du bas, sur le sol du décor.
-- Pour l'instant : trois persos en bas de l'écran, qui marchent au rythme (un pas par temps) : le héros (`heros-vert`, terminé le 12/11 après 10 passes avec Kiki ; son épée et son bouclier sont des images de Kiki), la princesse (`princesse`, créée le 13/11 en carte blanche d'après 3 images de Kiki) le colosse de roc (`colosse`, look validé par Kiki le 14/11 après 6 passes) et la princesse des eaux (`princesse-eaux`, look validé le 14/11 après 7 passes, avec son trident). L'équipe de 4 est au complet (dans le jeu depuis le 14/11 ; fluidité : 4,1 ms par image avec 4 persos contre 4,0 avec 3, mesure.js).
-- **Attaques** (à faire avec la dizaine d'actions) : le héros et la princesse attaquent à l'épée ; **le colosse de roc attaque avec ses poings** : animation d'attaque à part (demande de Kiki, 14/11 ; noté `attaque: 'poings'` dans sa fiche). `EQUIPE` et `dessinerEquipe` dans index.html ; à 3 et plus, le groupe recule vers la gauche pour ne pas passer sous le panneau du capitaine.
-- Vision de Kiki pour la suite (capture Final Bar Line, 12/11) : l'équipe de 4 regroupée en bas à droite, une piste par perso (il tape quand on réussit sa note), attaque spéciale au bout de N notes avec un bandeau en triangle à droite (gros plan du perso + nom du coup), monstres à gauche qui meurent et sont remplacés. Une dizaine d'actions par perso (attaque, coup spécial, touché, à genoux, saut de victoire…), les mêmes pour tous.
-- **Interface de la partie (HUD) façon Final Bar Line** (13/11, d'après 4 captures de Kiki ; le menu, lui, n'a pas changé) :
-  pistes = fins traits blancs, cibles = gros anneaux blancs à droite (x = W − 0,298 H, pistes de 0,2 H à 0,554 H) ;
-  en haut à gauche, bandeau du titre (jaquette aux couleurs du morceau, logo de difficulté dont la couleur dépend des notes/s :
-  vert Facile < 1,5, bleu Normal < 2,5, orange Difficile < 3,5, rouge Expert ; nom du morceau, jeu, nombre de notes) — **toucher le bandeau = pause** ;
-  en haut au centre « 196 CHAIN » (chiffres irisés penchés) ; en haut à droite le score (chiffres chromés, il défile) ;
-  en bas la barre TIME ; en bas à droite le panneau du capitaine (= `EQUIPE[0]`, sa tête dans un rond, PV, jauge du coup spécial, coffres).
-  Effet Critical = cercle magique **de la couleur de la note** (rouge, vert, doré) avec croches qui tournent + petits triangles, texte à droite de la cible.
-  **Coffres sur les notes** et **coup spécial** (triangle avec le gros plan du capitaine + nom du coup, `coup:` dans la fiche) : codés le 13/11 puis **mis de côté par Kiki le 14/11** (`COFFRES_SUR_NOTES = false`, `COUP_SPECIAL = false` dans index.html, code gardé). Les coffres viendront d'un autre système ; le compteur du panneau reste à 0. La jauge se remplit (Critical 1, Great 0,6, Good 0,3) et reste pleine.
-  Code : section « Look façon Final Bar Line » (sprites, `stylise` = textes stylés pré-dessinés) et section « HUD » (`preparerHud`, `hud`, `dessinerCoup`) de index.html. `TETE` = position de la tête dans le repère des poupées (portrait et gros plan).
-- Fluidité : **standard validé par Kiki le 14/11 : 120 i/s stables sur son Pixel 7 Pro, à garder TOUJOURS** (« très agréable à jouer »). Toute nouveauté (persos, monstres, effets, décors) doit le respecter : mesurer avant/après et ne rien livrer qui coûte plus cher sans le compenser. Minimum absolu : 60 i/s réguliers. Pistes et textes pré-dessinés, horloge lissée, résolution qui baisse toute seule si le téléphone peine.
-  Phase de test : compteur **toujours affiché** sous le titre (`FPS = true`) : i/s · pire écart entre deux images · temps de dessin moyen · résolution ; il passe en rouge sous 58 i/s ou au-delà de 25 ms.
-  Règles apprises le 14/11 (la 1re version du HUD saccadait sur le Pixel) : rien de lourd ne se prépare pendant la partie (la baisse de résolution `changerQualite` ne redessine rien) ;
-  tout ce qui ne bouge pas du HUD est peint dans le fond (`peindreFond`) ; les images des notes, cibles et effets sont faites à la taille exacte d'affichage (`preparerSprites`) ;
-  peu de particules (Critical = 1 cercle avec ses croches en une seule image + 5 triangles + 3 points).
-  **Personnages** (14/11) : la marche de chaque perso est pré-dessinée en 24 images au lancement (`preparerEquipe`) → 1 seule image par perso et par image du jeu (avant : ~22 pièces chacun). Obligatoire pour 4 persos + monstres : faire pareil pour les monstres et les futures animations.
-  **Pendant la partie, aucun tracé** (chemins, arcs, cercles, coins arrondis) : seulement des images pré-dessinées et des rectangles (barres = image pleine recadrée).
-  **Écrans 120 Hz** (Pixel 7 Pro) : budget 8 ms par image. Si le téléphone rate des images à 120, le jeu se cale sur 60 bien réguliers (`cale60`, affiché « calé à 60 » sur le compteur), puis seulement ensuite baisse la résolution.
-  Coût mesuré (mesure.js) : 6,5 ms avant le HUD, 7,4 avec le 1er HUD, 3,7 ms après tout ça.
-  Mesurer avant/après : `outils/perf/mesure.js` (coût d'une image, rendu logiciel) en comparant à l'ancienne version (`git worktree add`), objectif ≤ l'ancienne.
+- Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas pour les pouces). **Pas de portrait** : un écran demande de tourner le téléphone et la partie se met en pause.
+- On touche **n'importe où** (le moment compte, pas l'endroit), 1 ou 2 pouces. Surtout une note à la fois ; doubles (barre **bleue**) et tenue d'un pouce + tape de l'autre aux moments forts. Le geste « retour » d'Android est ignoré en partie.
+- Notes façon Final Bar Line : rond rouge à point blanc (taper), vert + bande (maintenir), doré avec grande flèche blanche (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
+- **HUD façon Final Bar Line** : pistes = fins traits blancs, cibles = gros anneaux à droite (x = W − 0,298 H, pistes de 0,2 H à 0,554 H) ; bandeau du titre en haut à gauche (jaquette, difficulté selon notes/s : Facile < 1,5, Normal < 2,5, Difficile < 3,5, Expert ; **toucher le bandeau = pause**) ; chaîne en haut au centre, score en haut à droite, barre TIME en bas, panneau du capitaine (`EQUIPE[0]`) en bas à droite. Critical = cercle magique de la couleur de la note.
+  Coffres sur les notes et coup spécial : codés puis **mis de côté par Kiki le 14/11** (`COFFRES_SUR_NOTES = false`, `COUP_SPECIAL = false`, code gardé). Détails : PERSOS-HISTORIQUE.md.
+- Équipe (14/11) : 4 persos au complet, un pas par temps : héros (`heros-vert`), princesse, colosse de roc (attaque aux **poings**, `attaque: 'poings'`), princesse des eaux. Pieds à 88,5 % de la hauteur, taille 0,29 H. Héros et princesse attaquent à l'épée. À 3+ le groupe recule à gauche (panneau du capitaine).
+- Vision de Kiki (à faire) : équipe en bas à droite, une piste par perso (il tape quand on réussit), attaque spéciale au bout de N notes avec bandeau triangle, monstres à gauche qui meurent et sont remplacés, une dizaine d'actions par perso (attaque, coup spécial, touché, à genoux, saut de victoire…), les mêmes pour tous.
 
-## Créer un personnage (process du 12/11)
-Kiki envoie 2-3 croquis ou images + une description. Claude :
-1. Écrit une **fiche** dans `persos/fiches.js` : couleurs (peau, yeux) + pièces choisies (`cheveux`, `coiffe`, `tenue`, `bras`, `jambes`, `arme`, `bouclier`).
-2. S'il manque une pièce (nouvelle coiffure, nouvelle arme…), l'ajoute dans `persos/pieces.js`, dessinée en pose de repos dans le repère de la poupée (pieds en 0,0, ~100 de haut, regarde à gauche), toujours avec `p.forme(...)` pour avoir le même ombrage. Regarder `coiffures.raie` et `armes.epee` comme modèles.
-3. **Ne touche jamais** au visage, aux proportions ni au pinceau de `poupee.js` pour un seul perso : tout changement là s'applique à tous (c'est voulu).
-4. Vérifie à l'œil : `atelier.html?perso=<id>&anim=repos&fond=sombre&t=0` (image figée, `&plat` = sans ombrage, `&os` = squelette), capture Playwright, comparer avec les modèles de Kiki, corriger, recommencer.
-5. Les animations sont dans `Poupee.animations` (poupee.js), écrites une fois pour le squelette : `attente`, `marche`. Angles en degrés par os ; positif = dans le sens des aiguilles d'une montre (jambe vers l'avant).
-- Personnages **originaux ou « inspirés de »** uniquement dans `fiches.js` (dépôt public). Claude ne redessine pas les emblèmes d'un vrai jeu.
-- **Images fournies par Kiki** (emblème, bouclier d'un vrai jeu…) : Kiki envoie le PNG dans la conversation, Claude le détoure et le range dans un paquet chiffré : `MDP_FAMILLE=... python3 outils/chiffrer.py images images/persos.bin <dossier> <image.png>...`, puis ajoute `'images/persos.bin?v=1'` à `Poupee.paquets` (fiches.js) ; **monter le `?v=` à chaque fois que le paquet change** (sinon le téléphone garde l'ancien). Une pièce l'utilise avec `p.image(nom, x, y, hauteur, ancreX, ancreY)` (voir `armes.image` et `boucliers.image`) et prévoit un dessin de `secours` tant que le jeu n'est pas déverrouillé. Le jeu et l'atelier chargent le paquet dès qu'ils ont la clé (`Poupee.chargerImages`).
-- Réglages communs décidés avec Kiki (12/11) : tête ronde (pas carrée), réduite à 0,9 (`OS.tete`), **cou caché** dans le col (la tunique remonte, col en V ouvert sur le vêtement blanc de dessous), deux yeux **de même taille**, ovales pleins (pas trop allongés), bien écartés, à peine plus sombres en bas ; nez = tout petit ovale couché presque noir ; bouche = petit toit rose très plat (modèles : gros plans Theatrhythm envoyés par Kiki), ombres roses et légères sur la peau (jamais jaunes), coiffe posée derrière les cheveux (`Z.coiffeArr`), bouclier et arme au premier plan (la main qui tient l'arme est une couche à part, `Z.mainD`, peinte par-dessus ; elle tient le **milieu du manche**), boucles = simples cadres dorés plus larges que hauts, **les mêmes** sur la ceinture et la bandoulière, qui dépassent à peine ; bandoulière de la même largeur que la ceinture, peinte **par-dessus l'épaule** (couche à part, après le haut du bras), et qui va jusqu'au bord du vêtement ; col en V décalé à gauche (vue de trois quarts : pan gauche très fin, pan droit large), pans bas et près du cou (ils ne dépassent pas de chaque côté de la tête) ; **pas de traits ni de mèches rapportées pour donner du volume** (bonnet, cheveux) : le volume vient seulement des ombres ; bonnet peu bombé, qui suit la forme de la tête et redescend jusqu'à l'épaule (le bas passe derrière le bouclier) ; oreille pointue courte, bord du haut presque horizontal, bout légèrement arrondi ; la main est une **boule** ; le gant est **une seule forme** (sans revers ni trait de séparation) qui couvre la moitié de la boule, se resserre nettement au poignet puis s'évase vers le coude (sinon on dirait un moignon), ses deux bords sont de légers arcs ; on voit le vêtement blanc de dessous entre la manche et le gant, avec des bords bien droits (pas de creux au coude), et toujours **plus fin que le gant** (c'est lui qui sort du gant, avec une marge en haut et en bas) ; la manche courte se termine par un bord droit ; le V du col est court (il s'arrête bien avant la bandoulière).
-- Monstres : plus tard, même pinceau, squelettes plus simples.
+## Fluidité (standard validé par Kiki le 14/11 : 120 i/s stables sur son Pixel 7 Pro, à garder TOUJOURS)
+- Toute nouveauté (persos, monstres, effets, décors) : **mesurer avant/après** (`outils/perf/mesure.js`, ancienne version via `git worktree add`), objectif ≤ l'ancienne ; ne rien livrer de plus cher sans compenser. Minimum absolu : 60 i/s réguliers. Coût actuel : ~3,7 ms par image.
+- Rien de lourd ne se prépare pendant la partie. **Aucun tracé en partie** (chemins, arcs, cercles, coins arrondis) : seulement des images pré-dessinées et des rectangles. Tout ce qui ne bouge pas du HUD est peint dans le fond (`peindreFond`) ; sprites à la taille exacte d'affichage (`preparerSprites`) ; peu de particules.
+- Persos : marche pré-dessinée en 24 images au lancement (`preparerEquipe`), recadrées au plus juste → 1 image par perso et par image du jeu. Obligatoire aussi pour monstres et futures animations.
+- 120 Hz : budget 8 ms par image ; si des images sont ratées, le jeu se cale sur 60 (`cale60`), puis seulement baisse la résolution (`changerQualite`, ne redessine rien).
+- Compteur (i/s · pire écart · temps de dessin · résolution, rouge sous 58 i/s ou au-delà de 25 ms) sous le titre : réglage **« Afficher les performances »** du menu (`FPS`, activé par défaut, mémorisé dans `rythme-reglages`).
 
-## Leçons du premier personnage (à relire AVANT chaque nouveau perso)
-Le héros vert a demandé une dizaine de passes avec Kiki le 12/11. Kiki a le souci du détail : le perso doit être simple, mais chaque élément juste et cohérent. Pour y arriver plus vite :
-1. **Le modèle de Kiki fait foi.** Avant de dessiner, regarder son image en grand, zone par zone (tête, col, bras, mains, ceinture, arme), et noter ce qu'on voit vraiment. Au moindre doute, y revenir plutôt que d'inventer.
-2. **Comparer côte à côte à chaque passe** : `outils/persos/capture.js` (capture de l'atelier) puis `outils/persos/comparer.py` (modèle à gauche, poupée à droite). Puis **recadrer et agrandir chaque détail** : les défauts que Kiki relève ne se voient qu'en gros plan.
-3. **Les plans (qui passe devant quoi)** se vérifient un par un sur le modèle : arme et bouclier au premier plan, main devant l'arme, lanière par-dessus l'épaule, coiffe derrière les cheveux, bas de la coiffe derrière le bouclier. L'ordre est dans `Z` (poupee.js) ; une pièce qui doit passer entre deux autres devient une couche à part.
-4. **Ce qui s'emboîte doit être plus fin que ce qui le recouvre** (le bras sort de la manche, le maillot sort du gant), et une sangle va jusqu'au bord du vêtement (pas de pixels de tissu qui dépassent).
-5. **Le volume vient des ombres, jamais de traits** ni de formes rapportées plus claires. Une pièce = une forme pleine peinte avec `p.forme`. Deux formes de la même couleur posées l'une sur l'autre font un trait de séparation : faire **une seule forme**.
-   **Exception, les cheveux** (13/11) : Kiki veut des cheveux « vivants » où l'on voit les mèches, comme les poupées Theatrhythm. On les construit avec `meche(points, largeur)` (pieces.js) : chaque mèche est une forme fine et ondulée qui finit en pointe, et ce sont les mèches posées les unes sur les autres (avec leurs ombres) qui dessinent la chevelure. Toujours aucun trait. Une racine visible doit être arrondie (`ronde`) ou cachée sous une autre mèche. Les grosses mèches posées sur le dessus de la tête, elles, ne doivent pas se voir comme des pièces posées : les fondre dans le dessus (une seule forme). Les cheveux de derrière sont plus sombres que ceux de devant, pour bien les distinguer.
-   Pour un nouveau perso, **chaque pièce repart des images de Kiki**, pas des pièces du héros (seul le moule de `poupee.js` est commun) : la première coiffure de la princesse, copiée sur celle du héros, a été refusée.
-6. **Formes** : rondes et douces (tête ronde, main en boule, poignet fin, bouts arrondis), bords d'un tube = arcs très légers, bord d'une manche = ligne droite, boucles = simples cadres. Pas de pointe qui pique, pas de creux aux articulations.
-7. **Vue de trois quarts** : ce qui est au centre du corps est décalé vers la gauche (col, visage) ; le côté gauche est plus étroit que le droit.
-8. **Quand Kiki dessine sur une capture** (traits rouges ou jaunes), convertir ses traits en coordonnées de la poupée (repérer deux points connus sur la capture : pieds et sommet) plutôt que d'estimer à l'œil.
-9. **Images fournies par Kiki** : demander une image nette, grande et déjà détourée (fond transparent). Vérifier l'ancrage (où la main tient l'arme) sur un gros plan.
-10. **Ne pas changer ce qui est validé** : une retouche demandée = cette retouche et rien d'autre. Annoncer ce qu'on a gardé ou choisi quand ce n'était pas demandé.
-11. À chaque passe : partie simulée (100 % Critical, aucune erreur), monter le `?v=` des fichiers `persos/` dans `index.html` et `atelier.html`, pousser sur `main`, envoyer à Kiki l'image côte à côte (et le gros plan du détail retouché).
-- Réutiliser pour les prochains persos : `coiffures.raie`, `coiffes.bonnet`, `tenues.tunique` (col, ceinture, bandoulière, boucles), `armes.image`, `boucliers.image`, bras avec gant.
-  Pièces de la princesse (13/11) : `coiffures.longs` (cheveux « vivants », refaits 3 fois le 13/11, le modèle final vient d'une poupée Theatrhythm envoyée par Kiki : dessus avec raie au milieu et deux grosses mèches qui s'envolent aux tempes, fondues dans le dessus (une seule forme + ombre très douce `portee` sous chacune : Kiki ne veut aucun trait visible), rien sur le front (petites mèches refusées), mèches ondulées devant les oreilles qui partent vers l'extérieur au bout, cheveux longs derrière plus sombres et moins saturés (`derriere`) en plusieurs mèches ondulées jusqu'au milieu du dos), `coiffes.diademe` (bandeau doré sous les cheveux + bijou en goutte), `tenues.robe` (corsage, jupe jusqu'au sol qui cache les jambes, ceinture à médaillon rond, tablier pointu à bord doré, gouttes dorées, épaulières dorées), `armes.rapiere`.
-- Options du moule ajoutées le 13/11 (sans effet sur le héros, vérifié au pixel près) : `oreilleLoin: true` = on voit aussi le bout de l'oreille pointue du côté éloigné (en miroir, plus petite, derrière la tête ; demandé par Kiki pour la princesse, le héros ne l'a pas) ; `bras.main` = couleur de la main ; si elle est égale à `bras.gant`, le gant couvre toute la main (gants de princesse). La peau nue des bras a des ombres légères (comme le visage), sinon elles tirent vers l'orange.
-- **Colosse de roc** (`colosse`, 14/11, d'après les images de Kiki ; **look validé par Kiki après la 6e passe : « parfait »**, intégré au jeu ; fluidité : 3 persos = 3,7-3,9 ms par image, la version validée à 120 i/s avec 2 persos mesurait 3,8-4,1 ms dans les mêmes conditions) : **1re version refusée** (« hideux ») : touffe de cheveux, rochers ronds dans le dos, tatouages inventés, gros mais pas musclé, pieds énormes.
-  Leçon : repartir de l'image de Kiki et en recopier **tous les codes** (ce qui fait que le perso est reconnaissable), zone par zone, avant de penser au style. Et **ne pas l'intégrer au jeu avant que Kiki ait validé le look** dans l'atelier.
-  2e version : « beaucoup mieux, on sent son côté musclé, majestueux ». 3e version (retours de Kiki sur la 2e) :
-  bouche = **juste des lèvres**, très large et très plate, lèvre du bas plus épaisse (`bouche: 'levres'` + `levres` = couleur de la lèvre du bas), pas un sourire ni des dents ;
-  coiffure = **coupe en brosse** de pierre sur le dessus du crâne, de la tempe gauche (au niveau du T) jusqu'à l'arrière (`coiffures.cailloux`, suit les courbes de `TETE_COLOSSE`), petits poils de pierre irréguliers ;
-  cailloux des épaules, du dos et des avant-bras = **croûte FINE qui épouse la peau** (`croute()` : peinte dans la forme du membre, bord cassé calme côté peau ; « très peu épais, 1 cm maximum », rien ne dépasse) ;
-  pectoraux bien visibles (ombre portée + creux entre les deux), tétons = **étoiles de pierre** irrégulières (`etoileDePierre`), à l'écart des traits de tatouage ;
-  tatouage du haut du bras d'après l'image : large bande en travers de l'épaule, barre qui la croise, crochet autour de deux points.
-  4e version (retours de Kiki sur la 3e, « on approche du but ») : **plus de bande sous les pecs** (la musculature se voit avec les volumes et les ombres) ;
-  pec gauche élargi jusqu'au bras (coupé au bord du corps, comme celui de droite) ; **tétons au milieu de chaque pectoral** (`TETONS`, positions tirées des ronds verts de Kiki en se calant sur les yeux) ;
-  motif des pecs = variante de l'image : grand arc + petit arc par-dessus l'étoile, reliés par une petite barre en haut, **sans jamais toucher l'étoile** (`motifPec`) ;
-  bras proche (à droite de l'écran) : **patte à trois griffes** (coussinet arrondi + 3 griffes en triangle, d'après une petite image de Kiki), sur l'épaule seule (à cheval sur le biceps, ça faisait un raccord) ; le bras éloigné garde l'ancien motif ;
-  **tatouages incrustés** (avant : « trop posés dessus ») et **d'un seul trait** : `encre(p, couleur, formes)` peint tous les traits d'un même tatouage
-  ensemble, pleins, sur une feuille à part, puis fond la feuille dans la peau d'un coup (`P.ENCRE` : voile à 30 % + « lumière douce » `soft-light`, bord adouci d'un rien).
-  Avec une simple transparence trait par trait, les croisements (milieu du T, barres des arcs) se voyaient doublés : refusé par Kiki. 6 réglages comparés le 14/11, celui-ci retenu (l'encre suit les ombres et les reflets) ;
-  6e version : patte **plus grosse, à cheval sur l'épaule et le biceps, dans l'axe du bras** (griffes vers l'épaule) ; astuce pour la cassure de l'articulation :
-  coupée au bord du biceps, la partie sur le biceps est un peu décalée et agrandie (le muscle avance) ; encre plus forte sur la partie épaule (dans l'ombre).
-  **T moins lumineux** : `encre(…, force)` ; `P.ENCRE_VISAGE = .6` (mesuré : à 1, le T éclaircissait la peau de 57 points contre 36 pour le corps ; à 0,6 : 39).
-  (Ancienne note) 5e version : la patte à trois griffes va **sur le biceps** (là où Kiki l'a dessinée en rouge, convertie d'après sa capture : centre (26,8 ; −37,7), penchée de −22°).
-  Reste du perso : tête en cloche (`tete`, `Poupee.TETE_COLOSSE`), sourcils en cailloux froncés, barbichette en caillou, T tatoué jusqu'au nez, petits yeux ronds bleu-violet (`yeuxTaille`), nez plus large (`nez`), pas de joues (`joues: null`) ;
-  ventre avec le grand arc et les deux spirales, slip blanc, rond sur les genoux, bandages aux chevilles, pieds nus normaux (`taillePieds`). Options du moule : `taille` (1,15), `os`, `corps`, `bras.manche: null`.
-- **Princesse des eaux** (`princesse-eaux`, 14/11, d'après 3 images de Kiki ; **look validé par Kiki après la 7e passe : « parfait »**, intégrée au jeu le 14/11 ; son emblème est dans `images/persos.bin`) :
-  pas de cheveux : `coiffures.capuche` = capuche de peau rouge framboise (crâne, pointe entre les yeux), deux pans fins le long du visage jusqu'à la poitrine, queue de poisson dans le dos (dessous clair, `Z.queue`),
-  marques rouge vif (bec entre les yeux jusqu'au nez, points au-dessus des yeux, goutte au front) ; `coiffes.bijouxEaux` = diadème d'argent en arc + croissant au sommet, étoile d'argent sur chaque tempe, pendants d'oreilles turquoise ;
-  `tenues.eaux` = corps rouge à devant crème, haut collier, parure des clavicules et chaîne à pendentif turquoise, ceinture en croissants, chaîne de hanche à losanges turquoise,
-  écharpe bleue (épaule proche → hanche opposée, tour de taille à vagues claires et triangles blancs, cape dans le dos), broche ronde à pierre bleue, nageoires d'épaule et d'avant-bras
-  (elles **pendent vers le bas** sous la main : le long de l'avant-bras, celle du bras qui tient l'arme sortait à l'horizontale comme une aile), bracelets, devant des cuisses crème + tache rouge au genou,
-  marques rouge vif sur les tibias, anneaux d'argent aux chevilles, griffe d'argent et talon orangé aux pieds ; `armes.trident` (manche d'argent, garde en croissant doré, 3 pointes à crochet, pierre turquoise).
-  L'emblème imprimé sur l'écharpe (vrai jeu) n'est pas redessiné : vagues claires à la place (si Kiki le veut, il l'envoie en image → paquet chiffré).
-  Options du moule ajoutées (sans effet sur les autres, vérifié au pixel près) : `pupilles` (pupille sombre dans l'œil), `bouche: 'petite'` (petites lèvres pleines), `couleurBouche` ([haut, bas]), `nez: 0` (pas de nez).
-  2e version (retours de Kiki, « très bon début… mais trop prototype ») : **yeux = simples ovales jaunes comme les autres** (pupilles refusées), **bouche = celle de la princesse** ;
-  **visage fin et féminin, en V, menton fin** (`tete: Poupee.TETE_EAUX`) ; cou fin (le corps remonte en un cou étroit, collier fin) ; épaules en pente douce, taille marquée ;
-  masque refait d'après un gros plan de Kiki : **bande plus sombre juste au-dessus des yeux** (elle touche le haut des yeux) qui descend en pointe entre eux, **3 points rouge vif en arc** sur la bande au-dessus de chaque œil,
-  **chevron rouge vif** qui sort de sous la bande, entre les coins intérieurs des yeux, jusqu'au nez (dessiné avant la capuche qui en recouvre le haut ; il ne mord pas sur les yeux), goutte du front large en haut et pointue en bas ;
-  **queue** : descend dans le dos, remonte vers l'arrière au bout, **nageoire fourchue** (une pointe vers le haut, une vers l'arrière, `feuille()`), **tout le dessous blanc** ;
-  **écharpe drapée** : pan posé sur l'épaule proche qui la recouvre et cache l'articulation (couche sur `brasG1`, avec la broche), plis (creux sombres, crêtes claires, `meche`), tour de taille plissé, cape plissée ;
-  **emblème de Kiki** (image `embleme-eaux.png`, détourée, bleu très clair) au milieu du tour de taille : `tenue.embleme` + `p.image` ; **pas encore dans `images/persos.bin`** (il faut le mot de passe) : sans lui, vagues claires.
-  (Rangée dans `images/persos.bin` le 14/11, paquet `?v=3`.)
-  3e version (retours de Kiki, « on est sur la bonne voie ») : **queue plus courte, elle s'arrête au niveau des épaules** avec **deux grandes nageoires tombantes** ; décalée vers l'arrière pour qu'on la voie à droite du pan, avec sa bande blanche ;
-  **le V rouge continue par-dessus le haut des yeux** (coloriage de Kiki) et **les yeux passent par-dessus le V** (ils sont redessinés dans la couche de la capuche, `si: {yeux: 'ouverts'}` ; les yeux fermés aussi) ;
-  yeux un tout petit peu plus foncés (`#dca326`), bouche un peu plus rouge (`couleurBouche`, forme de la princesse) ;
-  **un seul vêtement** (pan en biais + tour de taille d'un seul tenant, plis doux), **manche** sur l'épaule proche à **ourlet droit et franc** (tracé bleu de Kiki) avec la broche ;
-  **supprimés** (entourés en jaune par Kiki) : les nageoires des avant-bras (mains normales), la cape qui pendait sous la main, la chaîne de hanche ; la nageoire de l'épaule proche aussi (il n'en dépassait qu'un bout rayé sous la manche) ;
-  **deux petites nageoires aux hanches** (tracé violet), rouges à bord rayé ; griffe d'argent et talon doré **peints dans la forme du pied** (jusqu'au bord, sans écart).
-  4e version : **ourlet de la manche** dans l'angle du trait jaune de Kiki (il monte vers l'extérieur), bord intérieur de la manche plus à gauche (on ne voit plus le haut du bras) ;
-  **queue d'une seule forme** : le bout s'élargit et se sépare en deux grandes nageoires (encoche entre les deux), plus de lobes accrochés à un point ; la bande blanche descend dans la nageoire du bas ;
-  **nageoires des hanches** qui tombent vers le bas et reposent sur le côté des cuisses (plus longues, plus fines, peintes par-dessus les cuisses) ;
-  5e version : bouche plus rouge (`couleurBouche: ['#d02838', '#e2474f']`) ; **le V rouge passe SOUS la bande violet foncé** du masque (peint avant la capuche), ses bras prolongés vers l'extérieur et vers le haut ; les yeux restent par-dessus.
-  6e version : **emblème plus grand et en biais** (−24°, il suit le drapé qui monte vers l'épaule) ; **liseré** (`lisere()`) : fin trait clair le long du bas du vêtement avec une rangée de petits triangles juste au-dessus, et **le même sur l'ourlet de la manche** (d'après une capture de Kiki).
-  7e version : ourlet de la manche = un seul segment, 5 triangles régulièrement espacés (avant : un vide au milieu) ; **broche descendue** (elle touchait le visage) et refaite d'après un gros plan de Kiki : anneau d'argent bordé de 12 petites perles, sertissage, **pierre ronde bleue à facettes** (hexagone + reflet), plus de losange.
-  **collier** remplacé par un petit collier simple : fine chaîne d'argent et trois gouttes bleues (on en voit deux, la 3e passe sous le drap) ; plus de haut collier, de parure ni de chaîne en V.
-- Coût des persos en partie (14/11) : les 24 images de marche sont **recadrées au plus juste** (même cadre pour les 24) : mesuré avec 3 persos : moins cher que 2 avant (3,8 ms par image contre 4,0, mesure.js).
-- Avant de livrer un perso : vérifier aussi la **marche** (captures `anim=marche&t=…`) et le **jeu** (`?auto`), où les persos se suivent et peuvent se chevaucher (arme de l'un sur le bouclier de l'autre). Tout ce qui est dans `poupee.js` (tête, visage, oreille, bras, main, jambes) est déjà validé et commun à tous.
+## Créer un personnage
+Kiki envoie 2-3 croquis/images + une description. Claude :
+1. Écrit une **fiche** dans `persos/fiches.js` : couleurs + pièces (`cheveux`, `coiffe`, `tenue`, `bras`, `jambes`, `arme`, `bouclier`).
+2. S'il manque une pièce, l'ajoute dans `persos/pieces.js` : pose de repos, repère de la poupée (pieds en 0,0, ~100 de haut, regarde à gauche), toujours avec `p.forme(...)`. Modèles : `coiffures.raie`, `armes.epee`.
+3. **Ne touche jamais** au visage, aux proportions ni au pinceau de `poupee.js` pour un seul perso (tout s'applique à tous). Une option du moule ajoutée doit être sans effet sur les autres (vérifié au pixel près).
+4. Vérifie à l'œil : `atelier.html?perso=<id>&anim=repos&fond=sombre&t=0` (`&plat` sans ombrage, `&os` squelette), capture Playwright, comparaison côte à côte, retouche. Vérifier aussi la **marche** (`anim=marche&t=…`) et le **jeu** (`?auto`, chevauchements).
+5. Animations : `Poupee.animations` (`attente`, `marche`), angles en degrés par os, positif = sens horaire.
+- Personnages **originaux ou « inspirés de »** uniquement (dépôt public). Claude ne redessine pas les emblèmes d'un vrai jeu.
+- **Images fournies par Kiki** : il envoie un PNG net, grand, déjà détouré ; Claude le range dans le paquet chiffré (`MDP_FAMILLE=... python3 outils/chiffrer.py images images/persos.bin <dossier> <image.png>...`), ajoute `'images/persos.bin?v=N'` à `Poupee.paquets` (**monter le `?v=` à chaque changement**). Pièce : `p.image(nom, x, y, hauteur, ancreX, ancreY)` avec un dessin de `secours`.
+- Ne pas montrer ni intégrer un perso au jeu avant que Kiki ait validé le look dans l'atelier. Monstres : plus tard, même pinceau, squelettes plus simples.
 
-## Mapper un nouveau morceau (méthode validée par Kiki le 08/11)
-Ne pas mapper seulement la mélodie (« on ne sent pas la musique », comme Guitar Hero en très facile).
-**Suivre ce que fait réellement l'instrument** : sa pulsation et sa texture.
-1. Décoder : `mkdir -p /tmp/rythme && ffmpeg -i morceau.mp3 -ac 1 -ar 22050 -f f32le /tmp/rythme/morceau.raw`.
-2. `outils/analyse/grid.py` : tempo + phase (grille qui maximise les attaques). Vérifier la stabilité (dérive par tranches de 6 s).
-3. `outils/analyse/notes.py` : note frappée à chaque demi-temps → repérer mélodie, accompagnement, sections.
-4. Écrire la partition par sections avec des codes (voir `outils/analyse/partition_gff.py`) :
-   pulsation de base, cascades aux moments forts, tenues lâchées sur une vraie frappe, doubles quand deux voix frappent ensemble,
-   difficulté qui monte puis redescend (GFF : 2,1 → 3,1 → 3,0 → 3,7 → 1,5 notes/s).
-   Confort : écart mini d'un demi-temps entre deux notes (hors doubles), rien ne démarre pile à la fin d'une tenue.
-5. `outils/analyse/verif.py` : chaque note doit tomber sur une vraie attaque (GFF : 172/172, max 10,5 ms).
-6. Écrire `niveaux/<id>.json`, puis `MDP_FAMILLE=... python3 outils/chiffrer.py morceau <id> morceau.mp3`.
-7. Tester (ci-dessous), commit, push sur `main`.
+### Leçons (à relire AVANT chaque perso ; le héros a coûté 10 passes, le colosse 6, la princesse des eaux 7)
+1. **Le modèle de Kiki fait foi** : l'examiner en grand zone par zone, recopier **tous les codes** qui rendent le perso reconnaissable, avant de penser au style. Chaque pièce repart des images de Kiki, pas des pièces d'un autre perso.
+2. **Comparer côte à côte à chaque passe** (`capture.js` puis `comparer.py`), puis agrandir chaque détail retouché : les défauts ne se voient qu'en gros plan.
+3. **Plans** (qui passe devant quoi) : à vérifier un par un sur le modèle ; l'ordre est dans `Z` (poupee.js) ; une pièce qui passe entre deux autres = couche à part.
+4. Ce qui s'emboîte est **plus fin** que ce qui le recouvre (bras dans la manche, maillot dans le gant) ; une sangle va jusqu'au bord du vêtement.
+5. **Le volume vient des ombres, jamais de traits** ni de formes plus claires rapportées. Une pièce = une forme pleine (`p.forme`) ; deux formes de même couleur superposées font un trait : faire **une seule forme**. Exception : cheveux « vivants » en mèches (`meche(points, largeur)`), tatouages fondus par `encre()`.
+6. Formes rondes et douces (tête ronde, main en boule, poignet fin, bouts arrondis), bords de tube = arcs légers, bord de manche = droit, pas de creux aux articulations.
+7. Vue de trois quarts : le centre du corps (col, visage) est décalé à gauche ; le côté gauche est plus étroit.
+8. Kiki dessine sur une capture : convertir ses traits en coordonnées de la poupée (deux points connus : pieds et sommet), pas à l'œil.
+9. **Ne pas changer ce qui est validé** : une retouche = cette retouche seule ; annoncer ce qu'on a gardé ou choisi sans demande.
+10. À chaque passe : partie simulée à 100 % Critical sans erreur, monter le `?v=` des fichiers `persos/` dans `index.html` et `atelier.html`, pousser sur `main`, envoyer l'image côte à côte (+ gros plan du détail).
+- Pièces réutilisables : `coiffures.raie`, `coiffes.bonnet`, `tenues.tunique`, `armes.image`, `boucliers.image`, bras avec gant ; princesse : `coiffures.longs`, `coiffes.diademe`, `tenues.robe`, `armes.rapiere` ; options du moule : `oreilleLoin`, `bras.main`, `taille`, `os`, `corps`, `bras.manche`, `tete`, `yeuxTaille`, `joues`, `nez`, `pupilles`, `bouche`, `couleurBouche`, `taillePieds`.
+- Colosse (`colosse`), princesse des eaux (`princesse-eaux`) : looks **validés par Kiki** (« parfait »), ne pas y toucher sans demande. Toutes leurs passes : PERSOS-HISTORIQUE.md.
+
+## Mapper un nouveau morceau (méthode validée le 08/11)
+Ne pas mapper seulement la mélodie : **suivre ce que fait l'instrument** (pulsation, texture).
+1. Décoder : `mkdir -p /tmp/rythme && ffmpeg -i morceau.mp3 -ac 1 -ar 22050 -f f32le /tmp/rythme/morceau.raw` et copier `outils/analyse/base.py` dans `/tmp/rythme/`.
+2. `outils/analyse/grid.py` : tempo + phase (écrit `/tmp/rythme/grid.npy`) ; vérifier la dérive par tranches de 6 s.
+3. `outils/analyse/notes.py` : note frappée à chaque demi-temps → mélodie, accompagnement, sections.
+4. Écrire la partition par sections avec des codes (modèle : `partition_gff.py`, mode d'emploi en tête du fichier) : pulsation de base, cascades aux moments forts, tenues lâchées sur une vraie frappe, doubles quand deux voix frappent ensemble, difficulté qui monte puis redescend (GFF : 2,1 → 3,1 → 3,0 → 3,7 → 1,5 notes/s). Confort : écart mini d'un demi-temps (hors doubles), rien ne démarre pile à la fin d'une tenue.
+5. `outils/analyse/verif.py` : chaque note sur une vraie attaque (GFF : 172/172, max 10,5 ms).
+6. Écrire `niveaux/<id>.json`, puis `MDP_FAMILLE=... python3 outils/chiffrer.py morceau <id> morceau.mp3`. 7. Tester, commit, push sur `main`.
 
 ## Tester sans écran
-- `python3 -m http.server 8765` à la racine (avec une copie chiffrée d'essai si besoin : `cp -r` du dépôt dans /tmp, `init` avec un mot de passe bidon).
-- `?auto` dans l'adresse : le jeu joue tout seul (pas de son) ; `?auto&niveau=gff` pour un niveau en ligne.
-- Compteur d'images par seconde affiché en permanence pendant la phase de test (sous le titre).
-- Playwright + `/usr/bin/google-chrome` : simuler de vrais doigts avec des `PointerEvent` dont les `pointerId` sont des **entiers distincts**.
+- `python3 -m http.server 8765` à la racine (avec une copie chiffrée d'essai si besoin : `cp -r` dans /tmp, `init` avec un mot de passe bidon).
+- `?auto` : le jeu joue tout seul (pas de son) ; `?auto&niveau=gff` pour un niveau en ligne.
+- Playwright + `/usr/bin/google-chrome` : vrais doigts avec des `PointerEvent` dont les `pointerId` sont des **entiers distincts**.
 - Objectif : partie complète simulée = 100 % Critical, aucune erreur dans la console.
