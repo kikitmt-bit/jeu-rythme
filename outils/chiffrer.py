@@ -19,6 +19,10 @@ la « clé de secours » (bouton du menu du jeu) par la variable CLE_FAMILLE.
   python3 outils/chiffrer.py fichier <entrée> <sortie.bin>
       Chiffre un fichier tel quel (ex. la réserve de ressources, dans reserve/).
 
+  python3 outils/chiffrer.py dechiffrer <entrée.bin> <sortie>
+      Rouvre un fichier chiffré (ex. musiques/gff.bin -> /tmp/rythme/gff.mp3, pour réanalyser un morceau).
+      La sortie doit être HORS du dépôt (refusé sinon) : jamais de musique ni d'image en clair dans le dépôt.
+
   python3 outils/chiffrer.py index
       Recalcule niveaux/index.json à partir des fichiers niveaux/*.json et musiques/*.bin.
 
@@ -138,6 +142,15 @@ def main():
         os.makedirs(os.path.dirname(os.path.abspath(sortie)), exist_ok=True)
         donnees = open(entree, 'rb').read()
         open(sortie, 'wb').write(chiffrer(k, donnees))
+        print(f'{sortie} : {len(donnees) / 1e6:.1f} Mo')
+    elif cmd == 'dechiffrer':
+        entree, sortie = sys.argv[2], os.path.abspath(sys.argv[3])
+        if os.path.commonpath([sortie, RACINE]) == RACINE:
+            sys.exit('Refusé : la sortie doit être en dehors du dépôt (ex. /tmp/rythme/).')
+        k = cle_verifiee(idx)
+        os.makedirs(os.path.dirname(sortie), exist_ok=True)
+        donnees = dechiffrer(k, open(entree, 'rb').read())
+        open(sortie, 'wb').write(donnees)
         print(f'{sortie} : {len(donnees) / 1e6:.1f} Mo')
     elif cmd == 'changer':
         # Changer le mot de passe : ancien par MDP_FAMILLE (ou CLE_FAMILLE), nouveau par MDP_NOUVEAU
