@@ -22,8 +22,9 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 | `jeu/hud.js` | HUD façon Final Bar Line (bandeau, chaîne, score, TIME, panneau du capitaine, coup spécial), `peindreFond`, compteur de performances (`FPS`) |
 | `jeu/equipe.js` | `EQUIPE`, marche pré-dessinée (`preparerEquipe`), `dessinerEquipe` |
 | `jeu/menu.js` | Écrans, `lancer`, plein écran, geste retour, pause et décompte 3-2-1, records, écran de fin (`terminer`), niveaux en ligne, mot de passe, cache des musiques, réglages du menu |
+| `jeu/essai.js` | **Page de test des partitions** (`index.html?test`, ou `atelier-partitions.html`) : boutons « Trop dur ici » / « On ne sent pas la musique » pendant la partie (marques gardées sur le téléphone, clé `rythme-marques`), « Copier les marques », « Regarder » (le jeu joue tout seul avec la musique), difficulté « Ancienne ». Sans `?test`, ne fait rien |
 | `jeu/boucle.js` | Boucle de jeu (`boucle`), surveillance de la fluidité (`surveiller`, `cale60`), démarrage (chargé en dernier) |
-| `niveaux/index.json` | Catalogue + chiffrement (sel, témoin). Généré par `outils/chiffrer.py`, ne pas éditer à la main. `notes` = combo maximal (une tenue compte double) |
+| `niveaux/index.json` | Catalogue + chiffrement (sel, témoin). Généré par `outils/chiffrer.py`, ne pas éditer à la main. `notes` = combo maximal du Normal (une tenue compte double) ; `modes` = `{facile: {notes, niveau}, …}` (combo et note de difficulté 1-10 de chaque mode) |
 | `niveaux/<id>.json` | Un niveau : tempo, décalages, partition |
 | `musiques/<id>.bin` | Musique, MP3 128 kbit/s **chiffré** (AES-256-GCM) |
 | `persos/poupee.js` | **Le moule des personnages** : squelette, mannequin (tête, visage, bras, jambes), pinceau (ombrage), animations. Commun à tous = le style unique |
@@ -36,11 +37,12 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 | `polices/` | Polices (OFL) : Cinzel 700/900, Libre Baskerville 700 (HUD) ; M PLUS Rounded 1c 700/800 (menus, typo ronde, via fontsource) |
 | `reserve/solarus-alttp-pack.zip.bin` | Réserve **chiffrée** du pack Solarus ALTTP envoyé par Kiki, pour piocher plus tard |
 | `outils/chiffrer.py` | Verrouille musiques (`morceau`), images (`images`), fichiers (`fichier`) ; `changer` = nouveau mot de passe |
-| `outils/analyse/` | Analyse audio (numpy + scipy) : `base`, `grid`, `notes`, `partition_gff`, `verif`. **Seule version à jour** (le cerveau n'a plus que des renvois) |
+| `outils/partitions/` | **Atelier de partitions** (chantier 1.1) : d'un MP3 à un niveau en 3 difficultés vérifié. `atelier.py` (`analyser`, `proposer [--ecrire]`, `verifier`, `marques`, `frappes`), fiches des morceaux dans `morceaux/<id>.json` (réglages, retouches, marques de Kiki). Mode d'emploi complet : `outils/partitions/LISEZMOI.md` |
+| `outils/analyse/` | Ancien outil (script jetable de la 1re partition de GFF, `partition_gff.py`) : historique seulement, remplacé par `outils/partitions/` |
 | `outils/persos/` | `capture.js` (captures de l'atelier, `MDP=…` pour les images chiffrées), `comparer.py` (modèle de Kiki / poupée côte à côte) |
 | `outils/perf/mesure.js` | Coût d'une image (rendu logiciel) |
 | `outils/menu/` | Maquette du menu : `capture.js` (captures figées, finesse 2 pour Kiki), `verif.js` (rien hors écran, zones à toucher ≥ 44 px, textes coupés), `parcours.js` (parcours au doigt), `perf.js` (coût par image) ; comparaison avec les modèles de Kiki : `outils/persos/comparer.py` (modèles dans le cerveau, jamais ici) |
-| `outils/tests/` | `records-pause.js` (pause, décompte 3-2-1, records), `partie-auto.js` (partie simulée complète, doit donner 9 999 999), `pixels.js` + `comparer-pixels.py` (captures à horloge et hasard figés du menu et de 3 instants de `?auto&niveau=gff`, comparées pixel par pixel avec une ancienne version : pour vérifier qu'un rangement du code ne change rien à l'image) |
+| `outils/tests/` | `records-pause.js` (pause, décompte 3-2-1, records), `partie-auto.js` (partie simulée complète, doit donner 9 999 999 ; `node outils/tests/partie-auto.js 8765 gff expert`), `pixels.js` + `comparer-pixels.py` (captures à horloge et hasard figés du menu et de 3 instants de `?auto&niveau=gff`, comparées pixel par pixel avec une ancienne version : pour vérifier qu'un rangement du code ne change rien à l'image) |
 | `manifest.webmanifest`, `icones/` | Installation sur l'écran d'accueil (plein écran, paysage) |
 
 ## Règles absolues
@@ -51,7 +53,8 @@ Mémoire commune : `kiki-cerveau/projets/jeu-rythme/` (`CONTEXTE.md`, `CHANTIERS
 3. Changer le mot de passe : `MDP_FAMILLE=ancien MDP_NOUVEAU=nouveau python3 outils/chiffrer.py changer` (ou `CLE_FAMILLE=...` pour l'ancien) rechiffre tous les `.bin` ; chacun retape ensuite le nouveau mot de passe dans le jeu.
 
 ## Format d'un niveau (`niveaux/<id>.json`)
-`bpm`, `grille` (s, premier temps de la grille dans le MP3), `avance` (s de silence avant le MP3, 1,5), `fin` (s dans le MP3 où la partie se termine), `musique`, puis `notes`, une par ligne :
+Écrit par l'atelier (`outils/partitions/atelier.py proposer <id> --ecrire`), pas à la main.
+`bpm`, `grille` (s, premier temps de la grille dans le MP3), `avance` (s de silence avant le MP3, 1,5), `fin` (s dans le MP3 où la partie se termine), `musique`, `difficulte` (`{facile: 2, normal: 5, expert: 8}`, note de 1 à 10), puis `partitions` : `{facile: [...], normal: [...], expert: [...]}` (+ `ancienne` pour GFF, visible seulement avec `?test`). Ancien format encore lu par le jeu : `notes` seul = Normal. Une note par ligne :
 `{"y": "t"|"h"|"s", "t": temps dans le MP3 (s), "l": piste 0-3 (0 = grave, en bas en paysage), "e": fin de tenue, "d": sens du glissé (u, d, l, r, ur, ul, dr, dl), "p": n° de note double}`.
 y : t = taper, h = tenue (compte 2 dans le combo : tête + queue), s = glissé.
 
@@ -59,7 +62,8 @@ y : t = taper, h = tenue (compte 2 dans le combo : tête + queue), s = glissé.
 - Paysage = style Switch (notes de gauche à droite, cibles à droite, pistes dans la moitié haute, le bas pour les pouces). **Pas de portrait** : un écran demande de tourner le téléphone et la partie se met en pause.
 - On touche **n'importe où** (le moment compte, pas l'endroit), 1 ou 2 pouces. Surtout une note à la fois ; doubles (barre **bleue**) et tenue d'un pouce + tape de l'autre aux moments forts. Le geste « retour » d'Android est ignoré en partie.
 - **Score** (16/11) : 9 999 999 pour une partie parfaite (tout en Critical), quel que soit le morceau (`SCORE_MAX`, `scoreBrut` / `poidsMax`).
-- **Records** (16/11) : sur le téléphone, `localStorage` clé `rythme-records` = `{morceau: {normal: {score, rang, combo, full}}}` (meilleur de chaque, séparément ; une clé par difficulté, `DIFFICULTE = 'normal'` pour le chantier 1.1). Seules les parties **terminées** comptent, et pas `?auto`. L'écran de fin dit « Nouveau record ! » avec l'ancien ; le menu montre le record sous chaque morceau. Tests : `outils/tests/records-pause.js` (pause, décompte, records) et `outils/tests/partie-auto.js` (partie simulée complète).
+- **Difficulté** (17/11, demande de Kiki) : 3 **vraies partitions différentes** par morceau (Facile, Normal, Expert : nombre de notes, gestes, doubles, flèches différents), la vitesse n'est **pas** une difficulté (c'est un réglage de confort à part). Chaque mode a une **note de 1 à 10** calculée sur la partition : elle dépend de la musique (un morceau calme peut valoir 2 / 4 / 5, un déchaîné 2 / 4 / 7). Choix au menu (mémorisé : `reglages.difficulte`, `?difficulte=expert` pour les tests), affiché dans le bandeau (couleur du logo + « EXPERT 8 »). `MODES`, `modeJoue()` dans `jeu/menu.js`. La Forêt d'émeraude n'a que Normal.
+- **Records** (16/11) : sur le téléphone, `localStorage` clé `rythme-records` = `{morceau: {facile|normal|expert: {score, rang, combo, full}}}` (meilleur de chaque, séparément, par difficulté). Les anciens records de GFF (avant le 17/11) sont restés sous « normal ». Seules les parties **terminées** comptent, et pas `?auto`. L'écran de fin dit « Nouveau record ! » avec l'ancien ; le menu montre le record sous chaque morceau. Tests : `outils/tests/records-pause.js` (pause, décompte, records) et `outils/tests/partie-auto.js` (partie simulée complète).
 - **Pause** : à la reprise, décompte 3-2-1 (`etat = 'decompte'`, `PAS_DECOMPTE` 0,8 s par chiffre) : son suspendu et notes figées (dt = 0), chiffres pré-dessinés (`CHIF.decompte`), horloge resynchronisée à la fin (`finDecompte`). Toucher le bandeau pendant le décompte redonne la pause.
 - Notes façon Final Bar Line : rond rouge à point blanc (taper), vert + bande (maintenir), doré avec grande flèche blanche (glisser), cibles sombres cerclées de blanc, « CRITICAL » arc-en-ciel, « CHAIN » en haut au centre.
 - **HUD façon Final Bar Line** : pistes = fins traits blancs, cibles = gros anneaux à droite (x = W − 0,298 H, pistes de 0,2 H à 0,554 H) ; bandeau du titre en haut à gauche (jaquette, difficulté selon notes/s : Facile < 1,5, Normal < 2,5, Difficile < 3,5, Expert ; **toucher le bandeau = pause**) ; chaîne en haut au centre, score en haut à droite, barre TIME en bas, panneau du capitaine (`EQUIPE[0]`) en bas à droite. Critical = cercle magique de la couleur de la note.
@@ -99,17 +103,18 @@ Kiki envoie 2-3 croquis/images + une description. Claude :
 - Pièces réutilisables : `coiffures.raie`, `coiffes.bonnet`, `tenues.tunique`, `armes.image`, `boucliers.image`, bras avec gant ; princesse : `coiffures.longs`, `coiffes.diademe`, `tenues.robe`, `armes.rapiere` ; options du moule : `oreilleLoin`, `bras.main`, `taille`, `os`, `corps`, `bras.manche`, `tete`, `yeuxTaille`, `joues`, `nez`, `pupilles`, `bouche`, `couleurBouche`, `taillePieds`.
 - Colosse (`colosse`), princesse des eaux (`princesse-eaux`) : looks **validés par Kiki** (« parfait »), ne pas y toucher sans demande. Toutes leurs passes : PERSOS-HISTORIQUE.md.
 
-## Mapper un nouveau morceau (méthode validée le 08/11)
-Ne pas mapper seulement la mélodie : **suivre ce que fait l'instrument** (pulsation, texture).
-1. Décoder : `mkdir -p /tmp/rythme && ffmpeg -i morceau.mp3 -ac 1 -ar 22050 -f f32le /tmp/rythme/morceau.raw` et copier `outils/analyse/base.py` dans `/tmp/rythme/`.
-2. `outils/analyse/grid.py` : tempo + phase (écrit `/tmp/rythme/grid.npy`) ; vérifier la dérive par tranches de 6 s.
-3. `outils/analyse/notes.py` : note frappée à chaque demi-temps → mélodie, accompagnement, sections.
-4. Écrire la partition par sections avec des codes (modèle : `partition_gff.py`, mode d'emploi en tête du fichier) : pulsation de base, cascades aux moments forts, tenues lâchées sur une vraie frappe, doubles quand deux voix frappent ensemble, difficulté qui monte puis redescend (GFF : 2,1 → 3,1 → 3,0 → 3,7 → 1,5 notes/s). Confort : écart mini d'un demi-temps (hors doubles), rien ne démarre pile à la fin d'une tenue.
-5. `outils/analyse/verif.py` : chaque note sur une vraie attaque (GFF : 172/172, max 10,5 ms).
-6. Écrire `niveaux/<id>.json`, puis `MDP_FAMILLE=... python3 outils/chiffrer.py morceau <id> morceau.mp3`. 7. Tester, commit, push sur `main`.
+## Ajouter un morceau (atelier de partitions, 17/11)
+Kiki envoie le MP3 + le mot de passe. Tout est dans `outils/partitions/LISEZMOI.md` ; en bref (une session) :
+1. `python3 outils/partitions/atelier.py analyser <id> morceau.mp3` (tempo, grille et stabilité, frappes basse / caisse / accompagnement / mélodie, sections), remplir `titre` et `jeu` dans `outils/partitions/morceaux/<id>.json`.
+2. `python3 outils/partitions/atelier.py proposer <id>` : bilan des 3 partitions (aucun souci attendu), puis `--ecrire` → `niveaux/<id>.json`.
+3. `MDP_FAMILLE=... python3 outils/chiffrer.py morceau <id> morceau.mp3` (musique chiffrée + `index.json`).
+4. `node outils/tests/partie-auto.js 8765 <id> facile|normal|expert` : 100 % Critical, aucune erreur. Commit, push sur `main`.
+5. Kiki teste sur `index.html?test`, renvoie ses marques ; `atelier.py marques <id> '<texte>'`, retouches dans la fiche (`sections`, `manuel`, `graine`), `proposer --ecrire`.
+La méthode du 08/11 (suivre la pulsation et la texture de l'instrument, cascades aux moments forts, tenues lâchées sur une vraie frappe, doubles quand deux voix frappent ensemble, difficulté qui monte puis redescend) est **codée dans l'outil** (`composer.py`). Ne pas réécrire une partition à la main : retoucher la fiche.
+Pour réécouter un morceau déjà en ligne : `MDP_FAMILLE=... python3 outils/chiffrer.py dechiffrer musiques/<id>.bin /tmp/rythme/<id>.mp3` (refuse d'écrire dans le dépôt).
 
 ## Tester sans écran
 - `python3 -m http.server 8765` à la racine (avec une copie chiffrée d'essai si besoin : `cp -r` dans /tmp, `init` avec un mot de passe bidon).
-- `?auto` : le jeu joue tout seul (pas de son) ; `?auto&niveau=gff` pour un niveau en ligne.
+- `?auto` : le jeu joue tout seul (pas de son) ; `?auto&niveau=gff&difficulte=expert` pour un niveau en ligne et une difficulté.
 - Playwright + `/usr/bin/google-chrome` : vrais doigts avec des `PointerEvent` dont les `pointerId` sont des **entiers distincts**.
 - Objectif : partie complète simulée = 100 % Critical, aucune erreur dans la console.
