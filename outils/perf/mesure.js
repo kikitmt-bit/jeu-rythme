@@ -3,13 +3,14 @@
 //   (à la racine du dépôt)  python3 -m http.server 8765 &
 //   ancienne version :      git worktree add /tmp/ancien <commit> && (cd /tmp/ancien && python3 -m http.server 8766 &)
 //   node outils/perf/mesure.js 8765 20   puis   node outils/perf/mesure.js 8766 20   (faire 2 passes chacun)
+//   node outils/perf/mesure.js 8765 20 '&difficulte=expert'   (une autre difficulté ; '&test&difficulte=ancienne' = l'ancienne partition)
 // Résultat : moy / médiane / 95e centile / pire, en ms par image. Objectif : pas plus que l'ancienne version.
 const {chromium} = require('playwright');
 (async () => {
-  const [port, duree] = [process.argv[2] || 8765, +(process.argv[3] || 20)];
+  const [port, duree, plus] = [process.argv[2] || 8765, +(process.argv[3] || 20), process.argv[4] || ''];   // plus : ex. '&difficulte=expert'
   const b = await chromium.launch();
   const p = await b.newPage({viewport: {width: 892, height: 412}, deviceScaleFactor: 2});   // Pixel 7 Pro en paysage
-  await p.goto(`http://localhost:${port}/index.html?auto&niveau=gff`);
+  await p.goto(`http://localhost:${port}/index.html?auto&niveau=gff${plus}`);
   await p.evaluate(() => {
     window.__t = []; const orig = dessiner; surveiller = () => {};
     dessiner = function (...a) { const t = performance.now(); orig.apply(this, a); g.getImageData(0, 0, 1, 1); window.__t.push(performance.now() - t); };

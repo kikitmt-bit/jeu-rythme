@@ -97,7 +97,14 @@ def recalculer(idx):
             print(f"  {d['id']} : musique absente, niveau non publié")
             continue
         h = hashlib.sha256(open(chemin, 'rb').read() + open(musique, 'rb').read()).hexdigest()[:10]
-        niveaux.append({'id': d['id'], 'titre': d['titre'], 'jeu': d['jeu'], 'notes': sum(2 if n.get('y') == 'h' else 1 for n in d['notes']), 'version': h})
+        # notes = combo maximal (une tenue compte double). Nouveau format : 3 partitions (« partitions »), chacune avec
+        # son nombre de notes et sa note de difficulté de 1 à 10 (« modes ») ; ancien format : « notes » seul = normal.
+        combo = lambda notes: sum(2 if n.get('y') == 'h' else 1 for n in notes)
+        parts = d.get('partitions') or {'normal': d['notes']}
+        niv = {'id': d['id'], 'titre': d['titre'], 'jeu': d['jeu'], 'notes': combo(parts.get('normal') or next(iter(parts.values()))), 'version': h}
+        if 'partitions' in d:
+            niv['modes'] = {m: {'notes': combo(p), **({'niveau': d['difficulte'][m]} if m in d.get('difficulte', {}) else {})} for m, p in parts.items()}
+        niveaux.append(niv)
     idx['niveaux'] = niveaux
     ecrire_index(idx)
     print(f'index.json : {len(niveaux)} niveau(x)')

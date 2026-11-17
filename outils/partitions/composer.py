@@ -77,7 +77,7 @@ class Matiere:
                 k = g.case_de(f['t'])
                 pos, mes = g.pos_mesure(k)
                 ev.append({'t': float(f['t']), 'k': k, 'pos': None, 'mes': int(mes), 'grille': False, **{c: f[c] for c in champs}})
-        ev = [x for x in ev if sections.debut - .05 <= x['t'] <= sections.fin - .4]
+        ev = [x for x in ev if sections.debut - .05 <= x['t'] <= min(sections.fin - .4, sections.fin_jeu)]
         ev.sort(key=lambda x: x['t'])
         for x in ev:
             x['sec'] = sections.de(x['t'])
@@ -249,7 +249,7 @@ class Partition:
                 libres = [x for x in evs if x is not acc and x['t'] - t0 >= max(.17, self.R['ecart']) - 1e-3 and b - x['t'] >= max(.17, self.R['ecart']) - 1e-3]
                 # combien de notes de pulsation ? assez pour approcher la densité visée dans cette section (au moins une
                 # par cellule de plus d'une demi-seconde) : un morceau aux accents espacés reçoit une pulsation plus fournie
-                nb_pul = int(np.clip(round(.85 * vise * (b - t0)) - 1, 1 if b - t0 >= .5 else 0, 4))
+                nb_pul = int(np.clip(round(1.1 * vise * (b - t0)) - 1, 1 if b - t0 >= .5 else 0, 4))
                 if self.dif == 'facile':
                     nb_pul = min(nb_pul, 1)
                 pul = []
@@ -260,7 +260,8 @@ class Partition:
                 if acc is None and not pul and evs:
                     pul = [max(evs, key=lambda x: x['w'])]
                 n1 = sorted(n0 + pul, key=lambda x: x['t'])
-                n2 = self._espacer(evs, n1)
+                # niveau 2 : tout ce que joue la musique dans la cellule (sans coller à l'accent suivant)
+                n2 = self._espacer([x for x in evs if any(x is y for y in n1) or b - x['t'] >= self.R['ecart'] - 1e-3 or b >= sec['t1'] - 1e-6], n1)
                 me = acc['mes'] if acc is not None else evs[0]['mes']
                 sec_cells.append({'t0': float(t0), 't1': float(b), 'acc': acc, 'evs': evs, 'mes': me, 'n': [n0, n1, n2],
                                   'sec': i, 'niveau': 0, 'fig': None, 'energie': sum(x['w'] for x in evs)})

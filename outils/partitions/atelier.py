@@ -95,7 +95,7 @@ def bilan_analyse(e, g, s):
     if len(tf):
         d = np.abs(tf[:, None] - g.cases[None, :]).min(1)
         print(f"Frappes fortes sur la grille (à 35 ms près) : {100 * (d < .035).mean():.0f} %")
-    print(f"Musique de {s.debut:.2f} s à {s.fin_son:.1f} s · fin de partie proposée {s.fin:.1f} s · énergie du morceau {s.energie:.1f}")
+    print(f"Musique de {s.debut:.2f} s à {s.fin_son:.1f} s (dernières notes possibles à {s.fin_jeu:.1f} s, ensuite elle s'éteint) · énergie du morceau {s.energie:.1f}")
     print('Sections :')
     for x in s.liste:
         fam = ' '.join(f"{c[:3]} {s.familles[c][x['m0']:x['m1']].mean():.1f}" for c in ('basse', 'caisse', 'accomp', 'melodie'))
@@ -152,7 +152,8 @@ def appliquer_manuel(notes, fiche, dif):
 def fabriquer_niveau(ident, fiche, e, g, s, partitions, notes_dif):
     import confort
     fin_notes = max(confort.fin_de(n) for p in partitions.values() for n in p)
-    fin = fiche.get('reglages', {}).get('fin') or round(min(e.duree - .3, max(fin_notes + 2.5, min(s.fin, fin_notes + 5))), 1)
+    # la partie se termine 3 s après la dernière note (le temps d'entendre la fin), sans dépasser le fichier
+    fin = fiche.get('reglages', {}).get('fin') or round(min(e.duree - .3, fin_notes + 3.0), 1)
     return {
         'id': ident, 'titre': fiche.get('titre', ident), 'jeu': fiche.get('jeu', ''),
         'bpm': round(g.bpm, 2), 'grille': round(g.phase, 4), 'avance': 1.5, 'fin': fin, 'duree': round(e.duree, 1),
@@ -160,7 +161,9 @@ def fabriquer_niveau(ident, fiche, e, g, s, partitions, notes_dif):
         'methode': "Atelier de partitions (outils/partitions/) : pulsation de l'instrument section par section, cascades aux "
                    "moments forts, tenues lâchées sur la frappe suivante, doubles quand deux voix frappent ensemble.",
         'difficulte': notes_dif,
-        'partitions': partitions,
+        # « en_plus » de la fiche : partitions gardées telles quelles à côté des 3 (ex. « ancienne », pour comparer
+        # sur la page de test ; le jeu normal ne la montre pas)
+        'partitions': {**partitions, **fiche.get('en_plus', {})},
     }
 
 

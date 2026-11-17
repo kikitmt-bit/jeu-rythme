@@ -13,8 +13,12 @@ function infosNiveau() {
   const dens = nb / Math.max(10, t1n - t0n);
   // nb = combo maximal (une tenue compte double : tête + queue), le même nombre que dans le menu
   const combo = notes.reduce((s, n) => s + (n.type === 'hold' ? 2 : 1), 0);
+  // logo de difficulté : celle qu'on a choisie (Facile, Normal, Expert) et sa note de 1 à 10 ;
+  // pour un niveau sans difficultés (Forêt d'émeraude), la couleur vient du nombre de notes par seconde
+  const modes = niveau.info && niveau.info.modes, mode = modeJoue();
   return {titre: niveau.nom, jeu: niveau.info ? niveau.info.jeu : 'Composition originale', nb: combo,
-          dif: dens < 1.5 ? 0 : dens < 2.5 ? 1 : dens < 3.5 ? 2 : 3};
+          dif: modes ? ({facile: 0, normal: 1, expert: 3})[mode] ?? 1 : dens < 1.5 ? 0 : dens < 2.5 ? 1 : dens < 3.5 ? 2 : 3,
+          mode: modes ? MODES[mode] + (modes[mode] && modes[mode].niveau ? ' ' + modes[mode].niveau : '') : ''};
 }
 const teinteDe = txt => { let h = 0; for (const ch of String(txt)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
 
@@ -26,7 +30,7 @@ function preparerBandeau() {
   const m = H * .016, h = H * .07, jq = h, ic = h * .52, tt = H * .033, ts = H * .0145;
   const [, mx] = toile(4);
   mx.font = `700 ${tt}px ${POLICE_TITRE}`; const lt = mx.measureText(inf.titre).width;
-  const sous = `${inf.jeu}   ·   ${inf.nb} notes`.toUpperCase();
+  const sous = `${inf.jeu}   ·   ${inf.mode ? inf.mode + '   ·   ' : ''}${inf.nb} notes`.toUpperCase();
   mx.font = `600 ${ts}px ${POLICE_SANS}`; const ls = mx.measureText(sous).width + sous.length * ts * .06;
   const xt = m + jq + h * .14 + ic + h * .2, fin = Math.max(H * .44, xt + Math.max(lt, ls) + h * .95);
   const L = fin + m, Ht = h + m * 2;

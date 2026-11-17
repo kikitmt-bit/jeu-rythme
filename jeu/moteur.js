@@ -10,6 +10,7 @@
    leur musique est dans musiques/<id>.bin, chiffrée (AES-GCM, clé tirée du mot de passe familial).
    Format des notes : y = t (taper) / h (maintenir) / s (glisser), t = temps dans le MP3 (s),
    l = piste (0 = grave), e = fin de la note tenue, d = sens du glissé, p = numéro de note double.
+   Un niveau a 3 partitions (« partitions » : facile, normal, expert) ; un ancien niveau n'a que « notes » (= normal).
    ============================================================ */
 const NIVEAUX = {
   foret: {id: 'foret', nom: "Forêt d'émeraude", notes: () => partition(), synth: true, debut: START, temps: BEAT, fin: END_T},
@@ -122,7 +123,7 @@ function lache(id, tm) {
 }
 
 cv.addEventListener('pointerdown', e => {
-  if (etat !== 'jeu' || AUTO) return;
+  if (etat !== 'jeu' || robot) return;
   e.preventDefault();
   try { cv.setPointerCapture(e.pointerId); } catch (_) {}
   appui(e.pointerId, tempsA(e.timeStamp), e.clientX, e.clientY);
@@ -133,7 +134,7 @@ for (const t of ['pointerup', 'pointercancel']) cv.addEventListener(t, e => { if
 const TOUCHES = new Set(['Space', 'Enter', 'KeyD', 'KeyF', 'KeyJ', 'KeyK']);
 const FLECHES = {ArrowUp: -90, ArrowDown: 90, ArrowLeft: 180, ArrowRight: 0};
 addEventListener('keydown', e => {
-  if (etat !== 'jeu' || e.repeat || AUTO) return;
+  if (etat !== 'jeu' || e.repeat || robot) return;
   const tm = tempsA(e.timeStamp);
   if (TOUCHES.has(e.code)) { e.preventDefault(); appui(e.code, tm, 0, 0); }
   else if (FLECHES[e.code] !== undefined) {
@@ -150,7 +151,7 @@ function mettreAJour(st, dt) {
   for (let i = prochaine; i < notes.length; i++) {
     const n = notes[i];
     if (n.t > st + 2.5) break;
-    if (AUTO) {
+    if (robot) {
       if (!n.fait && !n.tete && st >= n.t) { if (n.type === 'hold') { n.tete = n.tenu = true; noter('CRITICAL', n); } else { n.fait = true; noter('CRITICAL', n); } }
       if (n.type === 'hold' && n.tenu && st >= n.end) { n.tenu = false; n.queue = n.fait = true; noter('CRITICAL', n); }
       continue;

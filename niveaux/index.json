@@ -6,11 +6,112 @@
   },
   "niveaux": [
     {
+      "id": "boss-oot",
+      "titre": "Boss Battle",
+      "jeu": "Zelda: Ocarina of Time",
+      "notes": 206,
+      "version": "e3e4abfe6c",
+      "modes": {
+        "facile": {
+          "notes": 119,
+          "niveau": 2
+        },
+        "normal": {
+          "notes": 206,
+          "niveau": 4
+        },
+        "expert": {
+          "notes": 359,
+          "niveau": 7
+        }
+      }
+    },
+    {
       "id": "gff",
       "titre": "Great Fairy's Fountain",
       "jeu": "Zelda: Ocarina of Time",
-      "notes": 185,
-      "version": "0dcb08981f"
+      "notes": 204,
+      "version": "7accf920c4",
+      "modes": {
+        "facile": {
+          "notes": 88,
+          "niveau": 2
+        },
+        "normal": {
+          "notes": 204,
+          "niveau": 5
+        },
+        "expert": {
+          "notes": 303,
+          "niveau": 8
+        },
+        "ancienne": {
+          "notes": 185
+        }
+      }
+    },
+    {
+      "id": "plaine-hyrule",
+      "titre": "Hyrule Field Main Theme",
+      "jeu": "Zelda: Twilight Princess",
+      "notes": 307,
+      "version": "c36c52d5c0",
+      "modes": {
+        "facile": {
+          "notes": 140,
+          "niveau": 2
+        },
+        "normal": {
+          "notes": 307,
+          "niveau": 4
+        },
+        "expert": {
+          "notes": 492,
+          "niveau": 6
+        }
+      }
+    },
+    {
+      "id": "theme-zelda",
+      "titre": "Zelda's Theme",
+      "jeu": "Zelda: Ocarina of Time",
+      "notes": 151,
+      "version": "f29b582470",
+      "modes": {
+        "facile": {
+          "notes": 70,
+          "niveau": 2
+        },
+        "normal": {
+          "notes": 151,
+          "niveau": 4
+        },
+        "expert": {
+          "notes": 224,
+          "niveau": 5
+        }
+      }
+    },
+    {
+      "id": "titre-oot",
+      "titre": "Title Theme",
+      "jeu": "Zelda: Ocarina of Time",
+      "notes": 251,
+      "version": "baeecc0ec0",
+      "modes": {
+        "facile": {
+          "notes": 113,
+          "niveau": 2
+        },
+        "normal": {
+          "notes": 251,
+          "niveau": 4
+        },
+        "expert": {
+          "notes": 368,
+          "niveau": 6
+        }
+      }
     }
   ]
 }

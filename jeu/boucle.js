@@ -33,7 +33,7 @@ function surveiller(ms) {
 
 addEventListener('resize', () => { if (innerHeight > innerWidth) mettrePause(); miseEnPage(); });
 
-majRecords();
+majDifficulte();   // boutons de difficulté et records du menu
 miseEnPage();
 chargerPolices().then(() => miseEnPage());   // les textes du HUD sont redessinés avec les bonnes polices
 demarrer();

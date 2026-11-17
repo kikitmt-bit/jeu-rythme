@@ -72,9 +72,20 @@ function dessinerDecompte() {
 
 /* Records : gardés sur le téléphone (localStorage, chaque accès dans un try/catch), par morceau et par difficulté.
    Format : {morceau: {normal: {score, rang, combo, full}}} ; chaque valeur est le meilleur résultat obtenu séparément
-   (meilleur score, meilleur rang, meilleur combo, Full combo oui/non). Une seule difficulté pour l'instant (« normal ») :
-   le chantier 1.1 (3 difficultés) n'aura qu'à changer DIFFICULTE. Seules les parties terminées comptent. */
-const DIFFICULTE = 'normal', CLE_RECORDS = 'rythme-records', RANGS = ['D', 'C', 'B', 'A', 'S'];
+   (meilleur score, meilleur rang, meilleur combo, Full combo oui/non). Seules les parties terminées comptent.
+
+   Difficulté (chantier 1.1) : chaque morceau en ligne a 3 vraies partitions, « facile », « normal », « expert »
+   (niveaux/<id>.json, « partitions »), et une note de difficulté de 1 à 10 par mode (« modes » de niveaux/index.json).
+   Le choix est mémorisé (reglages.difficulte). La Forêt d'émeraude et un niveau à l'ancien format n'ont que « normal ».
+   « ancienne » = la partition d'avant l'atelier, gardée pour comparer : visible seulement sur la page de test (?test). */
+const MODES = {facile: 'Facile', normal: 'Normal', expert: 'Expert', ancienne: 'Ancienne'};
+const COULEUR_MODE = {facile: '#5ad66c', normal: '#4aa8ff', expert: '#ff4a5a', ancienne: '#c9b38a'};
+let difficulte = MODES[reglages.difficulte] ? reglages.difficulte : 'normal';
+{ const m = location.search.match(/difficulte=(\w+)/); if (m && MODES[m[1]]) difficulte = m[1]; }
+function modesDe(nv) { return nv && nv.info && nv.info.modes ? Object.keys(nv.info.modes).filter(m => m !== 'ancienne' || TEST) : ['normal']; }
+// la difficulté réellement jouée sur ce niveau (celle choisie si le niveau l'a, sinon « normal »)
+function modeJoue(nv = niveau) { return modesDe(nv).includes(difficulte) ? difficulte : 'normal'; }
+const CLE_RECORDS = 'rythme-records', RANGS = ['D', 'C', 'B', 'A', 'S'];
 let recordsMemoire = {};   // si le téléphone refuse localStorage (navigation privée…), on garde au moins ça jusqu'au rechargement
 function lireRecords() {
   try {
@@ -83,13 +94,13 @@ function lireRecords() {
   } catch (e) {}
   return recordsMemoire;
 }
-function recordDe(id, dif = DIFFICULTE) {
+function recordDe(id, dif = modeJoue(NIVEAUX[id])) {
   const r = (lireRecords()[id] || {})[dif];
   if (!r || typeof r !== 'object' || !(r.score >= 0) || !RANGS.includes(r.rang)) return null;
   return {score: Math.round(r.score), rang: r.rang, combo: r.combo > 0 ? Math.round(r.combo) : 0, full: r.full === true};
 }
 // enregistre un résultat ; rend l'ancien record et ce qui vient d'être battu
-function enregistrerRecord(id, res, dif = DIFFICULTE) {
+function enregistrerRecord(id, res, dif = modeJoue(NIVEAUX[id])) {
   const ancien = recordDe(id, dif), plus = (a, b) => !ancien || a > b;
   const bat = {
     score: plus(res.score, ancien && ancien.score),
@@ -112,13 +123,39 @@ function enregistrerRecord(id, res, dif = DIFFICULTE) {
 }
 const espaces = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 const texteRecord = r => `${espaces(r.score)} · rang ${r.rang} · combo ${r.combo}${r.full ? ' · Full combo' : ''}`;
-// ligne de record sous chaque morceau du menu
+// ligne de record sous chaque morceau du menu (celui de la difficulté choisie)
 function majRecords() {
   for (const b of $('niveaux').children) {
     const el = b.querySelector('.rec'); if (!el) continue;
     const r = recordDe(b.dataset.n);
     el.textContent = r ? `Record : ${texteRecord(r)}` : '';
   }
+}
+// boutons de difficulté : ceux du morceau choisi, avec sa note de 1 à 10 ; nombre de notes de chaque morceau
+function majDifficulte() {
+  const modes = modesDe(niveau), joue = modeJoue(), infos = (niveau.info && niveau.info.modes) || {};
+  for (const b of $('difficulte').children) {
+    const d = b.dataset.d, dispo = modes.includes(d);
+    b.classList.toggle('cache', d === 'ancienne' && !dispo);
+    b.disabled = !dispo;
+    b.classList.toggle('actif', d === joue);
+    b.style.background = d === joue ? COULEUR_MODE[d] : '';
+    b.textContent = MODES[d] + (infos[d] && infos[d].niveau ? ' ' + infos[d].niveau : '');
+  }
+  $('aideDif').textContent = modes.length > 1 ? 'Le chiffre est la note de difficulté du morceau, de 1 à 10.' : 'Ce morceau n\'a qu\'une difficulté.';
+  for (const b of $('niveaux').children) {
+    const nv = NIVEAUX[b.dataset.n], el = b.querySelector('.nb');
+    if (!el || !nv.info) continue;
+    const m = nv.info.modes && nv.info.modes[modeJoue(nv)];
+    el.textContent = `${nv.info.jeu} · ${m ? m.notes : nv.info.notes} notes`;
+  }
+  majRecords();
+}
+function choisirDifficulte(d) {
+  if (!MODES[d]) return;
+  difficulte = d;
+  if (d !== 'ancienne') { reglages.difficulte = d; sauver(); }
+  majDifficulte();
 }
 // bloc « Nouveau record ! » de l'écran de fin
 function afficherRecord(res) {
@@ -150,7 +187,7 @@ function terminer(gagne) {
   $('rang').textContent = rang; $('rScore').textContent = espaces(score);
   $('rCrit').textContent = comptes.CRITICAL; $('rGreat').textContent = comptes.GREAT; $('rGood').textContent = comptes.GOOD; $('rMiss').textContent = comptes.MISS; $('rCombo').textContent = comboMax; $('rCoffres').textContent = `${coffres} / ${coffresMax}`; $('ligneCoffres').classList.toggle('cache', !coffresMax);
   // record : seulement une partie terminée et jouée pour de vrai (pas ?auto, qui sert aux tests)
-  if (gagne && !AUTO) { afficherRecord(enregistrerRecord(niveau.id, {score, rang, combo: comboMax, full: comptes.MISS === 0})); majRecords(); }
+  if (gagne && !robot && modeJoue() !== 'ancienne') { afficherRecord(enregistrerRecord(niveau.id, {score, rang, combo: comboMax, full: comptes.MISS === 0})); majRecords(); }
   else $('recordFin').classList.add('cache');
   setTimeout(() => afficher('fin'), gagne ? 600 : 300);
 }
@@ -204,6 +241,7 @@ function choisirNiveau(id) {
   chargerDecor(id);
   for (const b of $('niveaux').children) b.classList.toggle('actif', b.dataset.n === id);
   try { localStorage.setItem('jeu-rythme-niveau', id); } catch (e) {}
+  majDifficulte();
 }
 function construireMenu() {
   const box = $('niveaux');
@@ -211,7 +249,7 @@ function construireMenu() {
     NIVEAUX[n.id] = {id: n.id, nom: n.titre, mp3: true, info: n};
     const b = document.createElement('button');
     b.className = 'niv'; b.dataset.n = n.id;
-    b.innerHTML = `${echap(n.titre)}<small>${echap(n.jeu)} · ${n.notes} notes</small><small class="rec"></small>`;
+    b.innerHTML = `${echap(n.titre)}<small class="nb">${echap(n.jeu)} · ${n.notes} notes</small><small class="rec"></small>`;
     box.insertBefore(b, box.lastElementChild);
   }
   for (const b of box.children) b.onclick = () => choisirNiveau(b.dataset.n);
@@ -229,7 +267,8 @@ async function preparer(nv) {
     nv.data = await (await fetch(`niveaux/${nv.id}.json?v=${nv.info.version}`)).json();
     const d = nv.data;
     Object.assign(nv, {avance: d.avance, debut: d.avance + d.grille, temps: 60 / d.bpm, fin: d.avance + d.fin,
-      notes: () => d.notes.map(n => {
+      // la partition de la difficulté choisie (ancien format : « notes » seul = normal)
+      notes: () => ((d.partitions && (d.partitions[modeJoue(nv)] || d.partitions.normal)) || d.notes).map(n => {
         const o = {type: {t: 'tap', h: 'hold', s: 'swipe'}[n.y], t: n.t + d.avance, lane: n.l};
         if (n.e !== undefined) o.end = n.e + d.avance;
         if (n.d) o.dir = n.d;
@@ -281,6 +320,7 @@ $('bsecours').onclick = async () => {
 $('sansMdp').onclick = () => { choisirNiveau('foret'); afficher('accueil'); };
 
 async function jouer() {
+  robot = AUTO || (TEST && $('regarder').checked);   // page de test : « Regarder » = le jeu joue tout seul, avec la musique
   if (!AUTO) initAudio();   // le son doit être réveillé pendant le toucher
   if (!AUTO && actx.state !== 'running') actx.resume();
   $('jouer').disabled = true;
@@ -312,6 +352,7 @@ async function demarrer() {
 document.addEventListener('visibilitychange', () => { if (document.hidden) mettrePause(); });
 
 // réglages
+for (const b of $('difficulte').children) b.onclick = () => choisirDifficulte(b.dataset.d);
 for (const b of $('vitesse').children) {
   b.classList.toggle('actif', +b.dataset.v === reglages.vitesse);
   b.onclick = () => { reglages.vitesse = +b.dataset.v; sauver(); for (const c of $('vitesse').children) c.classList.toggle('actif', c === b); };

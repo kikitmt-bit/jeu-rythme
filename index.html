@@ -52,11 +52,18 @@ td:last-child{text-align:right;font-weight:800}
 @keyframes recordPop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12);opacity:1}100%{transform:scale(1)}}
 #bpause{position:fixed;left:0;top:0;width:240px;height:60px;padding:0;border-radius:0;font-size:1px;background:transparent;color:transparent;border:0;box-shadow:none}
 #bpause:active{transform:none;box-shadow:none}
+.choix button:disabled{opacity:.3}
+.choix button.actif[data-d]{color:#06110c;border-color:#fff}
+.marque{position:fixed;top:4px;height:40px;z-index:5;padding:0 6px;border-radius:10px;font-size:12px;font-weight:700;line-height:1.15;background:rgba(10,6,16,.6);color:#fff;border:1px solid rgba(255,255,255,.55);box-shadow:none;overflow:hidden}
+.marque:active{transform:none;box-shadow:none}
+.marque.note{background:#2f9e4a;border-color:#fff}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <button id="bpause" class="cache" aria-label="Pause">❚❚</button>
+<button id="mDur" class="marque cache">Trop dur ici</button>
+<button id="mMus" class="marque cache">On ne sent pas la musique</button>
 
 <div id="tourner" class="ecran"><div class="tel">📱</div><h2>Tourne ton téléphone</h2><div class="sous">Le jeu se joue en paysage.</div></div>
 
@@ -65,6 +72,8 @@ td:last-child{text-align:right;font-weight:800}
   <div class="niveaux" id="niveaux">
     <button class="niv" data-n="foret">Forêt d'émeraude<small>musique intégrée · plus facile</small><small class="rec"></small></button>
   </div>
+  <div class="reglages"><div>Difficulté<span class="choix" id="difficulte"><button data-d="facile">Facile</button><button data-d="normal">Normal</button><button data-d="expert">Expert</button><button data-d="ancienne" class="cache">Ancienne</button></span></div><span id="aideDif" style="opacity:.7;font-size:12px"></span></div>
+  <div class="reglages cache" id="zoneTest"><b style="color:#ffd98a">Page de test</b><label><input id="regarder" type="checkbox"> Regarder (le jeu joue tout seul)</label><span id="nbMarques"></span><button id="copierMarques" class="discret">Copier les marques</button><button id="effacerMarques" class="discret">Effacer</button></div>
   <div class="sous">Joue n'importe où sur l'écran, avec un doigt ou les deux pouces. Les notes reliées par une barre bleue se tapent ensemble, un doigt sur chacune.</div>
   <div class="legende">
     <span><i class="pastille" style="background:#ff4545"></i>Taper</span>
@@ -119,14 +128,15 @@ td:last-child{text-align:right;font-weight:800}
 <script src="persos/poupee.js?v=33"></script>
 <script src="persos/pieces.js?v=33"></script>
 <script src="persos/fiches.js?v=33"></script>
-<script src="jeu/reglages.js?v=1"></script>
+<script src="jeu/reglages.js?v=2"></script>
 <script src="jeu/son.js?v=1"></script>
 <script src="jeu/foret.js?v=1"></script>
-<script src="jeu/moteur.js?v=1"></script>
+<script src="jeu/moteur.js?v=2"></script>
 <script src="jeu/dessin.js?v=1"></script>
-<script src="jeu/hud.js?v=1"></script>
+<script src="jeu/hud.js?v=2"></script>
 <script src="jeu/equipe.js?v=1"></script>
-<script src="jeu/menu.js?v=1"></script>
-<script src="jeu/boucle.js?v=1"></script>
+<script src="jeu/menu.js?v=2"></script>
+<script src="jeu/essai.js?v=1"></script>
+<script src="jeu/boucle.js?v=2"></script>
 </body>
 </html>

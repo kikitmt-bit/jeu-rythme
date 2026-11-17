@@ -35,6 +35,12 @@ class Sections:
         self.debut = float(e.frappes[0]['t']) if debut is None else debut
         dernier = max((f['t'] for f in e.frappes if f['force'] > .12), default=e.duree)
         self.fin = float(min(e.duree - .3, max(dernier + 1.5, min(self.fin_son, dernier + 4)))) if fin is None else fin
+        # fin du jeu : après ce moment la musique s'éteint (fondu : plus de 12 dB sous son volume habituel) et on n'y met
+        # plus de notes ; seule une dernière tenue peut s'y prolonger
+        i0, i1 = int(self.debut / DT), max(int(self.debut / DT) + 1, int(self.fin_son / DT))
+        habituel = float(np.median(e.volume[i0:i1]))
+        forts = np.where(e.volume[:i1] >= habituel - 12)[0]
+        self.fin_jeu = float(forts[-1] * DT) if len(forts) else self.fin_son
         # énergie du morceau : la force des frappes par seconde, toutes familles réunies (sur la musique elle-même,
         # sans les silences du début et de la fin). Great Fairy's Fountain vaut 11 ; Boss Battle 18 ; une berceuse 6.
         corps = [i for i in range(n) if self.t_mesures[i] >= self.debut - .5 and self.t_mesures[i + 1] <= self.fin_son]
